@@ -10,9 +10,9 @@ import java.util.stream.Stream;
 
 @Getter
 public enum Role {
-    PASSENGER("PASSENGER_ROLE", null),
-    DRIVER("DRIVER_ROLE", PASSENGER),
-    ADMIN("ADMIN_ROLE", DRIVER);
+    PASSENGER("PASSENGER", null),
+    DRIVER("DRIVER", PASSENGER),
+    ADMIN("ADMIN", DRIVER);
 
     private final String role;
     private final Role inheritance;
@@ -24,7 +24,11 @@ public enum Role {
 
     public Collection<? extends GrantedAuthority> getRoleAuthority() {
         return Stream.iterate(this, Objects::nonNull, Role::getInheritance)
-                .map(role -> new SimpleGrantedAuthority(role.getRole()))
+                .map(role -> new SimpleGrantedAuthority(getRoleName(role)))
                 .toList();
+    }
+
+    private String getRoleName(Role role) {
+        return role.getRole() + "_ROLE";
     }
 }
