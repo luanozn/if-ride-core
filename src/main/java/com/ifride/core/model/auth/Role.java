@@ -24,11 +24,7 @@ public enum Role {
 
     public Collection<? extends GrantedAuthority> getRoleAuthority() {
         return Stream.iterate(this, Objects::nonNull, Role::getInheritance)
-                .map(role -> new SimpleGrantedAuthority(getRoleName(role)))
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRole()))
                 .toList();
-    }
-
-    private String getRoleName(Role role) {
-        return role.getRole() + "_ROLE";
     }
 }
