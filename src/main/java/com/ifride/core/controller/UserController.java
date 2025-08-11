@@ -19,28 +19,29 @@ public class UserController {
 
     @PostMapping("/register/passenger")
     public User registerPassenger(@RequestBody RegisterRequestDTO registerDTO) {
+        log.info("Started the PASSENGER registration for {}", registerDTO.email());
         return userService.register(registerDTO);
     }
 
     @PostMapping("/register/driver")
     @PreAuthorize("hasRole('PASSENGER')")
     public User registerDriver(
-            @RequestBody RegisterRequestDTO registerRequestDTO,
+            @RequestBody RegisterRequestDTO registerDTO,
             @AuthenticationPrincipal User author
     ) {
-        log.info("User {} started the DRIVER registration for {}", author.getEmail(), registerRequestDTO.email());
+        log.info("User {} started the DRIVER registration for {}", author.getEmail(), registerDTO.email());
 
-        return userService.registerDriver(registerRequestDTO, author);
+        return userService.registerDriver(registerDTO, author);
     }
 
     @PostMapping("/register/admin")
     @PreAuthorize("hasRole('ADMIN')")
     public User registerAdmin(
-            @RequestBody RegisterRequestDTO registerRequestDTO,
+            @RequestBody RegisterRequestDTO registerDTO,
             @AuthenticationPrincipal User author
     ) {
-        log.info("User {} started the ADMIN registration for {}", author.getEmail(), registerRequestDTO.email());
+        log.info("User {} started the ADMIN registration for {}", author.getEmail(), registerDTO.email());
 
-        return userService.registerAdmin(registerRequestDTO);
+        return userService.registerAdmin(registerDTO);
     }
 }
