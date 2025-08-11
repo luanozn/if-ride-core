@@ -2,6 +2,7 @@ package com.ifride.core.service;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.ifride.core.model.auth.LoginResponseDTO;
 import com.ifride.core.model.auth.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -11,18 +12,25 @@ import java.time.Instant;
 @Service
 public class TokenService {
 
-    @Value("${api.security.token.secret}")
-    private String secret;
-
     private final Long EXPIRATION = 21600L;
-    private final Algorithm ALGORITHM = Algorithm.HMAC256(secret);
+    private final Algorithm ALGORITHM;
     private final String ISSUER = "if-ride-core";
 
-    public String generateToken(User user) {
+    public TokenService(@Value("${api.security.token.secret}") String secret) {
+        this.ALGORITHM = Algorithm.HMAC256(secret);
+    }
+
+    public LoginResponseDTO generateLoginResponse(User user) {
+        var expirationDate = generateExpirationDate();
+        var token = generateToken(user, expirationDate);
+        return new LoginResponseDTO(token, user.getEmail(), expirationDate.toEpochMilli());
+    }
+
+    public String generateToken(User user, Instant expirationDate) {
         return JWT.create()
                 .withIssuer(ISSUER)
                 .withSubject(user.getEmail())
-                .withExpiresAt(generateExpirationDate())
+                .withExpiresAt(expirationDate)
                 .sign(ALGORITHM);
     }
 

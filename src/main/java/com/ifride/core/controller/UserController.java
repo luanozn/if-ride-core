@@ -1,13 +1,46 @@
 package com.ifride.core.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.ifride.core.model.auth.RegisterRequestDTO;
+import com.ifride.core.model.auth.User;
+import com.ifride.core.service.UserService;
+import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/v1/users")
+@AllArgsConstructor
+@Log4j2
 public class UserController {
 
-    @GetMapping("/user/auth")
-    public String auth() {
-        return "Hello World";
+    private final UserService userService;
+
+    @PostMapping("/register/passenger")
+    public User registerPassenger(@RequestBody RegisterRequestDTO registerDTO) {
+        return userService.register(registerDTO);
+    }
+
+    @PostMapping("/register/driver")
+    @PreAuthorize("hasRole('PASSENGER')")
+    public User registerDriver(
+            @RequestBody RegisterRequestDTO registerRequestDTO,
+            @AuthenticationPrincipal User author
+    ) {
+        log.info("User {} started the DRIVER registration for {}", author.getEmail(), registerRequestDTO.email());
+
+        return userService.registerDriver(registerRequestDTO, author);
+    }
+
+    @PostMapping("/register/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public User registerAdmin(
+            @RequestBody RegisterRequestDTO registerRequestDTO,
+            @AuthenticationPrincipal User author
+    ) {
+        log.info("User {} started the ADMIN registration for {}", author.getEmail(), registerRequestDTO.email());
+
+        return userService.registerAdmin(registerRequestDTO);
     }
 }

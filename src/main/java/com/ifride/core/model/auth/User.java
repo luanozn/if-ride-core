@@ -6,6 +6,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 @Table(name="users")
 @Entity(name = "users")
@@ -49,5 +51,10 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return UserDetails.super.isEnabled();
+    }
+
+    public boolean has(Role role) {
+        return Stream.iterate(this.role, Objects::nonNull, Role::getInheritance)
+                .anyMatch(userRole -> userRole.equals(role));
     }
 }
