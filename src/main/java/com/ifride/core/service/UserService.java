@@ -36,7 +36,10 @@ public class UserService {
             if(authorCanEditUser(author, foundUser)) {
                 throw new PreconditionFailedException("User %s is not allowed to turn other users in DRIVER", registerRequest.email());
             }
-//            TODO insert validation to dont overwrite the permission of an ADMIN
+
+            if(foundUser.has(Role.DRIVER)) {
+                throw new ConflictException("User %s is already taken in DRIVER", registerRequest.email());
+            }
 
             return repository.save(userConverter.from(registerRequest, Role.DRIVER));
         }
