@@ -1,8 +1,10 @@
 package com.ifride.core.exceptions;
 
-public class ConflictException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class ConflictException extends ApiException {
 
     public ConflictException(String message, Object... args) {
-        super(String.format(message, args));
+        super(String.format(message, args), HttpStatus.CONFLICT);
     }
 }
