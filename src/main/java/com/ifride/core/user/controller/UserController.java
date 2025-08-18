@@ -1,8 +1,8 @@
-package com.ifride.core.controller;
+package com.ifride.core.user.controller;
 
 import com.ifride.core.model.auth.RegisterRequestDTO;
-import com.ifride.core.model.auth.User;
-import com.ifride.core.service.UserService;
+import com.ifride.core.user.models.User;
+import com.ifride.core.user.service.UserService;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.access.prepost.PreAuthorize;

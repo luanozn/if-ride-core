@@ -1,13 +1,13 @@
-package com.ifride.core.service;
+package com.ifride.core.user.service;
 
 import com.ifride.core.exceptions.ConflictException;
 import com.ifride.core.exceptions.NotFoundException;
 import com.ifride.core.exceptions.PreconditionFailedException;
 import com.ifride.core.model.auth.RegisterRequestDTO;
-import com.ifride.core.model.auth.Role;
-import com.ifride.core.model.auth.User;
-import com.ifride.core.repository.UserRepository;
-import com.ifride.core.service.converter.UserConverter;
+import com.ifride.core.user.models.Role;
+import com.ifride.core.user.models.User;
+import com.ifride.core.user.repository.UserRepository;
+import com.ifride.core.user.service.converter.UserConverter;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 

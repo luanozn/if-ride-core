@@ -3,7 +3,7 @@ package com.ifride.core.service;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.ifride.core.model.auth.LoginResponseDTO;
-import com.ifride.core.model.auth.User;
+import com.ifride.core.user.models.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 

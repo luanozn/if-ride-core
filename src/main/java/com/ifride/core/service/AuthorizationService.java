@@ -1,6 +1,6 @@
 package com.ifride.core.service;
 
-import com.ifride.core.repository.UserRepository;
+import com.ifride.core.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

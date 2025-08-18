@@ -1,4 +1,4 @@
-package com.ifride.core.model.auth;
+package com.ifride.core.user.models;
 
 import jakarta.persistence.*;
 import lombok.Data;
