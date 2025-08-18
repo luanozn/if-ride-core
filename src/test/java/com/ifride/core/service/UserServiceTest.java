@@ -1,10 +1,10 @@
 package com.ifride.core.service;
 
 import com.ifride.core.shared.exceptions.ConflictException;
-import com.ifride.core.auth.model.RegisterRequestDTO;
-import com.ifride.core.user.models.User;
-import com.ifride.core.user.repository.UserRepository;
-import com.ifride.core.user.service.UserService;
+import com.ifride.core.auth.model.dto.RegisterRequestDTO;
+import com.ifride.core.auth.model.entity.User;
+import com.ifride.core.auth.repository.UserRepository;
+import com.ifride.core.auth.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 

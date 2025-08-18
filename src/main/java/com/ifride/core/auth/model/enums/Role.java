@@ -1,4 +1,4 @@
-package com.ifride.core.user.models;
+package com.ifride.core.auth.model.enums;
 
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
