@@ -1,11 +1,11 @@
 package com.ifride.core.auth.controller;
 
-import com.ifride.core.auth.model.LoginRequestDTO;
-import com.ifride.core.auth.model.LoginResponseDTO;
-import com.ifride.core.auth.model.RegisterRequestDTO;
-import com.ifride.core.user.models.User;
+import com.ifride.core.auth.model.dto.LoginRequestDTO;
+import com.ifride.core.auth.model.dto.LoginResponseDTO;
+import com.ifride.core.auth.model.dto.RegisterRequestDTO;
+import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.service.TokenService;
-import com.ifride.core.user.service.UserService;
+import com.ifride.core.auth.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

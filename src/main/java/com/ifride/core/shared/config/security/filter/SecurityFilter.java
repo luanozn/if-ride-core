@@ -5,7 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import com.ifride.core.user.repository.UserRepository;
+import com.ifride.core.auth.repository.UserRepository;
 import com.ifride.core.auth.service.TokenService;
 
 import lombok.AllArgsConstructor;

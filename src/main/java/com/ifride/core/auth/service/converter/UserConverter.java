@@ -1,8 +1,8 @@
-package com.ifride.core.user.service.converter;
+package com.ifride.core.auth.service.converter;
 
-import com.ifride.core.auth.model.RegisterRequestDTO;
-import com.ifride.core.user.models.Role;
-import com.ifride.core.user.models.User;
+import com.ifride.core.auth.model.dto.RegisterRequestDTO;
+import com.ifride.core.auth.model.enums.Role;
+import com.ifride.core.auth.model.entity.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 

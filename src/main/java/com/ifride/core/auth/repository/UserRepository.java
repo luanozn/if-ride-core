@@ -1,6 +1,6 @@
-package com.ifride.core.user.repository;
+package com.ifride.core.auth.repository;
 
-import com.ifride.core.user.models.User;
+import com.ifride.core.auth.model.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

@@ -1,5 +1,6 @@
-package com.ifride.core.user.models;
+package com.ifride.core.auth.model.entity;
 
+import com.ifride.core.auth.model.enums.Role;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
