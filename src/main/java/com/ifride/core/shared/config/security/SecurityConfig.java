@@ -1,6 +1,6 @@
-package com.ifride.core.config.security;
+package com.ifride.core.shared.config.security;
 
-import com.ifride.core.config.security.filter.SecurityFilter;
+import com.ifride.core.shared.config.security.filter.SecurityFilter;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
