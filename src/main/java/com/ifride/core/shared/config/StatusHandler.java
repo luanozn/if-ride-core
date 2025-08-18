@@ -1,6 +1,6 @@
-package com.ifride.core.config.exceptions;
+package com.ifride.core.shared.config;
 
-import com.ifride.core.exceptions.ApiException;
+import com.ifride.core.shared.exceptions.ApiException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;

@@ -1,4 +1,4 @@
-package com.ifride.core.service;
+package com.ifride.core.auth.service;
 
 import com.ifride.core.user.repository.UserRepository;
 import lombok.AllArgsConstructor;

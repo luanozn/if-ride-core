@@ -1,4 +1,4 @@
-package com.ifride.core.exceptions;
+package com.ifride.core.shared.exceptions;
 
 import org.springframework.http.HttpStatus;
 

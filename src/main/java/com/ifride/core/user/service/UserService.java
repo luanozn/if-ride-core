@@ -1,9 +1,9 @@
 package com.ifride.core.user.service;
 
-import com.ifride.core.exceptions.ConflictException;
-import com.ifride.core.exceptions.NotFoundException;
-import com.ifride.core.exceptions.PreconditionFailedException;
-import com.ifride.core.model.auth.RegisterRequestDTO;
+import com.ifride.core.shared.exceptions.ConflictException;
+import com.ifride.core.shared.exceptions.NotFoundException;
+import com.ifride.core.shared.exceptions.PreconditionFailedException;
+import com.ifride.core.auth.model.RegisterRequestDTO;
 import com.ifride.core.user.models.Role;
 import com.ifride.core.user.models.User;
 import com.ifride.core.user.repository.UserRepository;

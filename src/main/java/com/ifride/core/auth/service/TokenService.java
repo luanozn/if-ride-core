@@ -1,8 +1,8 @@
-package com.ifride.core.service;
+package com.ifride.core.auth.service;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.ifride.core.model.auth.LoginResponseDTO;
+import com.ifride.core.auth.model.LoginResponseDTO;
 import com.ifride.core.user.models.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

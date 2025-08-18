@@ -1,6 +1,6 @@
 package com.ifride.core.user.controller;
 
-import com.ifride.core.model.auth.RegisterRequestDTO;
+import com.ifride.core.auth.model.RegisterRequestDTO;
 import com.ifride.core.user.models.User;
 import com.ifride.core.user.service.UserService;
 import lombok.AllArgsConstructor;

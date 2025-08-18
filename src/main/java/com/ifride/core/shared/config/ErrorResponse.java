@@ -1,4 +1,4 @@
-package com.ifride.core.config.exceptions;
+package com.ifride.core.shared.config;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
