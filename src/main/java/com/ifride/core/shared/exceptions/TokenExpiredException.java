@@ -1,6 +1,5 @@
 package com.ifride.core.shared.exceptions;
 
-import com.ifride.core.shared.exceptions.api.ApiException;
 import com.ifride.core.shared.exceptions.api.UnauthorizedException;
 
 public class TokenExpiredException extends UnauthorizedException {

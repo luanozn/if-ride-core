@@ -8,7 +8,6 @@ import com.ifride.core.auth.service.EmailVerificationTokenService;
 import com.ifride.core.auth.service.JwtService;
 import com.ifride.core.auth.service.UserService;
 import lombok.AllArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
