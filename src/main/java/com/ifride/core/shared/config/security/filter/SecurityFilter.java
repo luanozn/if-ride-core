@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.ifride.core.auth.repository.UserRepository;
-import com.ifride.core.auth.service.TokenService;
+import com.ifride.core.auth.service.JwtService;
 
 import lombok.AllArgsConstructor;
 
@@ -22,7 +22,7 @@ import java.io.IOException;
 @AllArgsConstructor
 public class SecurityFilter extends OncePerRequestFilter {
 
-    private final TokenService tokenService;
+    private final JwtService jwtService;
     private final UserRepository repository;
 
     @Override
@@ -34,7 +34,7 @@ public class SecurityFilter extends OncePerRequestFilter {
         var jwt = retrieveToken(request);
 
         if (jwt != null) {
-           var subject = tokenService.validateToken(jwt);
+           var subject = jwtService.validateToken(jwt);
            var user = repository.findByEmail(subject);
 
             if (user != null) {
