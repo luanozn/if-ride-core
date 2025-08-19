@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erro na Verificação</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f8f0f0;
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        p {
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        h1 {
+            color: #dc3545;
+        }
+
+        .icon {
+            font-size: 4em;
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="icon">✖</div>
+
+    <h1>Ocorreu um Problema!</h1>
+    <p id="dynamic-error-message"></p>
+    <p>Por favor, tente solicitar um novo link de verificação pelo aplicativo.</p>
+<script>
+    window.onload = function() {
+        const params = new URLSearchParams(window.location.search);
+        const errorMessage = params.get('errorMessage');
+        const messageElement = document.getElementById('dynamic-error-message');
+        if (errorMessage) {
+            messageElement.textContent = errorMessage;
+        }
+    };
+</script>
+</div>
+</body>
+</html>
