@@ -23,6 +23,9 @@ public class User implements UserDetails {
     private String email;
     private String password;
 
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private Role role;

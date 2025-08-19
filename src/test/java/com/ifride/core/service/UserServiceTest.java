@@ -1,6 +1,6 @@
 package com.ifride.core.service;
 
-import com.ifride.core.shared.exceptions.ConflictException;
+import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.auth.model.dto.RegisterRequestDTO;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.repository.UserRepository;
