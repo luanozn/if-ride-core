@@ -32,5 +32,4 @@ public class AuthorizationController {
     public void registerAdmin(@RequestBody RegisterRequestDTO registerRequestDTO) {
         userService.registerAdmin(registerRequestDTO);
     }
-
 }
