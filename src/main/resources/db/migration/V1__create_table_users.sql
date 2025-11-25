@@ -3,5 +3,6 @@ CREATE TABLE users(
     name varchar not null,
     email varchar not null unique,
     password varchar not null,
+    email_verified boolean,
     role varchar not null
 );

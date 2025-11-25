@@ -1,8 +1,8 @@
 package com.ifride.core.auth.service;
 
-import com.ifride.core.shared.exceptions.ConflictException;
-import com.ifride.core.shared.exceptions.NotFoundException;
-import com.ifride.core.shared.exceptions.PreconditionFailedException;
+import com.ifride.core.shared.exceptions.api.ConflictException;
+import com.ifride.core.shared.exceptions.api.NotFoundException;
+import com.ifride.core.shared.exceptions.api.PreconditionFailedException;
 import com.ifride.core.auth.model.dto.RegisterRequestDTO;
 import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.model.entity.User;
@@ -19,6 +19,15 @@ public class UserService {
 
     private final UserRepository repository;
     private final UserConverter userConverter;
+    private final UserRepository userRepository;
+
+    public User findById(String id) {
+        return userRepository.findById(id).orElseThrow(() -> new NotFoundException("User %s not found", id));
+    }
+
+    public User save(User user) {
+        return userRepository.save(user);
+    }
 
     public User register(RegisterRequestDTO registerRequest) {
         var currentUser = repository.findByEmail(registerRequest.email());

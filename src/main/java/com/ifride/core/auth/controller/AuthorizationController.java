@@ -4,7 +4,8 @@ import com.ifride.core.auth.model.dto.LoginRequestDTO;
 import com.ifride.core.auth.model.dto.LoginResponseDTO;
 import com.ifride.core.auth.model.dto.RegisterRequestDTO;
 import com.ifride.core.auth.model.entity.User;
-import com.ifride.core.auth.service.TokenService;
+import com.ifride.core.auth.service.EmailVerificationTokenService;
+import com.ifride.core.auth.service.JwtService;
 import com.ifride.core.auth.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,15 +17,16 @@ import org.springframework.web.bind.annotation.*;
 @AllArgsConstructor
 public class AuthorizationController {
     private final AuthenticationManager authenticationManager;
-    private final TokenService tokenService;
+    private final JwtService jwtService;
     private final UserService userService;
+    private final EmailVerificationTokenService emailVerificationTokenService;
 
     @PostMapping("/login")
     public LoginResponseDTO login(@RequestBody LoginRequestDTO authBody) {
         var userPassword = new UsernamePasswordAuthenticationToken(authBody.email(), authBody.password());
         var auth = this.authenticationManager.authenticate(userPassword);
 
-        return tokenService.generateLoginResponse((User) auth.getPrincipal());
+        return jwtService.generateLoginResponse((User) auth.getPrincipal());
     }
 
     // TODO: Remove this endpoint (Used for testing only)
@@ -32,4 +34,10 @@ public class AuthorizationController {
     public void registerAdmin(@RequestBody RegisterRequestDTO registerRequestDTO) {
         userService.registerAdmin(registerRequestDTO);
     }
+
+    @GetMapping("/verify-email")
+    public void verifyEmail(@RequestParam String token) {
+        emailVerificationTokenService.confirmEmailVerification(token);
+    }
+
 }

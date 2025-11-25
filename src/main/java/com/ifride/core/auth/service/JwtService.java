@@ -10,13 +10,13 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 
 @Service
-public class TokenService {
+public class JwtService {
 
     private final Long EXPIRATION = 21600L;
     private final Algorithm ALGORITHM;
     private final String ISSUER = "if-ride-core";
 
-    public TokenService(@Value("${api.security.token.secret}") String secret) {
+    public JwtService(@Value("${api.security.token.secret}") String secret) {
         this.ALGORITHM = Algorithm.HMAC256(secret);
     }
 
