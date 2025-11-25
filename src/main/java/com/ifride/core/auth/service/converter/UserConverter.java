@@ -14,8 +14,7 @@ public class UserConverter {
 
         user.setEmail(registerRequestDTO.email());
         user.setPassword(new BCryptPasswordEncoder().encode(registerRequestDTO.password()));
-        user.setFirstName(registerRequestDTO.firstName());
-        user.setLastName(registerRequestDTO.lastName());
+        user.setName(registerRequestDTO.name());
         user.setRole(role);
 
         return user;
