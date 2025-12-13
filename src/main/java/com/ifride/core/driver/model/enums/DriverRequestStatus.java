@@ -1,4 +1,4 @@
-package com.ifride.core.auth.model.enums;
+package com.ifride.core.driver.model.enums;
 
 public enum DriverRequestStatus {
     PENDING,
