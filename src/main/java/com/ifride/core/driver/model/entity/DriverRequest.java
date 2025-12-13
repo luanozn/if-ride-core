@@ -1,11 +1,16 @@
-package com.ifride.core.auth.model.entity;
+package com.ifride.core.driver.model.entity;
 
-import com.ifride.core.auth.model.enums.DriverRequestStatus;
+import com.ifride.core.auth.model.entity.User;
+import com.ifride.core.driver.model.enums.DriverRequestStatus;
 import com.ifride.core.shared.model.BaseEntity;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "driver_requests")
+@Getter
+@Setter
 public class DriverRequest extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
