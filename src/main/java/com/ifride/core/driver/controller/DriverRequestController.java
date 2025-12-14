@@ -28,6 +28,6 @@ public class DriverRequestController {
         var user = userService.findById(driverRequest.requesterId());
 
         log.info("O usuário {} iniciou a requisição de motorista para o usuário {}", author.getEmail() , user.getEmail());
-        return driverRequestService.createDriverRequest(author, user, driverRequest.documentNumber());
+        return driverRequestService.createDriverRequest(author, user, driverRequest);
     }
 }

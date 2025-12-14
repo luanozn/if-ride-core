@@ -1,11 +1,14 @@
 package com.ifride.core.driver.model.entity;
 
 import com.ifride.core.auth.model.entity.User;
+import com.ifride.core.driver.model.enums.CnhCategory;
 import com.ifride.core.driver.model.enums.DriverRequestStatus;
 import com.ifride.core.shared.model.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "driver_requests")
@@ -21,8 +24,15 @@ public class DriverRequest extends BaseEntity {
     @Column(nullable = false)
     private DriverRequestStatus status = DriverRequestStatus.PENDING;
 
-    @Column(name = "document_number", nullable = false)
-    private String documentNumber;
+    @Column(name = "cnh_number", nullable = false)
+    private String cnhNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cnh_category", nullable = false)
+    private CnhCategory cnhCategory;
+
+    @Column(name = "cnh_expiration", nullable = false)
+    private LocalDateTime cnhExpiration;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewed_by")

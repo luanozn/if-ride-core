@@ -1,6 +1,7 @@
 package com.ifride.core.driver.service;
 
 import com.ifride.core.auth.model.enums.Role;
+import com.ifride.core.driver.model.dto.DriverRequestDTO;
 import com.ifride.core.driver.model.entity.DriverRequest;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.driver.model.enums.DriverRequestStatus;
@@ -21,7 +22,7 @@ public class DriverRequestService {
 
     private final DriverRequestRepository repository;
 
-    public DriverRequest createDriverRequest(User author, User user, String documentNumber) {
+    public DriverRequest createDriverRequest(User author, User user, DriverRequestDTO dto) {
         if(!userIsRequestingForHimself(author, user)) {
             throw new ForbiddenException("Somente o próprio usuário pode solicitar para virar motorista!");
         }
@@ -32,13 +33,15 @@ public class DriverRequestService {
 
         var driverRequest = new DriverRequest();
         driverRequest.setRequester(user);
-        driverRequest.setDocumentNumber(documentNumber);
+        driverRequest.setCnhNumber(dto.cnhNumber());
+        driverRequest.setCnhCategory(dto.cnhCategory());
+        driverRequest.setCnhExpiration(dto.expiration());
         driverRequest.setStatus(PENDING);
 
         return repository.save(driverRequest);
     }
 
-    public DriverRequest changeDriverRequestStatus(String id, DriverRequestStatus status) {
+    private DriverRequest changeDriverRequestStatus(String id, DriverRequestStatus status) {
         var driverRequest = repository.findById(id).orElseThrow(() -> new NotFoundException("Não foi possível encontrar a requisição no sistema."));
 
         if(driverRequest.getStatus() != PENDING) {
