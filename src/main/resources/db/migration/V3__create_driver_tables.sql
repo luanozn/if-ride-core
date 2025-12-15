@@ -1,4 +1,4 @@
-CREATE TABLE driver_requests(
+CREATE TABLE driver_applications(
     id varchar(36) PRIMARY KEY UNIQUE NOT NULL,
     user_id varchar(36) references users(id),
     status varchar not null,

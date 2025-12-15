@@ -1,10 +1,8 @@
 package com.ifride.core.auth.service;
 
-import com.ifride.core.driver.service.DriverRequestService;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.repository.UserRepository;
-import com.ifride.core.auth.service.converter.UserConverter;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 

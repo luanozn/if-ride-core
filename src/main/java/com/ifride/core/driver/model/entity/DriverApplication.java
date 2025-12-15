@@ -2,7 +2,7 @@ package com.ifride.core.driver.model.entity;
 
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.driver.model.enums.CnhCategory;
-import com.ifride.core.driver.model.enums.DriverRequestStatus;
+import com.ifride.core.driver.model.enums.DriverApplicationStatus;
 import com.ifride.core.shared.model.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -11,10 +11,10 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "driver_requests")
+@Table(name = "driver_applications")
 @Getter
 @Setter
-public class DriverRequest extends BaseEntity {
+public class DriverApplication extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -22,7 +22,7 @@ public class DriverRequest extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private DriverRequestStatus status = DriverRequestStatus.PENDING;
+    private DriverApplicationStatus status = DriverApplicationStatus.PENDING;
 
     @Column(name = "cnh_number", nullable = false)
     private String cnhNumber;

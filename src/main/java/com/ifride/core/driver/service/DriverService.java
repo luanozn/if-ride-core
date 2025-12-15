@@ -1,7 +1,7 @@
 package com.ifride.core.driver.service;
 
 import com.ifride.core.driver.model.entity.Driver;
-import com.ifride.core.driver.model.entity.DriverRequest;
+import com.ifride.core.driver.model.entity.DriverApplication;
 import com.ifride.core.driver.repository.DriverRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,12 +12,12 @@ public class DriverService {
 
     private final DriverRepository driverRepository;
 
-    public Driver saveFromDriverRequest(DriverRequest driverRequest) {
+    public Driver saveFromDriverRequest(DriverApplication driverApplication) {
         Driver driver = new Driver();
-        driver.setUser(driverRequest.getRequester());
-        driver.setCnhNumber(driverRequest.getCnhNumber());
-        driver.setCnhCategory(driverRequest.getCnhCategory());
-        driver.setCnhExpiration(driverRequest.getCnhExpiration());
+        driver.setUser(driverApplication.getRequester());
+        driver.setCnhNumber(driverApplication.getCnhNumber());
+        driver.setCnhCategory(driverApplication.getCnhCategory());
+        driver.setCnhExpiration(driverApplication.getCnhExpiration());
 
         return driverRepository.save(driver);
     }

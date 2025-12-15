@@ -2,13 +2,13 @@ package com.ifride.core.driver.service;
 
 import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.service.UserService;
-import com.ifride.core.driver.model.dto.DriverRequestChangeStatusDTO;
-import com.ifride.core.driver.model.dto.DriverRequestDTO;
+import com.ifride.core.driver.model.dto.DriverApplicationRejectionDTO;
+import com.ifride.core.driver.model.dto.DriverApplicationDTO;
 import com.ifride.core.driver.model.entity.Driver;
-import com.ifride.core.driver.model.entity.DriverRequest;
+import com.ifride.core.driver.model.entity.DriverApplication;
 import com.ifride.core.auth.model.entity.User;
-import com.ifride.core.driver.model.enums.DriverRequestStatus;
-import com.ifride.core.driver.repository.DriverRequestRepository;
+import com.ifride.core.driver.model.enums.DriverApplicationStatus;
+import com.ifride.core.driver.repository.DriverApplicationRepository;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import lombok.AllArgsConstructor;
@@ -16,17 +16,17 @@ import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
-import static com.ifride.core.driver.model.enums.DriverRequestStatus.*;
+import static com.ifride.core.driver.model.enums.DriverApplicationStatus.*;
 
 @Service
 @AllArgsConstructor
-public class DriverRequestService {
+public class DriverApplicationService {
 
-    private final DriverRequestRepository repository;
+    private final DriverApplicationRepository repository;
     private final DriverService driverService;
     private final UserService userService;
 
-    public DriverRequest createDriverRequest(User author, User user, DriverRequestDTO dto) {
+    public DriverApplication createDriverApplication(User author, User user, DriverApplicationDTO dto) {
         if(!userIsRequestingForHimself(author, user)) {
             throw new ForbiddenException("Somente o próprio usuário pode solicitar para virar motorista!");
         }
@@ -35,7 +35,7 @@ public class DriverRequestService {
             throw new ConflictException("O usuário %s já é um MOTORISTA", user.getEmail());
         }
 
-        var driverRequest = new DriverRequest();
+        var driverRequest = new DriverApplication();
         driverRequest.setRequester(user);
         driverRequest.setCnhNumber(dto.cnhNumber());
         driverRequest.setCnhCategory(dto.cnhCategory());
@@ -45,17 +45,17 @@ public class DriverRequestService {
         return repository.save(driverRequest);
     }
 
-    public Driver approveDriveRequest(User author, String userId) {
-        var driverRequest = changeDriverRequestStatus(userId, APPROVED, author, null);
+    public Driver approveDriverApplication(User author, String userId) {
+        var driverRequest = changeDriverApplicationStatus(userId, APPROVED, author, null);
         return driverService.saveFromDriverRequest(driverRequest);
     }
 
-    public DriverRequest rejectDriveRequest(User author, String userId, DriverRequestChangeStatusDTO dto) {
-        return changeDriverRequestStatus(userId, DENIED, author, dto.rejectionReason());
+    public DriverApplication rejectDriverApplication(User author, String userId, DriverApplicationRejectionDTO dto) {
+        return changeDriverApplicationStatus(userId, DENIED, author, dto.rejectionReason());
     }
 
-    private DriverRequest changeDriverRequestStatus(String userId, DriverRequestStatus status, User author, String rejectionReason) {
-        var driverRequest = getLastDriverRequestByUser(userId);
+    private DriverApplication changeDriverApplicationStatus(String userId, DriverApplicationStatus status, User author, String rejectionReason) {
+        var driverRequest = getLastDriverApplicationByUser(userId);
 
         if(driverRequest.getStatus() != PENDING) {
             throw new ConflictException("Não é possível modificar uma requisição que está com o status %s", driverRequest.getStatus());
@@ -70,7 +70,7 @@ public class DriverRequestService {
         return repository.save(driverRequest);
     }
 
-    private DriverRequest getLastDriverRequestByUser(String userId) {
+    private DriverApplication getLastDriverApplicationByUser(String userId) {
         var requester = userService.findById(userId);
 
         return repository.findAllByRequesterOrderByCreatedAtDesc(requester).getFirst();

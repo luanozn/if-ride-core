@@ -1,6 +1,6 @@
 package com.ifride.core.driver.model.enums;
 
-public enum DriverRequestStatus {
+public enum DriverApplicationStatus {
     PENDING,
     APPROVED,
     DENIED
