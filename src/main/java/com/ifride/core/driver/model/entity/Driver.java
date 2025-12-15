@@ -11,7 +11,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "driver")
+@Table(name = "drivers")
 @Getter
 @Setter
 public class Driver extends BaseEntity {

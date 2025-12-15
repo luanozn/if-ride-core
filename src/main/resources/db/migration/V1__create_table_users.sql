@@ -4,5 +4,8 @@ CREATE TABLE users(
     email varchar not null unique,
     password varchar not null,
     email_verified boolean,
-    role varchar not null
+    role varchar not null,
+    created_at TIMESTAMPTZ not null,
+    updated_at TIMESTAMPTZ not null,
+    deleted boolean
 );
