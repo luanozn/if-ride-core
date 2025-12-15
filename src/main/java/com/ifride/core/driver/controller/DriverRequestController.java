@@ -2,6 +2,7 @@ package com.ifride.core.driver.controller;
 
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.service.UserService;
+import com.ifride.core.driver.model.dto.DriverRequestChangeStatusDTO;
 import com.ifride.core.driver.model.dto.DriverRequestDTO;
 import com.ifride.core.driver.model.entity.Driver;
 import com.ifride.core.driver.model.entity.DriverRequest;
@@ -34,6 +35,12 @@ public class DriverRequestController {
     @PreAuthorize("hasRole('ADMIN')")
     public Driver approveDriverRequest(@AuthenticationPrincipal User author, @PathVariable String userId) {
         return driverRequestService.approveDriveRequest(author, userId);
+    }
+
+    @PatchMapping("/{userId}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public DriverRequest rejectDriverRequest(@AuthenticationPrincipal User author, @PathVariable String userId, @RequestBody DriverRequestChangeStatusDTO dto) {
+        return driverRequestService.rejectDriveRequest(author, userId, dto);
     }
 
 }

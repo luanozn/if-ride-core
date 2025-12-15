@@ -2,6 +2,7 @@ package com.ifride.core.driver.service;
 
 import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.service.UserService;
+import com.ifride.core.driver.model.dto.DriverRequestChangeStatusDTO;
 import com.ifride.core.driver.model.dto.DriverRequestDTO;
 import com.ifride.core.driver.model.entity.Driver;
 import com.ifride.core.driver.model.entity.DriverRequest;
@@ -15,8 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
-import static com.ifride.core.driver.model.enums.DriverRequestStatus.APPROVED;
-import static com.ifride.core.driver.model.enums.DriverRequestStatus.PENDING;
+import static com.ifride.core.driver.model.enums.DriverRequestStatus.*;
 
 @Service
 @AllArgsConstructor
@@ -48,6 +48,10 @@ public class DriverRequestService {
     public Driver approveDriveRequest(User author, String userId) {
         var driverRequest = changeDriverRequestStatus(userId, APPROVED, author, null);
         return driverService.saveFromDriverRequest(driverRequest);
+    }
+
+    public DriverRequest rejectDriveRequest(User author, String userId, DriverRequestChangeStatusDTO dto) {
+        return changeDriverRequestStatus(userId, DENIED, author, dto.rejectionReason());
     }
 
     private DriverRequest changeDriverRequestStatus(String userId, DriverRequestStatus status, User author, String rejectionReason) {
