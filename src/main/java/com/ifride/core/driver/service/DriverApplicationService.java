@@ -77,6 +77,6 @@ public class DriverApplicationService {
     }
 
     private boolean userIsRequestingForHimself(User author, User requested) {
-        return !Objects.equals(author.getEmail(), requested.getEmail());
+        return Objects.equals(author.getEmail(), requested.getEmail());
     }
 }
