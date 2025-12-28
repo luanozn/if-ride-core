@@ -1,8 +1,10 @@
 package com.ifride.core.auth.model.entity;
 
 import com.ifride.core.auth.model.enums.Role;
+import com.ifride.core.shared.model.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -12,12 +14,10 @@ import java.util.stream.Stream;
 
 @Table(name="users")
 @Entity(name = "users")
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class User implements UserDetails {
+public class User extends BaseEntity implements UserDetails {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
     private String name;
     private String email;
     private String password;
