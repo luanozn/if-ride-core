@@ -33,7 +33,7 @@ public class DriverApplicationController {
 
     @PatchMapping("/{userId}/approve")
     @PreAuthorize("hasRole('ADMIN')")
-    public Driver approveDriverRequest(@AuthenticationPrincipal User author, @PathVariable String userId) {
+    public DriverApplication approveDriverRequest(@AuthenticationPrincipal User author, @PathVariable String userId) {
         return driverApplicationService.approveDriverApplication(author, userId);
     }
 

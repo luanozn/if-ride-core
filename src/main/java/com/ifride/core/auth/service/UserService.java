@@ -1,5 +1,6 @@
 package com.ifride.core.auth.service;
 
+import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.repository.UserRepository;
@@ -19,6 +20,12 @@ public class UserService {
 
     public User save(User user) {
         return repository.save(user);
+    }
+
+    public User updateUserRole(User user, Role newRole) {
+        user.setRole(newRole);
+
+        return save(user);
     }
 
 }

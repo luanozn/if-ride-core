@@ -10,15 +10,15 @@ import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.driver.model.enums.DriverApplicationStatus;
 import com.ifride.core.driver.repository.DriverApplicationRepository;
 import com.ifride.core.driver.repository.DriverRepository;
+import com.ifride.core.events.models.DriverApplicationApprovedEvent;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import com.ifride.core.shared.model.enums.Status;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -31,12 +31,10 @@ import static com.ifride.core.driver.model.enums.DriverApplicationStatus.*;
 @Log4j2
 public class DriverApplicationService {
 
-    private final DriverRepository driverRepository;
-    @PersistenceContext
-    private EntityManager entityManager;
     private final DriverApplicationRepository repository;
-    private final DriverService driverService;
     private final UserService userService;
+
+    private final ApplicationEventPublisher eventPublisher;
 
 
     public DriverApplication createDriverApplication(User author, User user, DriverApplicationDTO dto) {
@@ -62,11 +60,11 @@ public class DriverApplicationService {
     }
 
     @Transactional
-    public Driver approveDriverApplication(User author, String userId) {
-        var driverRequest = changeDriverApplicationStatus(userId, APPROVED, author, null);
-        driverService.saveFromDriverRequest(driverRequest);
+    public DriverApplication approveDriverApplication(User author, String userId) {
+        var application = changeDriverApplicationStatus(userId, APPROVED, author, null);
 
-        return driverRepository.findById(userId).get();
+        eventPublisher.publishEvent(new DriverApplicationApprovedEvent(application, author));
+        return application;
     }
 
     public DriverApplication rejectDriverApplication(User author, String userId, DriverApplicationRejectionDTO dto) {
