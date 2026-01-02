@@ -52,7 +52,8 @@ CREATE TABLE vehicles
     updated_at TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_by VARCHAR(255),
 
-    CONSTRAINT fk_vehicle_driver FOREIGN KEY (driver_id) REFERENCES drivers (id)
+    CONSTRAINT fk_vehicle_driver FOREIGN KEY (driver_id) REFERENCES drivers (id),
+    CONSTRAINT uk_owner_plate UNIQUE (driver_id, plate);
 );
 
 CREATE INDEX idx_driver_app_user ON driver_applications (user_id);

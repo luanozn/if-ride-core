@@ -8,7 +8,15 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
 @Entity
-@Table(name = "vehicles")
+@Table(
+    name = "vehicles",
+    uniqueConstraints = {
+            @UniqueConstraint(
+                    name = "uk_owner_plate",
+                    columnNames = {"driver_id", "plate"}
+            )
+    }
+)
 @SQLDelete(sql = "UPDATE vehicles SET status = 'DELETED' WHERE id = ? AND version = ?")
 @SQLRestriction("status <> 'DELETED'")
 @Data

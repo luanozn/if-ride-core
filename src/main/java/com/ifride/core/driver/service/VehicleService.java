@@ -1,10 +1,14 @@
 package com.ifride.core.driver.service;
 
 import com.ifride.core.driver.model.dto.VehicleCreationDTO;
+import com.ifride.core.driver.model.dto.VehicleResponseDTO;
 import com.ifride.core.driver.model.entity.Vehicle;
 import com.ifride.core.driver.repository.VehicleRepository;
+import com.ifride.core.shared.exceptions.api.ConflictException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -13,16 +17,30 @@ public class VehicleService {
     private final VehicleRepository repository;
     private final DriverService driverService;
 
-    public Vehicle saveBy(VehicleCreationDTO dto, String driverId) {
+    public VehicleResponseDTO saveBy(VehicleCreationDTO dto, String driverId) {
         var vehicle = new Vehicle();
 
         var owner = driverService.findById(driverId);
+
+        if(repository.existsByOwnerIdAndPlate(driverId, dto.plate())) {
+            throw new ConflictException("O veículo com a placa %s já existe pra o usuário %s", dto.plate(), owner.getUser().getEmail());
+        }
 
         vehicle.setModel(dto.model());
         vehicle.setColor(dto.color());
         vehicle.setPlate(dto.plate());
         vehicle.setOwner(owner);
 
-        return repository.save(vehicle);
+        vehicle = repository.save(vehicle);
+
+        return VehicleResponseDTO.fromEntity(vehicle);
+    }
+
+    public List<VehicleResponseDTO> getByOwner(String id) {
+        var driver = driverService.findById(id);
+        return repository.findByOwner(driver)
+                .stream()
+                .map(VehicleResponseDTO::fromEntity)
+                .toList();
     }
 }

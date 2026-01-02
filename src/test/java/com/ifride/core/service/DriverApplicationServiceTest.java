@@ -3,8 +3,9 @@ package com.ifride.core.service;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.service.UserService;
-import com.ifride.core.driver.model.dto.DriverApplicationDTO;
+import com.ifride.core.driver.model.dto.DriverApplicationRequestDTO;
 import com.ifride.core.driver.model.dto.DriverApplicationRejectionDTO;
+import com.ifride.core.driver.model.dto.DriverApplicationSummaryDTO;
 import com.ifride.core.driver.model.entity.DriverApplication;
 import com.ifride.core.driver.model.enums.CnhCategory;
 import com.ifride.core.driver.model.enums.DriverApplicationStatus;
@@ -48,19 +49,18 @@ class DriverApplicationServiceTest {
     void createDriverApplication_Success() {
         User author = mock(User.class);
         User user = mock(User.class);
-        DriverApplicationDTO dto = new DriverApplicationDTO("123456", "B", CnhCategory.A , LocalDate.now().plusYears(1));
+        DriverApplicationRequestDTO dto = new DriverApplicationRequestDTO("123456", "B", CnhCategory.A , LocalDate.now().plusYears(1));
 
         when(author.getEmail()).thenReturn("user@email.com");
         when(user.getEmail()).thenReturn("user@email.com");
         when(user.has(Role.DRIVER)).thenReturn(false);
         when(repository.save(any(DriverApplication.class))).thenAnswer(i -> i.getArguments()[0]);
 
-        DriverApplication result = service.createDriverApplication(author, user, dto);
+        DriverApplicationSummaryDTO result = service.createDriverApplication(author, user, dto);
 
         assertNotNull(result);
-        assertEquals(DriverApplicationStatus.PENDING, result.getApplicationStatus());
-        assertEquals(user, result.getRequester());
-        assertEquals(dto.cnhNumber(), result.getCnhNumber());
+        assertEquals(DriverApplicationStatus.PENDING, result.applicationStatus());
+        assertEquals(dto.cnhNumber(), result.cnhNumber());
         verify(repository).save(any(DriverApplication.class));
     }
 
@@ -69,7 +69,7 @@ class DriverApplicationServiceTest {
     void createDriverApplication_ThrowsForbidden_WhenUserIsSelf() {
         User user = mock(User.class);
         User author = mock(User.class);
-        DriverApplicationDTO dto = new DriverApplicationDTO("123", "B", CnhCategory.A , LocalDate.now());
+        DriverApplicationRequestDTO dto = new DriverApplicationRequestDTO("123", "B", CnhCategory.A , LocalDate.now());
 
         when(user.getEmail()).thenReturn("user@email.com");
         when(author.getEmail()).thenReturn("admini@email.com");
@@ -86,7 +86,7 @@ class DriverApplicationServiceTest {
     @DisplayName("Create: Deve lançar ConflictException quando o usuário já for um motorista")
     void createDriverApplication_ThrowsConflict_WhenAlreadyDriver() {
         User user = mock(User.class);
-        DriverApplicationDTO dto = new DriverApplicationDTO("123", "B", CnhCategory.A , LocalDate.now());
+        DriverApplicationRequestDTO dto = new DriverApplicationRequestDTO("123", "B", CnhCategory.A , LocalDate.now());
 
         when(user.getEmail()).thenReturn("user@email.com");
         when(user.has(Role.DRIVER)).thenReturn(true);
@@ -113,7 +113,7 @@ class DriverApplicationServiceTest {
         when(repository.findAllByRequesterOrderByCreatedAtDesc(requester)).thenReturn(List.of(pendingApp));
         when(repository.save(any(DriverApplication.class))).thenAnswer(i -> i.getArguments()[0]);
 
-        DriverApplication result = service.approveDriverApplication(author, userId);
+        DriverApplicationSummaryDTO result = service.approveDriverApplication(author, userId);
 
         assertNotNull(result);
         assertEquals(DriverApplicationStatus.APPROVED, pendingApp.getApplicationStatus());
@@ -161,11 +161,10 @@ class DriverApplicationServiceTest {
         when(repository.findAllByRequesterOrderByCreatedAtDesc(requester)).thenReturn(List.of(pendingApp));
         when(repository.save(any(DriverApplication.class))).thenAnswer(i -> i.getArguments()[0]);
 
-        DriverApplication result = service.rejectDriverApplication(author, userId, dto);
+        DriverApplicationSummaryDTO result = service.rejectDriverApplication(author, userId, dto);
 
-        assertEquals(DriverApplicationStatus.DENIED, result.getApplicationStatus());
-        assertEquals("CNH Inválida", result.getRejectionReason());
-        assertEquals(author, result.getReviewedBy());
+        assertEquals(DriverApplicationStatus.DENIED, result.applicationStatus());
+        assertEquals("CNH Inválida", result.rejectionReason());
 
         verify(repository).save(pendingApp);
     }

@@ -3,13 +3,12 @@ package com.ifride.core.driver.service;
 import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.service.UserService;
 import com.ifride.core.driver.model.dto.DriverApplicationRejectionDTO;
-import com.ifride.core.driver.model.dto.DriverApplicationDTO;
-import com.ifride.core.driver.model.entity.Driver;
+import com.ifride.core.driver.model.dto.DriverApplicationRequestDTO;
+import com.ifride.core.driver.model.dto.DriverApplicationSummaryDTO;
 import com.ifride.core.driver.model.entity.DriverApplication;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.driver.model.enums.DriverApplicationStatus;
 import com.ifride.core.driver.repository.DriverApplicationRepository;
-import com.ifride.core.driver.repository.DriverRepository;
 import com.ifride.core.events.models.DriverApplicationApprovedEvent;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
@@ -37,7 +36,7 @@ public class DriverApplicationService {
     private final ApplicationEventPublisher eventPublisher;
 
 
-    public DriverApplication createDriverApplication(User author, User user, DriverApplicationDTO dto) {
+    public DriverApplicationSummaryDTO createDriverApplication(User author, User user, DriverApplicationRequestDTO dto) {
         if(!userIsRequestingForHimself(author, user)) {
             throw new ForbiddenException("Somente o próprio usuário pode solicitar para virar motorista!");
         }
@@ -49,26 +48,29 @@ public class DriverApplicationService {
         var lastDriverApplication = getLastDriverApplicationByUser(user.getId());
         validateLastDriverApplication(lastDriverApplication);
 
-        var driverRequest = new DriverApplication();
-        driverRequest.setRequester(user);
-        driverRequest.setCnhNumber(dto.cnhNumber());
-        driverRequest.setCnhCategory(dto.cnhCategory());
-        driverRequest.setCnhExpiration(dto.expiration());
-        driverRequest.setApplicationStatus(PENDING);
+        var driverApplication = new DriverApplication();
+        driverApplication.setRequester(user);
+        driverApplication.setCnhNumber(dto.cnhNumber());
+        driverApplication.setCnhCategory(dto.cnhCategory());
+        driverApplication.setCnhExpiration(dto.expiration());
+        driverApplication.setApplicationStatus(PENDING);
 
-        return repository.save(driverRequest);
+        driverApplication = repository.save(driverApplication);
+
+        return DriverApplicationSummaryDTO.fromEntity(driverApplication);
     }
 
     @Transactional
-    public DriverApplication approveDriverApplication(User author, String userId) {
+    public DriverApplicationSummaryDTO approveDriverApplication(User author, String userId) {
         var application = changeDriverApplicationStatus(userId, APPROVED, author, null);
 
         eventPublisher.publishEvent(new DriverApplicationApprovedEvent(application, author));
-        return application;
+        return DriverApplicationSummaryDTO.fromEntity(application);
     }
 
-    public DriverApplication rejectDriverApplication(User author, String userId, DriverApplicationRejectionDTO dto) {
-        return changeDriverApplicationStatus(userId, DENIED, author, dto.rejectionReason());
+    public DriverApplicationSummaryDTO rejectDriverApplication(User author, String userId, DriverApplicationRejectionDTO dto) {
+        var deniedApplication = changeDriverApplicationStatus(userId, DENIED, author, dto.rejectionReason());
+        return DriverApplicationSummaryDTO.fromEntity(deniedApplication);
     }
 
     public void delete(String applicationId, User author) {
