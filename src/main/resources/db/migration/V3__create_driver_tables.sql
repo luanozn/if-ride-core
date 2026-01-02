@@ -7,7 +7,7 @@ CREATE TABLE driver_applications
     application_status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
     cnh_number         VARCHAR(20) NOT NULL,
     cnh_category       VARCHAR(10) NOT NULL,
-    cnh_expiration     TIMESTAMPTZ NOT NULL,
+    cnh_expiration     DATE NOT NULL,
     reviewed_by        VARCHAR(36),
     rejection_reason   TEXT,
 
@@ -23,19 +23,18 @@ CREATE TABLE driver_applications
 CREATE TABLE drivers
 (
     id             VARCHAR(36) PRIMARY KEY,
-    user_id        VARCHAR(36) NOT NULL UNIQUE,
     status         VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
 
     cnh_number     VARCHAR(20) NOT NULL,
     cnh_category   VARCHAR(10) NOT NULL,
-    cnh_expiration TIMESTAMPTZ NOT NULL,
+    cnh_expiration DATE NOT NULL,
 
     created_at     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by     VARCHAR(255),
     updated_at     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_by     VARCHAR(255),
 
-    CONSTRAINT fk_driver_user FOREIGN KEY (user_id) REFERENCES users (id)
+    CONSTRAINT fk_driver_user FOREIGN KEY (id) REFERENCES users (id)
 );
 
 CREATE TABLE vehicles
