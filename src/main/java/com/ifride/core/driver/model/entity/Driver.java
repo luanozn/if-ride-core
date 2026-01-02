@@ -8,10 +8,11 @@ import com.ifride.core.shared.model.enums.Status;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "drivers")
@@ -19,14 +20,16 @@ import java.time.LocalDateTime;
 @Setter
 @SQLDelete(sql = "UPDATE drivers SET status = 'DELETED' WHERE id = ? AND version = ?")
 @SQLRestriction("status <> 'DELETED'")
+@ToString(callSuper = true)
 public class Driver extends AuditEntity {
 
     @Id
+    @Column(name = "id")
     private String id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
     @MapsId
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "id", nullable = false)
     private User user;
 
     @Column(name = "cnh_number", nullable = false)
@@ -37,7 +40,7 @@ public class Driver extends AuditEntity {
     private CnhCategory cnhCategory;
 
     @Column(name = "cnh_expiration", nullable = false)
-    private LocalDateTime cnhExpiration;
+    private LocalDate cnhExpiration;
 
     @Enumerated(EnumType.STRING)
     private Status status = Status.ACTIVE;

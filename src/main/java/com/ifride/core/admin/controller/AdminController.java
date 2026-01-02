@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/v1/admin")
+@RequestMapping("/v1/admins")
 @PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 @Log4j2

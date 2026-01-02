@@ -13,11 +13,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-@RestController("/v1/driver-request")
+@RestController
+@RequestMapping("/v1/driver-requests")
 @RequiredArgsConstructor
 @Log4j2
-
-public class DriverRequestController {
+public class DriverApplicationController {
 
     private final UserService userService;
     private final DriverApplicationService driverApplicationService;
@@ -41,6 +41,12 @@ public class DriverRequestController {
     @PreAuthorize("hasRole('ADMIN')")
     public DriverApplication rejectDriverRequest(@AuthenticationPrincipal User author, @PathVariable String userId, @RequestBody DriverApplicationRejectionDTO dto) {
         return driverApplicationService.rejectDriverApplication(author, userId, dto);
+    }
+
+    @DeleteMapping("/{requestId}")
+    @PreAuthorize("hasRole('PASSENGER')")
+    public void deleteDriverRequest(@AuthenticationPrincipal User author, @PathVariable String requestId) {
+        driverApplicationService.delete(requestId, author);
     }
 
 }

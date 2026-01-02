@@ -10,7 +10,7 @@ import lombok.Setter;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "driver_applications")
@@ -36,7 +36,7 @@ public class DriverApplication extends BaseEntity {
     private CnhCategory cnhCategory;
 
     @Column(name = "cnh_expiration", nullable = false)
-    private LocalDateTime cnhExpiration;
+    private LocalDate cnhExpiration;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewed_by")
