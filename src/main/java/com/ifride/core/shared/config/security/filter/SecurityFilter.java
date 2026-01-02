@@ -26,6 +26,11 @@ public class SecurityFilter extends OncePerRequestFilter {
     private final UserRepository repository;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return request.getServletPath().startsWith("/v1/auth");
+    }
+
+    @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
