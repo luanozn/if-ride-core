@@ -5,7 +5,6 @@ import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.service.UserService;
 import com.ifride.core.driver.model.dto.DriverApplicationDTO;
 import com.ifride.core.driver.model.dto.DriverApplicationRejectionDTO;
-import com.ifride.core.driver.model.entity.Driver;
 import com.ifride.core.driver.model.entity.DriverApplication;
 import com.ifride.core.driver.model.enums.CnhCategory;
 import com.ifride.core.driver.model.enums.DriverApplicationStatus;
@@ -114,7 +113,7 @@ class DriverApplicationServiceTest {
         when(repository.findAllByRequesterOrderByCreatedAtDesc(requester)).thenReturn(List.of(pendingApp));
         when(repository.save(any(DriverApplication.class))).thenAnswer(i -> i.getArguments()[0]);
 
-        Driver result = service.approveDriverApplication(author, userId);
+        DriverApplication result = service.approveDriverApplication(author, userId);
 
         assertNotNull(result);
         assertEquals(DriverApplicationStatus.APPROVED, pendingApp.getApplicationStatus());
