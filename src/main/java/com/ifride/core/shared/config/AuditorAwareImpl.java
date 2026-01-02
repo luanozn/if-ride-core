@@ -2,6 +2,7 @@ package com.ifride.core.shared.config;
 
 import com.ifride.core.auth.model.entity.User;
 import lombok.NonNull;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -18,8 +19,7 @@ public class AuditorAwareImpl implements AuditorAware<String> {
     public Optional<String> getCurrentAuditor() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication == null || !authentication.isAuthenticated() ||
-                authentication instanceof AnonymousAuthenticationToken) {
+        if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
             return Optional.empty();
         }
 
