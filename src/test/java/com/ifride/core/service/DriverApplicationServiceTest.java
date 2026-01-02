@@ -21,7 +21,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,7 +49,7 @@ class DriverApplicationServiceTest {
     void createDriverApplication_Success() {
         User author = mock(User.class);
         User user = mock(User.class);
-        DriverApplicationDTO dto = new DriverApplicationDTO("123456", "B", CnhCategory.A , LocalDateTime.now().plusYears(1));
+        DriverApplicationDTO dto = new DriverApplicationDTO("123456", "B", CnhCategory.A , LocalDate.now().plusYears(1));
 
         when(author.getEmail()).thenReturn("user@email.com");
         when(user.getEmail()).thenReturn("user@email.com");
@@ -59,7 +59,7 @@ class DriverApplicationServiceTest {
         DriverApplication result = service.createDriverApplication(author, user, dto);
 
         assertNotNull(result);
-        assertEquals(DriverApplicationStatus.PENDING, result.getStatus());
+        assertEquals(DriverApplicationStatus.PENDING, result.getApplicationStatus());
         assertEquals(user, result.getRequester());
         assertEquals(dto.cnhNumber(), result.getCnhNumber());
         verify(repository).save(any(DriverApplication.class));
@@ -70,7 +70,7 @@ class DriverApplicationServiceTest {
     void createDriverApplication_ThrowsForbidden_WhenUserIsSelf() {
         User user = mock(User.class);
         User author = mock(User.class);
-        DriverApplicationDTO dto = new DriverApplicationDTO("123", "B", CnhCategory.A , LocalDateTime.now());
+        DriverApplicationDTO dto = new DriverApplicationDTO("123", "B", CnhCategory.A , LocalDate.now());
 
         when(user.getEmail()).thenReturn("user@email.com");
         when(author.getEmail()).thenReturn("admini@email.com");
@@ -87,7 +87,7 @@ class DriverApplicationServiceTest {
     @DisplayName("Create: Deve lançar ConflictException quando o usuário já for um motorista")
     void createDriverApplication_ThrowsConflict_WhenAlreadyDriver() {
         User user = mock(User.class);
-        DriverApplicationDTO dto = new DriverApplicationDTO("123", "B", CnhCategory.A , LocalDateTime.now());
+        DriverApplicationDTO dto = new DriverApplicationDTO("123", "B", CnhCategory.A , LocalDate.now());
 
         when(user.getEmail()).thenReturn("user@email.com");
         when(user.has(Role.DRIVER)).thenReturn(true);
@@ -107,18 +107,17 @@ class DriverApplicationServiceTest {
         User author = new User();
         User requester = new User();
         DriverApplication pendingApp = new DriverApplication();
-        pendingApp.setStatus(DriverApplicationStatus.PENDING);
+        pendingApp.setApplicationStatus(DriverApplicationStatus.PENDING);
         pendingApp.setRequester(requester);
 
         when(userService.findById(userId)).thenReturn(requester);
         when(repository.findAllByRequesterOrderByCreatedAtDesc(requester)).thenReturn(List.of(pendingApp));
         when(repository.save(any(DriverApplication.class))).thenAnswer(i -> i.getArguments()[0]);
-        when(driverService.saveFromDriverRequest(any(DriverApplication.class))).thenReturn(new Driver());
 
         Driver result = service.approveDriverApplication(author, userId);
 
         assertNotNull(result);
-        assertEquals(DriverApplicationStatus.APPROVED, pendingApp.getStatus());
+        assertEquals(DriverApplicationStatus.APPROVED, pendingApp.getApplicationStatus());
         assertEquals(author, pendingApp.getReviewedBy());
         assertNull(pendingApp.getRejectionReason());
 
@@ -133,7 +132,7 @@ class DriverApplicationServiceTest {
         User author = new User();
         User requester = new User();
         DriverApplication rejectedApp = new DriverApplication();
-        rejectedApp.setStatus(DriverApplicationStatus.DENIED);
+        rejectedApp.setApplicationStatus(DriverApplicationStatus.DENIED);
 
         when(userService.findById(userId)).thenReturn(requester);
         when(repository.findAllByRequesterOrderByCreatedAtDesc(requester)).thenReturn(List.of(rejectedApp));
@@ -157,7 +156,7 @@ class DriverApplicationServiceTest {
         DriverApplicationRejectionDTO dto = new DriverApplicationRejectionDTO("CNH Inválida");
 
         DriverApplication pendingApp = new DriverApplication();
-        pendingApp.setStatus(DriverApplicationStatus.PENDING);
+        pendingApp.setApplicationStatus(DriverApplicationStatus.PENDING);
 
         when(userService.findById(userId)).thenReturn(requester);
         when(repository.findAllByRequesterOrderByCreatedAtDesc(requester)).thenReturn(List.of(pendingApp));
@@ -165,7 +164,7 @@ class DriverApplicationServiceTest {
 
         DriverApplication result = service.rejectDriverApplication(author, userId, dto);
 
-        assertEquals(DriverApplicationStatus.DENIED, result.getStatus());
+        assertEquals(DriverApplicationStatus.DENIED, result.getApplicationStatus());
         assertEquals("CNH Inválida", result.getRejectionReason());
         assertEquals(author, result.getReviewedBy());
 

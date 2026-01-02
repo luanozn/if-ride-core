@@ -11,6 +11,6 @@ public class StatusHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     private ResponseEntity<ErrorResponse> exceptionHandler(ApiException exception) {
-        return ResponseEntity.status(exception.getStatus()).body(new ErrorResponse(exception.getMessage(), exception.getStatus().value()));
+        return ResponseEntity.status(exception.getStatus()).body(new ErrorResponse(exception.getMessage(), exception.getDetails(), exception.getStatus().value()));
     }
 }
