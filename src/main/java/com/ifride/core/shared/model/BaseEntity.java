@@ -1,26 +1,18 @@
 package com.ifride.core.shared.model;
 
+import com.ifride.core.shared.model.enums.Status;
 import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
+import lombok.EqualsAndHashCode;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @MappedSuperclass
-public abstract class BaseEntity {
+public abstract class BaseEntity extends AuditEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
-    private boolean deleted = false;
-
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Enumerated(EnumType.STRING)
+    private Status status = Status.ACTIVE;
 }

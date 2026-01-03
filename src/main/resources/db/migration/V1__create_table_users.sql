@@ -1,11 +1,17 @@
-CREATE TABLE users(
-    id varchar(36) PRIMARY KEY UNIQUE NOT NULL,
-    name varchar not null,
-    email varchar not null unique,
-    password varchar not null,
-    email_verified boolean,
-    role varchar not null,
-    created_at TIMESTAMPTZ not null,
-    updated_at TIMESTAMPTZ not null,
-    deleted boolean
+CREATE TABLE users (
+   id VARCHAR(36) PRIMARY KEY,
+   status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+
+   name VARCHAR(255) NOT NULL,
+   email VARCHAR(255) NOT NULL UNIQUE,
+   password VARCHAR(255) NOT NULL,
+   email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+   role VARCHAR(50) NOT NULL,
+
+   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   created_by VARCHAR(255),
+   updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   updated_by VARCHAR(255)
 );
+
+CREATE INDEX idx_users_email ON users(email);

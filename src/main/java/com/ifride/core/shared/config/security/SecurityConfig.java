@@ -40,10 +40,10 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/v1/auth/**").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/verify-email").permitAll()
                         .requestMatchers("/verification-error.html").permitAll()
                         .requestMatchers("/verification-success.html").permitAll()
-                        .requestMatchers("/v1/users/register/passenger").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)

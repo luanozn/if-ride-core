@@ -7,13 +7,17 @@ import com.ifride.core.shared.model.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "driver_applications")
 @Getter
 @Setter
+@SQLDelete(sql = "UPDATE driver_applications SET status = 'DELETED' WHERE id = ? AND version = ?")
+@SQLRestriction("status <> 'DELETED'")
 public class DriverApplication extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -21,8 +25,8 @@ public class DriverApplication extends BaseEntity {
     private User requester;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private DriverApplicationStatus status = DriverApplicationStatus.PENDING;
+    @Column(name = "application_status", nullable = false)
+    private DriverApplicationStatus applicationStatus = DriverApplicationStatus.PENDING;
 
     @Column(name = "cnh_number", nullable = false)
     private String cnhNumber;
@@ -32,7 +36,7 @@ public class DriverApplication extends BaseEntity {
     private CnhCategory cnhCategory;
 
     @Column(name = "cnh_expiration", nullable = false)
-    private LocalDateTime cnhExpiration;
+    private LocalDate cnhExpiration;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewed_by")
