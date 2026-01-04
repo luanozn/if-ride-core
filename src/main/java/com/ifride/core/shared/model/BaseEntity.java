@@ -13,6 +13,10 @@ public abstract class BaseEntity extends AuditEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
     @Enumerated(EnumType.STRING)
     private Status status = Status.ACTIVE;
+
+    @Version
+    private Long version;
 }
