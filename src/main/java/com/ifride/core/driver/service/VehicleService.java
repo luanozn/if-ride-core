@@ -5,6 +5,7 @@ import com.ifride.core.driver.model.dto.VehicleResponseDTO;
 import com.ifride.core.driver.model.entity.Vehicle;
 import com.ifride.core.driver.repository.VehicleRepository;
 import com.ifride.core.shared.exceptions.api.ConflictException;
+import com.ifride.core.shared.exceptions.api.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +35,10 @@ public class VehicleService {
         vehicle = repository.save(vehicle);
 
         return VehicleResponseDTO.fromEntity(vehicle);
+    }
+
+    public Vehicle findById(String id) {
+        return repository.findById(id).orElseThrow(() -> new NotFoundException("Veículo com o ID %s não encontrado!", id));
     }
 
     public List<VehicleResponseDTO> getByOwner(String id) {
