@@ -65,7 +65,7 @@ public class RideService {
         LocalDateTime end = newDeparture.plusHours(1);
 
         if (rideRepository.existsOverlap(driverId, start, end)) {
-            throw new ConflictException("Conflito de Horário, você já possui uma carona agendada próxima a este horário.");
+            throw new ConflictException("Conflito de Horário! Você já possui uma carona agendada próxima a este horário.");
         }
     }
 
