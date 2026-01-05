@@ -4,15 +4,26 @@ import com.ifride.core.driver.model.entity.Driver;
 import com.ifride.core.driver.model.entity.Vehicle;
 import com.ifride.core.ride.model.enums.RideStatus;
 import com.ifride.core.shared.model.BaseEntity;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OrderColumn;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
+@EqualsAndHashCode(callSuper = true)
+@Entity
+@Data
 public class Ride extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -39,6 +50,12 @@ public class Ride extends BaseEntity {
     @Column(nullable = false)
     private RideStatus rideStatus = RideStatus.SCHEDULED;
 
-    @Column(precision = 10, scale = 2)
-    private BigDecimal price;
+    @ElementCollection
+    @CollectionTable(name = "ride_pickup_points", joinColumns = @JoinColumn(name = "ride_id"))
+    @Column(name = "point_name")
+    @OrderColumn(name = "point_order")
+    private List<String> pickupPoints = new ArrayList<>();
+
+    @Column(precision = 10, scale = 2, nullable = false)
+    private BigDecimal price = BigDecimal.ZERO;
 }
