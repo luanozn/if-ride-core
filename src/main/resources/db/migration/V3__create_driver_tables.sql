@@ -7,7 +7,7 @@ CREATE TABLE driver_applications
     application_status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
     cnh_number         VARCHAR(20) NOT NULL,
     cnh_category       VARCHAR(10) NOT NULL,
-    cnh_expiration     DATE NOT NULL,
+    cnh_expiration     DATE        NOT NULL,
     reviewed_by        VARCHAR(36),
     rejection_reason   TEXT,
 
@@ -27,7 +27,7 @@ CREATE TABLE drivers
 
     cnh_number     VARCHAR(20) NOT NULL,
     cnh_category   VARCHAR(10) NOT NULL,
-    cnh_expiration DATE NOT NULL,
+    cnh_expiration DATE        NOT NULL,
 
     created_at     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by     VARCHAR(255),
@@ -45,6 +45,7 @@ CREATE TABLE vehicles
     driver_id  VARCHAR(36)  NOT NULL,
     model      VARCHAR(100) NOT NULL,
     plate      VARCHAR(20)  NOT NULL,
+    capacity   INTEGER      NOT NULL,
     color      VARCHAR(50),
 
     created_at TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -36,6 +36,12 @@ public class RideService {
         }
         validateNoOverlap(driverId, rideRequestDTO.departureTime());
 
+        if (rideRequestDTO.departureTime().isBefore(LocalDateTime.now())) {
+            throw new ForbiddenException("A data de partida não pode ser no passado.");
+        }
+
+        
+
         ride.setDriver(driver);
         ride.setVehicle(vehicle);
         ride.setOrigin(rideRequestDTO.origin());

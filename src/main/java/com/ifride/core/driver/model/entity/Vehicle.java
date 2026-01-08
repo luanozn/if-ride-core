@@ -2,6 +2,7 @@ package com.ifride.core.driver.model.entity;
 
 import com.ifride.core.shared.model.BaseEntity;
 import jakarta.persistence.*;
+import java.math.BigInteger;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.SQLDelete;
@@ -26,6 +27,7 @@ public class Vehicle extends BaseEntity {
     private String model;
     private String plate;
     private String color;
+    private BigInteger capacity;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "driver_id")

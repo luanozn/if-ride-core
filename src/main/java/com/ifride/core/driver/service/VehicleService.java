@@ -30,6 +30,7 @@ public class VehicleService {
         vehicle.setModel(dto.model());
         vehicle.setColor(dto.color());
         vehicle.setPlate(dto.plate());
+        vehicle.setCapacity(dto.capacity());
         vehicle.setOwner(owner);
 
         vehicle = repository.save(vehicle);
