@@ -12,6 +12,6 @@ public record RideRequestDTO(
         String destination,
         List<String> pickupPoints,
         LocalDateTime departureTime,
-        int availableSeats,
+        Integer availableSeats,
         BigDecimal price
 ) { }

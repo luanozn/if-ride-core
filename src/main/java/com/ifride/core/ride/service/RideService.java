@@ -40,7 +40,9 @@ public class RideService {
             throw new ForbiddenException("A data de partida não pode ser no passado.");
         }
 
-        
+        if (rideRequestDTO.availableSeats() > vehicle.getCapacity()) {
+            throw new ConflictException("O número de vagas excede a capacidade do veículo (%d).", vehicle.getCapacity());
+        }
 
         ride.setDriver(driver);
         ride.setVehicle(vehicle);

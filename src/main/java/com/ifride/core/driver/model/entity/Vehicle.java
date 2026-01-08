@@ -27,7 +27,7 @@ public class Vehicle extends BaseEntity {
     private String model;
     private String plate;
     private String color;
-    private BigInteger capacity;
+    private Integer capacity;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "driver_id")
