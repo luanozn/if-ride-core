@@ -11,7 +11,7 @@ public record RideParticipantResponseDTO(RideResponseDTO ride, UserDto passenger
         return new RideParticipantResponseDTO(
                 RideResponseDTO.fromEntity(rideParticipant.getRide()),
                 UserDto.fromEntity(rideParticipant.getPassenger()),
-                rideParticipant.getStatus(),
+                rideParticipant.getParticipantStatus(),
                 rideParticipant.getRequestedAt()
         );
     }

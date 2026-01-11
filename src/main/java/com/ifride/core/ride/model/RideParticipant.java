@@ -29,7 +29,7 @@ public class RideParticipant extends BaseEntity {
     private User passenger;
 
     @Enumerated(EnumType.STRING)
-    private ParticipantStatus status = ParticipantStatus.PENDING;
+    private ParticipantStatus participantStatus = ParticipantStatus.PENDING;
 
     private LocalDateTime requestedAt = LocalDateTime.now();
 }

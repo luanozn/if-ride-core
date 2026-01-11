@@ -96,6 +96,13 @@ public class RideService {
         rideRepository.updateStatus(rideId, newStatus);
     }
 
+    @Transactional
+    public void incrementAvailableSeats(Ride ride) {
+        int rowsUpdated = rideRepository.incrementAvailableSeats(ride.getId());
+        if (rowsUpdated == 0) {
+            throw new ConflictException("Não foi possível devolver a vaga: Limite do veículo atingido.");
+        }
+    }
 
     private void validateNoOverlap(String driverId, LocalDateTime newDeparture) {
         LocalDateTime start = newDeparture.minusHours(1);

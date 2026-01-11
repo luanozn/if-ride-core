@@ -38,6 +38,10 @@ public interface RideRepository extends JpaRepository<Ride, String> {
             """)
     int decrementAvailableSeats(@Param("rideId") String rideId);
 
+    @Modifying
+    @Query("UPDATE Ride r SET r.availableSeats = r.availableSeats + 1 WHERE r.id = :rideId AND r.availableSeats < r.totalSeats")
+    int incrementAvailableSeats(@Param("rideId") String rideId);
+
     @Query("SELECT r.availableSeats FROM Ride r WHERE r.id = :id")
     int getCurrentAvailableSeats(@Param("id") String id);
 
