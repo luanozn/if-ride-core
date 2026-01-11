@@ -5,9 +5,12 @@ import com.ifride.core.driver.service.VehicleService;
 import com.ifride.core.ride.model.Ride;
 import com.ifride.core.ride.model.dto.RideRequestDTO;
 import com.ifride.core.ride.model.dto.RideResponseDTO;
+import com.ifride.core.ride.model.enums.RideStatus;
 import com.ifride.core.ride.repository.RideRepository;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
+import com.ifride.core.shared.exceptions.api.NotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
@@ -23,6 +26,7 @@ public class RideService {
     private final DriverService driverService;
     private final VehicleService vehicleService;
 
+    @Transactional
     public RideResponseDTO createRide(String driverId, RideRequestDTO rideRequestDTO) {
         BigDecimal finalPrice = Objects.requireNonNullElse(rideRequestDTO.price(), BigDecimal.ZERO);
 
@@ -67,6 +71,31 @@ public class RideService {
 
         return RideResponseDTO.fromEntity(ride);
     }
+
+    @Transactional
+    public void decrementAvailableSeats(Ride ride) {
+        int rowsUpdated = rideRepository.decrementAvailableSeats(ride.getId());
+
+        if (rowsUpdated == 0) {
+            throw new ConflictException("Não foi possível reservar a vaga: Carona já está lotada.");
+        }
+    }
+
+    @Transactional(readOnly=true)
+    public Ride findById(String id) {
+        return rideRepository.findById(id).orElseThrow(() -> new NotFoundException("Carona com o ID %s não encontrada!", id));
+    }
+
+    @Transactional(readOnly=true)
+    public Integer getCurrentAvailableSeats(String rideId) {
+        return rideRepository.getCurrentAvailableSeats(rideId);
+    }
+
+    @Transactional
+    public void updateStatus(String rideId, RideStatus newStatus) {
+        rideRepository.updateStatus(rideId, newStatus);
+    }
+
 
     private void validateNoOverlap(String driverId, LocalDateTime newDeparture) {
         LocalDateTime start = newDeparture.minusHours(1);

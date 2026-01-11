@@ -1,8 +1,10 @@
 package com.ifride.core.ride.repository;
 
 import com.ifride.core.ride.model.Ride;
+import com.ifride.core.ride.model.enums.RideStatus;
 import java.time.LocalDateTime;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -26,4 +28,20 @@ public interface RideRepository extends JpaRepository<Ride, String> {
     boolean existsOverlap(@Param("driverId") String driverId,
                           @Param("startTime") LocalDateTime startTime,
                           @Param("endTime") LocalDateTime endTime);
+
+    @Modifying
+    @Query("""
+                UPDATE Ride r
+                SET r.availableSeats = r.availableSeats - 1
+                WHERE r.id = :rideId
+                AND r.availableSeats > 0
+            """)
+    int decrementAvailableSeats(@Param("rideId") String rideId);
+
+    @Query("SELECT r.availableSeats FROM Ride r WHERE r.id = :id")
+    int getCurrentAvailableSeats(@Param("id") String id);
+
+    @Modifying
+    @Query("UPDATE Ride r SET r.rideStatus = :status WHERE r.id = :id")
+    void updateStatus(@Param("id") String id, @Param("status") RideStatus status);
 }
