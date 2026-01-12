@@ -44,3 +44,4 @@ CREATE TABLE ride_participants
 CREATE INDEX idx_rides_departure ON rides (departure_time);
 CREATE INDEX idx_participants_ride ON ride_participants (ride_id);
 CREATE INDEX idx_participants_user ON ride_participants (user_id);
+CREATE UNIQUE INDEX idx_unique_active_participant ON ride_participants (ride_id, user_id) WHERE participant_status IN ('PENDING', 'ACCEPTED');
