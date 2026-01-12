@@ -14,6 +14,7 @@ import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -43,6 +44,16 @@ public class RideParticipantService {
 
         if (repository.hasConflict(author, start, end)) {
             throw new ConflictException("Você já possui uma carona aceita em um horário conflitante.");
+        }
+
+        boolean alreadyRequested = repository.existsByRideIdAndPassengerIdAndParticipantStatusIn(
+                rideId,
+                author.getId(),
+                List.of(ParticipantStatus.PENDING, ParticipantStatus.ACCEPTED)
+        );
+
+        if (alreadyRequested) {
+            throw new ConflictException("Você já possui uma solicitação ativa para esta carona.");
         }
 
         var rideParticipant = new RideParticipant();

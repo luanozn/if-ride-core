@@ -2,9 +2,10 @@ package com.ifride.core.ride.repository;
 
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.ride.model.RideParticipant;
+import com.ifride.core.ride.model.enums.ParticipantStatus;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.Collection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -34,7 +35,7 @@ public interface RideParticipantRepository extends JpaRepository<RideParticipant
     @Transactional
     @Query("""
         UPDATE RideParticipant rp
-        SET rp.status = com.ifride.core.ride.model.enums.ParticipantStatus.DENIED
+        SET rp.status = com.ifride.core.ride.model.enums.ParticipantStatus.REJECTED
         WHERE rp.passenger.id = :passengerId
         AND rp.ride.id != :acceptedRideId
         AND rp.status = com.ifride.core.ride.model.enums.ParticipantStatus.PENDING
@@ -47,4 +48,9 @@ public interface RideParticipantRepository extends JpaRepository<RideParticipant
             @Param("endTime") LocalDateTime endTime
     );
 
+    boolean existsByRideIdAndPassengerIdAndParticipantStatusIn(
+            String rideId,
+            String passengerId,
+            Collection<ParticipantStatus> statuses
+    );
 }
