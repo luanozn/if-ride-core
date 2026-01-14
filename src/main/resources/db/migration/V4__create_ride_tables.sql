@@ -1,6 +1,8 @@
 CREATE TABLE rides
 (
     id              VARCHAR(36) PRIMARY KEY,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+
     driver_id       VARCHAR(36)    NOT NULL,
     vehicle_id      VARCHAR(36)    NOT NULL,
     available_seats INT            NOT NULL,
@@ -10,8 +12,12 @@ CREATE TABLE rides
     departure_time  TIMESTAMP      NOT NULL,
     ride_status     VARCHAR(20)    NOT NULL DEFAULT 'SCHEDULED',
     price           DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    created_at      TIMESTAMP      NOT NULL,
-    updated_at      TIMESTAMP,
+
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by         VARCHAR(255),
+    updated_at         TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by         VARCHAR(255),
+    version            BIGINT NOT NULL DEFAULT 0,
 
     CONSTRAINT fk_ride_driver FOREIGN KEY (driver_id) REFERENCES drivers (id),
     CONSTRAINT fk_ride_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles (id)
@@ -30,12 +36,18 @@ CREATE TABLE ride_pickup_points
 CREATE TABLE ride_participants
 (
     id                 VARCHAR(36) PRIMARY KEY,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+
     ride_id            VARCHAR(36) NOT NULL,
     user_id            VARCHAR(36) NOT NULL,
     participant_status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     requested_at       TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at         TIMESTAMP   NOT NULL,
-    updated_at         TIMESTAMP,
+
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by         VARCHAR(255),
+    updated_at         TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by         VARCHAR(255),
+    version            BIGINT NOT NULL DEFAULT 0,
 
     CONSTRAINT fk_participant_ride FOREIGN KEY (ride_id) REFERENCES rides (id),
     CONSTRAINT fk_participant_user FOREIGN KEY (user_id) REFERENCES users (id)

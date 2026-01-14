@@ -35,10 +35,10 @@ public interface RideParticipantRepository extends JpaRepository<RideParticipant
     @Transactional
     @Query("""
         UPDATE RideParticipant rp
-        SET rp.status = com.ifride.core.ride.model.enums.ParticipantStatus.REJECTED
+        SET rp.participantStatus = com.ifride.core.ride.model.enums.ParticipantStatus.REJECTED
         WHERE rp.passenger.id = :passengerId
         AND rp.ride.id != :acceptedRideId
-        AND rp.status = com.ifride.core.ride.model.enums.ParticipantStatus.PENDING
+        AND rp.participantStatus = com.ifride.core.ride.model.enums.ParticipantStatus.PENDING
         AND rp.ride.departureTime BETWEEN :startTime AND :endTime
     """)
     void rejectOverlappingRequests(

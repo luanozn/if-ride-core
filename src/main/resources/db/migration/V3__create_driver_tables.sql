@@ -15,6 +15,7 @@ CREATE TABLE driver_applications
     created_by         VARCHAR(255),
     updated_at         TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_by         VARCHAR(255),
+    version            BIGINT NOT NULL DEFAULT 0,
 
     CONSTRAINT fk_app_user FOREIGN KEY (user_id) REFERENCES users (id),
     CONSTRAINT fk_app_reviewer FOREIGN KEY (reviewed_by) REFERENCES users (id)
@@ -33,6 +34,7 @@ CREATE TABLE drivers
     created_by     VARCHAR(255),
     updated_at     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_by     VARCHAR(255),
+    version        BIGINT NOT NULL DEFAULT 0,
 
     CONSTRAINT fk_driver_user FOREIGN KEY (id) REFERENCES users (id)
 );
@@ -52,9 +54,10 @@ CREATE TABLE vehicles
     created_by VARCHAR(255),
     updated_at TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_by VARCHAR(255),
+    version    BIGINT NOT NULL DEFAULT 0,
 
     CONSTRAINT fk_vehicle_driver FOREIGN KEY (driver_id) REFERENCES drivers (id),
-    CONSTRAINT uk_owner_plate UNIQUE (driver_id, plate);
+    CONSTRAINT uk_owner_plate UNIQUE (driver_id, plate)
 );
 
 CREATE INDEX idx_driver_app_user ON driver_applications (user_id);
