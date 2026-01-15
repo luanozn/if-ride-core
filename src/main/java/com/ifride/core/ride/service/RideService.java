@@ -7,14 +7,13 @@ import com.ifride.core.ride.model.dto.RideRequestDTO;
 import com.ifride.core.ride.model.dto.RideResponseDTO;
 import com.ifride.core.ride.model.enums.RideStatus;
 import com.ifride.core.ride.repository.RideRepository;
+import com.ifride.core.ride.service.validators.RideValidator;
 import com.ifride.core.shared.exceptions.api.ConflictException;
-import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +25,7 @@ public class RideService {
     private final RideRepository rideRepository;
     private final DriverService driverService;
     private final VehicleService vehicleService;
+    private final RideValidator rideValidator;
 
     @Transactional
     public RideResponseDTO createRide(String driverId, RideRequestDTO rideRequestDTO) {
@@ -36,18 +36,7 @@ public class RideService {
         var driver = driverService.findById(driverId);
         var vehicle = vehicleService.findById(rideRequestDTO.vehicleId());
 
-        if(!vehicle.getOwner().getId().equals(driverId)) {
-            throw new ForbiddenException("O veículo %s não pertence ao usuário %s", vehicle.getModel(), driver.getUser().getEmail());
-        }
-        validateNoOverlap(driverId, rideRequestDTO.departureTime());
-
-        if (rideRequestDTO.departureTime().isBefore(LocalDateTime.now())) {
-            throw new ForbiddenException("A data de partida não pode ser no passado.");
-        }
-
-        if (rideRequestDTO.availableSeats() > vehicle.getCapacity()) {
-            throw new ConflictException("O número de vagas excede a capacidade do veículo (%d).", vehicle.getCapacity());
-        }
+        rideValidator.validateRideCreation(driver, vehicle, rideRequestDTO);
 
         ride.setDriver(driver);
         ride.setVehicle(vehicle);
@@ -56,10 +45,7 @@ public class RideService {
         ride.setAvailableSeats(rideRequestDTO.availableSeats());
         ride.setTotalSeats(rideRequestDTO.availableSeats());
         ride.setDepartureTime(rideRequestDTO.departureTime());
-
-        ride.setPickupPoints(
-            rideRequestDTO.pickupPoints()
-        );
+        ride.setPickupPoints(rideRequestDTO.pickupPoints());
 
         if(finalPrice.compareTo(BigDecimal.ZERO) > 0) {
             ride.setPrice(rideRequestDTO.price());
@@ -105,15 +91,6 @@ public class RideService {
         int rowsUpdated = rideRepository.incrementAvailableSeats(ride.getId());
         if (rowsUpdated == 0) {
             throw new ConflictException("Não foi possível devolver a vaga: Limite do veículo atingido.");
-        }
-    }
-
-    private void validateNoOverlap(String driverId, LocalDateTime newDeparture) {
-        LocalDateTime start = newDeparture.minusHours(1);
-        LocalDateTime end = newDeparture.plusHours(1);
-
-        if (rideRepository.existsOverlap(driverId, start, end)) {
-            throw new ConflictException("Conflito de Horário! Você já possui uma carona agendada próxima a este horário.");
         }
     }
 }
