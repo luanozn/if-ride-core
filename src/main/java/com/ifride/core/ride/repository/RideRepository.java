@@ -3,6 +3,9 @@ package com.ifride.core.ride.repository;
 import com.ifride.core.ride.model.Ride;
 import com.ifride.core.ride.model.enums.RideStatus;
 import java.time.LocalDateTime;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -29,7 +32,7 @@ public interface RideRepository extends JpaRepository<Ride, String> {
                           @Param("startTime") LocalDateTime startTime,
                           @Param("endTime") LocalDateTime endTime);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
                 UPDATE Ride r
                 SET r.availableSeats = r.availableSeats - 1
@@ -38,7 +41,7 @@ public interface RideRepository extends JpaRepository<Ride, String> {
             """)
     int decrementAvailableSeats(@Param("rideId") String rideId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Ride r SET r.availableSeats = r.availableSeats + 1 WHERE r.id = :rideId AND r.availableSeats < r.totalSeats")
     int incrementAvailableSeats(@Param("rideId") String rideId);
 
@@ -48,4 +51,11 @@ public interface RideRepository extends JpaRepository<Ride, String> {
     @Modifying
     @Query("UPDATE Ride r SET r.rideStatus = :status WHERE r.id = :id")
     void updateStatus(@Param("id") String id, @Param("status") RideStatus status);
+
+    @Query("SELECT r FROM Ride r WHERE " +
+            "(:origin IS NULL OR r.origin LIKE :origin%) AND " +
+            "(:destination IS NULL OR r.destination LIKE :destination%) AND " +
+            "(:includeFull = true OR r.availableSeats > 0) AND " +
+            "r.departureTime > CURRENT_TIMESTAMP")
+    Page<Ride> findAvailableRides(String origin, String destination, boolean includeFull, Pageable pageable);
 }

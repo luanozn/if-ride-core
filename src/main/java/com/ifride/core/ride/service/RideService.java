@@ -10,9 +10,10 @@ import com.ifride.core.ride.repository.RideRepository;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
-import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -58,9 +59,6 @@ public class RideService {
 
         ride.setPickupPoints(
             rideRequestDTO.pickupPoints()
-                    .stream()
-                    .map(this::normalize)
-                    .toList()
         );
 
         if(finalPrice.compareTo(BigDecimal.ZERO) > 0) {
@@ -91,6 +89,12 @@ public class RideService {
         return rideRepository.getCurrentAvailableSeats(rideId);
     }
 
+    @Transactional(readOnly = true)
+    public Page<RideResponseDTO> findAvailableRides(String origin, String destination, boolean includeFull, Pageable pageable) {
+        return rideRepository.findAvailableRides(origin, destination, includeFull, pageable)
+                .map(RideResponseDTO::fromEntity);
+    }
+
     @Transactional
     public void updateStatus(String rideId, RideStatus newStatus) {
         rideRepository.updateStatus(rideId, newStatus);
@@ -111,11 +115,5 @@ public class RideService {
         if (rideRepository.existsOverlap(driverId, start, end)) {
             throw new ConflictException("Conflito de Horário! Você já possui uma carona agendada próxima a este horário.");
         }
-    }
-
-    private String normalize(String input) {
-        if (input == null) return null;
-        String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
-        return normalized.replaceAll("\\p{M}", "").toLowerCase().trim();
     }
 }

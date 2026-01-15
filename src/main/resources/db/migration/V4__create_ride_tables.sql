@@ -42,6 +42,7 @@ CREATE TABLE ride_participants
     user_id            VARCHAR(36) NOT NULL,
     participant_status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     requested_at       TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    pickup_point       VARCHAR(255) NOT NULL,
 
     created_at         TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by         VARCHAR(255),
@@ -54,6 +55,11 @@ CREATE TABLE ride_participants
 );
 
 CREATE INDEX idx_rides_departure ON rides (departure_time);
+CREATE INDEX idx_rides_driver ON rides(driver_id);
+CREATE INDEX idx_rides_origin_lower ON rides (lower(origin) varchar_pattern_ops);
+CREATE INDEX idx_rides_dest_lower ON rides (lower(destination) varchar_pattern_ops);
+
 CREATE INDEX idx_participants_ride ON ride_participants (ride_id);
 CREATE INDEX idx_participants_user ON ride_participants (user_id);
+CREATE INDEX idx_participants_requested_at ON ride_participants (requested_at DESC);
 CREATE UNIQUE INDEX idx_unique_active_participant ON ride_participants (ride_id, user_id) WHERE participant_status IN ('PENDING', 'ACCEPTED');

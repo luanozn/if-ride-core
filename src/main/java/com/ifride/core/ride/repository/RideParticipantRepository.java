@@ -20,7 +20,7 @@ public interface RideParticipantRepository extends JpaRepository<RideParticipant
     SELECT COUNT(rp) > 0
     FROM RideParticipant rp
     WHERE rp.passenger = :passenger
-    AND rp.status = 'ACCEPTED'
+    AND rp.participantStatus = 'ACCEPTED'
     AND rp.ride.rideStatus NOT IN (
         com.ifride.core.ride.model.enums.RideStatus.FINISHED,
         com.ifride.core.ride.model.enums.RideStatus.CANCELLED
