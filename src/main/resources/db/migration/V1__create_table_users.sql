@@ -11,7 +11,8 @@ CREATE TABLE users (
    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
    created_by VARCHAR(255),
    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-   updated_by VARCHAR(255)
+   updated_by VARCHAR(255),
+   version            BIGINT NOT NULL DEFAULT 0
 );
 
 CREATE INDEX idx_users_email ON users(email);
