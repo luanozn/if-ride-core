@@ -32,7 +32,7 @@ INSERT INTO ride_pickup_points (ride_id, point_name, point_order) VALUES
                                                                       ('123e4567-e89b-12d3-a456-426614174000', 'RU', 1),
                                                                       ('123e4567-e89b-12d3-a456-426614174001', 'Portão Norte', 0);
 
--- 7. PARTICIPANTES (Corrigido: Adicionado pickup_point)
+-- 7. PARTICIPANTES
 INSERT INTO ride_participants (id, ride_id, user_id, pickup_point, participant_status, requested_at, created_at, updated_at) VALUES
                                                                                                                                  ('30283c48-6923-45f1-8e0c-806733f38131', '123e4567-e89b-12d3-a456-426614174000', '3e58498b-7004-44f2-959c-85f26f2f9f1b', 'Entrada Bloco A', 'PENDING', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
                                                                                                                                  ('4887b47b-166e-47f2-a25e-2f3b9c03b123', '123e4567-e89b-12d3-a456-426614174001', '3e58498b-7004-44f2-959c-85f26f2f9f1b', 'Portão Norte', 'ACCEPTED', CURRENT_TIMESTAMP - interval '1 hour', CURRENT_TIMESTAMP - interval '1 hour', CURRENT_TIMESTAMP);
