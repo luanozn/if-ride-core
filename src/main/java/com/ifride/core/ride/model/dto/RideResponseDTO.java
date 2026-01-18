@@ -20,7 +20,8 @@ public record RideResponseDTO(
         @Schema(description = "Destino final", example = "Estação de Metrô")
         String destination,
 
-        @Schema(description = "Lista de pontos de parada intermediários")
+        @Schema(description = "Lista de pontos de parada intermediários", example = "[\"Supermercado União\", \"Hotel Carvalho\", \"Trevo\"]"
+        )
         List<String> pickupPoints,
 
         @Schema(description = "Número atual de vagas livres", example = "2")

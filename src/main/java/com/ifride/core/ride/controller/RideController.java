@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -33,13 +34,22 @@ public class RideController {
     private final RideParticipantService rideParticipantService;
 
     @Operation(
-            summary = "Cria uma nova oferta de carona",
-            description = "Apenas motoristas podem criar caronas. Valida conflitos de horário e capacidade do veículo."
+            summary = "Ofertar nova carona",
+            description = """
+            Registra uma oferta de trajeto no sistema.
+        
+            **Regras de Negócio (RN):**
+            * **Propriedade:** O veículo informado deve pertencer ao motorista logado.
+            * **Antecedência:** A partida deve ser posterior ao horário atual ($t_{partida} > t_{agora}$).
+            * **Capacidade:** O número de vagas ofertadas não pode exceder a lotação do veículo.
+            * **Intersecção:** O motorista não pode ter outra carona em um intervalo de 60 minutos.
+        """
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Carona criada com sucesso"),
-            @ApiResponse(responseCode = "403", description = "Data no passado OU veículo não pertence ao motorista"),
-            @ApiResponse(responseCode = "409", description = "Conflito de horário (±1h) OU vagas excedem a capacidade do veículo")
+            @ApiResponse(responseCode = "201", description = "Oferta criada com sucesso"),
+            @ApiResponse(responseCode = "403", description = "Veículo de terceiros ou data retroativa"),
+            @ApiResponse(responseCode = "409", description = "Conflito de horário ou excesso de passageiros para o veículo"),
+            @ApiResponse(responseCode = "409", description = "Excesso de passageiros para o veículo")
     })
     @PostMapping
     @PreAuthorize("hasRole('DRIVER')")
@@ -75,7 +85,7 @@ public class RideController {
             @RequestParam(required = false) String origin,
             @RequestParam(required = false) String destination,
             @RequestParam(defaultValue = "false") boolean includeFull,
-            @PageableDefault(sort = "departureTime", direction = Sort.Direction.ASC) Pageable pageable
+            @ParameterObject @PageableDefault(sort = "departureTime", direction = Sort.Direction.ASC) Pageable pageable
     ) {
         return rideService.findAvailableRides(origin, destination, includeFull, pageable);
     }

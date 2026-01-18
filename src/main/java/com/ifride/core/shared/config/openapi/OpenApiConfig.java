@@ -50,6 +50,16 @@ public class OpenApiConfig {
                         openApi.getComponents().addSchemas("ApiException", schema);
 
                         openApi.getPaths().values().forEach(pathItem -> pathItem.readOperations().forEach(operation -> {
+                                if (operation.getParameters() != null) {
+                                        operation.getParameters().forEach(parameter -> {
+                                                switch (parameter.getName()) {
+                                                        case "page" -> parameter.description("Índice da página (inicia em 0)");
+                                                        case "size" -> parameter.description("Quantidade de itens por página");
+                                                        case "sort" -> parameter.description("Critério de ordenação no formato: propriedade,(asc|desc)");
+                                                }
+                                        });
+                                }
+
                                 var responses = operation.getResponses();
 
                                 for (HttpStatus httpStatus : errorStatuses) {

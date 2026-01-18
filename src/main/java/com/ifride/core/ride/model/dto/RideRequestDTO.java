@@ -17,7 +17,7 @@ public record RideRequestDTO(
         @Schema(description = "Destino final da carona", example = "Terminal Rodoviário de Orizona")
         String destination,
 
-        @Schema(description = "Lista de pontos onde o motorista pode parar no caminho")
+        @Schema(description = "Lista de pontos onde o motorista pode parar no caminho", example = "[\"Supermercado União\", \"Hotel Carvalho\", \"Trevo\"]")
         List<String> pickupPoints,
 
         @Schema(description = "Data e hora da partida (deve ser no futuro)", example = "2026-02-20T14:30:00")
