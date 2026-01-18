@@ -1,5 +1,9 @@
 package com.ifride.core.driver.service;
 
+import com.ifride.core.auth.model.entity.User;
+import com.ifride.core.auth.repository.UserRepository;
+import com.ifride.core.auth.service.UserService;
+import com.ifride.core.driver.model.dto.DriverApplicationRequestDTO;
 import com.ifride.core.driver.model.entity.Driver;
 import com.ifride.core.driver.model.entity.DriverApplication;
 import com.ifride.core.driver.repository.DriverRepository;
@@ -16,6 +20,7 @@ public class DriverService {
     @PersistenceContext
     private EntityManager entityManager;
     private final DriverRepository driverRepository;
+    private final UserService userService;
 
 
     public void saveFromDriverRequest(DriverApplication driverApplication) {
@@ -27,6 +32,17 @@ public class DriverService {
         driver.setCnhExpiration(driverApplication.getCnhExpiration());
 
         entityManager.persist(driver);
+    }
+
+    public void saveFromDTO(DriverApplicationRequestDTO driverApplicationRequestDTO) {
+        User user = userService.findById(driverApplicationRequestDTO.requesterId());
+        Driver driver = new Driver();
+        driver.setUser(user);
+        driver.setCnhNumber(driverApplicationRequestDTO.cnhNumber());
+        driver.setCnhCategory(driverApplicationRequestDTO.cnhCategory());
+        driver.setCnhExpiration(driverApplicationRequestDTO.expiration());
+
+        driverRepository.save(driver);
     }
 
     public Driver findById(String id) {
