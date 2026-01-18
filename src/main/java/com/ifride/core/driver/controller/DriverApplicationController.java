@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/v1/driver-requests")
 @RequiredArgsConstructor
 @Log4j2
-@Tag(name = "Solicitações de Motorista", description = "Gerenciamento do fluxo de upgrade de conta para motorista")
+@Tag(name = "Solicitações de Upgrade à Motorista", description = "Gerenciamento do fluxo de upgrade de conta para motorista")
 @SecurityRequirement(name = "bearerAuth")
 public class DriverApplicationController {
 
