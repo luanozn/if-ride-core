@@ -5,6 +5,7 @@ export interface ConfigProps extends StackProps {
         name: string;
     }
     parameterNames: {
+        ec2Url: string;
         assetsBucketName: string;
         databaseUsername: string;
         appSecurityGroupId: string

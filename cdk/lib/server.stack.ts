@@ -1,7 +1,6 @@
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import { RemovalPolicy, Stack, StackProps} from 'aws-cdk-lib';
+import {Stack} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
-import {Network} from "node:inspector";
 import {Instance, InstanceType, KeyPair, MachineImage, SecurityGroup, SubnetType, Vpc} from "aws-cdk-lib/aws-ec2";
 import {ParameterUtils} from "./utils/parameter-utils";
 import {ConfigProps} from "./utils/config-props";
@@ -38,6 +37,8 @@ export class ServerStack extends Stack {
       vpcSubnets: { subnetType: SubnetType.PUBLIC },
       keyPair: key
     });
+
+    ParameterUtils.createParameter(this, "Ec2InstanceUrl", `http://${instance.instancePublicDnsName}:8080`, props.parameterNames.ec2Url)
 
     bucket.grantReadWrite(instance)
 
