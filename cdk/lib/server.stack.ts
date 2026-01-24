@@ -12,7 +12,7 @@ export class ServerStack extends Stack {
     super(scope, id, props);
 
     const vpc = Vpc.fromLookup(this, "CoreVPC", {
-      vpcId: ParameterUtils.retrieveParameter(this, "VpcId", props.parameterNames.vpcId).stringValue,
+      vpcName: props.vpc.name,
     })
 
     const bucketName = ParameterUtils.retrieveParameter(this, "BucketName", props.parameterNames.assetsBucketName).stringValue

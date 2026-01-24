@@ -18,7 +18,7 @@ export class DatabaseStack extends Stack {
         super(scope, id, props);
 
         const vpc = Vpc.fromLookup(this, "CoreVPC", {
-            vpcId: ParameterUtils.retrieveParameter(this, "VpcIdParameter", props.parameterNames.vpcId).stringValue
+            vpcName: props.vpc.name
         })
 
         const rdsSecurityGroup = new SecurityGroup(this, 'RdsSG', {

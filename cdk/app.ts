@@ -1,4 +1,4 @@
-import { App } from "aws-cdk-lib/core";
+import {App} from "aws-cdk-lib/core";
 import {VpcStack} from "./lib/vpc.stack";
 import {ConfigProps} from "./lib/utils/config-props";
 import {AssetsStack} from "./lib/assets.stack";
@@ -14,18 +14,20 @@ const env = {
 
 const configProps: ConfigProps = {
     env,
+    vpc: {
+        name: "if-ride-vpc"
+    },
     parameterNames: {
-        vpcId: "vpc.id",
         assetsBucketName: "assets.bucket.name",
         databaseUsername: "database.username",
         appSecurityGroupId: "network.app.security-group.id"
     }
 }
 
-const vpc = new VpcStack(app, "VpcIfRide", configProps);
-const assets = new AssetsStack(app, "AssetsIfRide", configProps);
-const database = new DatabaseStack(app, "DatabaseStack", configProps);
-const server = new ServerStack(app, "ServerStack", configProps);
+const vpc = new VpcStack(app, "IfRideNetwork", configProps);
+const assets = new AssetsStack(app, "IfRideStaticAssets", configProps);
+const database = new DatabaseStack(app, "IfRidePersistence", configProps);
+const server = new ServerStack(app, "IfRideServer", configProps);
 
 server.addDependency(vpc)
 server.addDependency(assets)
