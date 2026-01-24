@@ -4,6 +4,7 @@ import {ConfigProps} from "./lib/utils/config-props";
 import {AssetsStack} from "./lib/assets.stack";
 import {ServerStack} from "./lib/server.stack";
 import {DatabaseStack} from "./lib/database.stack";
+import {GithubPipelineStack} from "./lib/github-pipeline.stack";
 
 const app = new App();
 
@@ -23,6 +24,8 @@ const configProps: ConfigProps = {
         appSecurityGroupId: "network.app.security-group.id"
     }
 }
+
+new GithubPipelineStack(app, "GithubPipelineOIDC", { env })
 
 const vpc = new VpcStack(app, "IfRideNetwork", configProps);
 const assets = new AssetsStack(app, "IfRideStaticAssets", configProps);
