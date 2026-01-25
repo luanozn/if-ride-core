@@ -44,4 +44,7 @@ public class Driver extends AuditEntity {
 
     @Enumerated(EnumType.STRING)
     private Status status = Status.ACTIVE;
+
+    @Version
+    private Long version;
 }
