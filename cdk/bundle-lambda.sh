@@ -11,4 +11,4 @@ cd $SOURCE_DIR
 npm install --production
 zip -r ../../cdk/$DEST_DIR/$ZIP_NAME . -x "*.ts" "*.map"
 
-echo "✅ Lambda compactado em $DEST_DIR/$ZIP_NAME"
+echo "Lambda compactado em $DEST_DIR/$ZIP_NAME"

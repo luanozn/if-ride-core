@@ -1,7 +1,7 @@
 name: IF Ride - CD (Manual Deploy)
 
 on:
-  workflow_dispatch: # Gatilho para execução manual
+  workflow_dispatch:
 
 permissions:
   id-token: write
