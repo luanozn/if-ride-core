@@ -17,8 +17,11 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: 'amazon-corretto'
+          distribution: 'corretto'
           cache: 'gradle'
+
+      - name: Grant Execute Permission to Gradlew
+        run: chmod +x gradlew
 
       - name: Run Unit Tests
         run: ./gradlew clean test
