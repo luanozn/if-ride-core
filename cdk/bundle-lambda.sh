@@ -4,7 +4,7 @@ set -e
 ROOT_DIR="${GITHUB_WORKSPACE:-$(pwd)}"
 
 CDK_DIR="$ROOT_DIR/cdk"
-SOURCE_DIR="$ROOT_DIR/functions/authorizer"
+SOURCE_DIR="$ROOT_DIR/functions"
 DEST_DIR="$CDK_DIR/dist"
 ZIP_NAME="authorizer.zip"
 
@@ -21,7 +21,7 @@ if [ -d "$SOURCE_DIR" ]; then
 
     echo "Compactando Lambda..."
     zip -r "$DEST_DIR/$ZIP_NAME" . \
-      -x "*.ts" "*.map" "node_modules/.bin/*"
+      -x "*.js" "*.map" "node_modules/.bin/*"
 
     echo "Lambda compactado com sucesso em: $DEST_DIR/$ZIP_NAME"
 else
