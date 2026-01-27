@@ -30,9 +30,9 @@ const configProps: ConfigProps = {
     }
 }
 
-new GithubPipelineStack(app, "GithubPipelineOIDC", { env })
+new GithubPipelineStack(app, "IfRideFoundation", { env })
 
-const apiGateway = new ApiGatewayStack(app, "GatewayAuthorizer",configProps);
+const apiGateway = new ApiGatewayStack(app, "IfRideGateway",configProps);
 const vpc = new VpcStack(app, "IfRideNetwork", configProps);
 const assets = new AssetsStack(app, "IfRideStaticAssets", configProps);
 const database = new DatabaseStack(app, "IfRidePersistence", configProps);

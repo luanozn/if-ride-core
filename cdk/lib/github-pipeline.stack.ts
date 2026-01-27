@@ -12,6 +12,7 @@ export class GithubPipelineStack extends Stack {
         });
 
         const githubRole = new Role(this, 'GitHubDeployRole', {
+            roleName: 'IFRide-GitHub-Deploy-Role',
             assumedBy: new FederatedPrincipal(
                 provider.openIdConnectProviderArn,
                 {
