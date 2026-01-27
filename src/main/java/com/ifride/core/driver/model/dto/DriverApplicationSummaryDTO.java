@@ -32,13 +32,15 @@ public record DriverApplicationSummaryDTO(
 ) {
 
     public static DriverApplicationSummaryDTO fromEntity(DriverApplication application) {
+        var reviewedByDto = application.getReviewedBy() != null ? UserDto.fromEntity(application.getReviewedBy()) : null;
+
         return new DriverApplicationSummaryDTO(
                 UserDto.fromEntity(application.getRequester()),
                 application.getApplicationStatus(),
                 application.getCnhNumber(),
                 application.getCnhCategory(),
                 application.getCnhExpiration(),
-                UserDto.fromEntity(application.getReviewedBy()),
+                reviewedByDto,
                 application.getRejectionReason()
         );
     }

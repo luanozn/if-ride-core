@@ -51,6 +51,16 @@ export class ApiGatewayStack extends Stack {
             },
         });
 
+        const swaggerIntegration = new HttpIntegration(`${ec2Endpoint}/swagger-ui/{proxy}`, {
+            httpMethod: 'ANY',
+            options: {
+                cacheKeyParameters: ['method.request.path.proxy'],
+                requestParameters: {
+                    'integration.request.path.proxy': 'method.request.path.proxy',
+                },
+            },
+        });
+
         const globalIntegration = new HttpIntegration(`${ec2Endpoint}/{proxy}`, {
             httpMethod: 'ANY',
             options: {
@@ -74,6 +84,12 @@ export class ApiGatewayStack extends Stack {
             defaultIntegration: staticFilesIntegration,
             anyMethod: true
         });
+
+        const swaggerAuth = api.root.addResource('swagger-ui')
+        swaggerAuth.addProxy({
+            defaultIntegration: swaggerIntegration,
+            anyMethod: true
+        })
 
         api.root.addProxy({
             defaultIntegration: globalIntegration,
