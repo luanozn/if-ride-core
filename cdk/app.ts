@@ -16,6 +16,9 @@ const env = {
 
 const configProps: ConfigProps = {
     env,
+    ses: {
+        email: "luan.ribeiro@estudante.ifgoiano.edu.br"
+    },
     vpc: {
         name: "if-ride-vpc"
     },
