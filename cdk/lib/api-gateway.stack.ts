@@ -4,7 +4,7 @@ import * as path from "node:path";
 import { ParameterUtils } from "./utils/parameter-utils";
 import {Duration, Stack} from "aws-cdk-lib";
 import {Code, Runtime, Function} from "aws-cdk-lib/aws-lambda";
-import {Cors, HttpIntegration, RestApi, TokenAuthorizer} from "aws-cdk-lib/aws-apigateway";
+import {AuthorizationType, Cors, HttpIntegration, RestApi, TokenAuthorizer} from "aws-cdk-lib/aws-apigateway";
 
 export class ApiGatewayStack extends Stack {
     constructor(scope: Construct, id: string, props: ConfigProps) {
@@ -31,7 +31,7 @@ export class ApiGatewayStack extends Stack {
         });
 
         const ec2Endpoint = ParameterUtils.retrieveParameter(this, 'Ec2Endpoint', props.parameterNames.ec2Url);
-        const httpIntegration = new HttpIntegration(ec2Endpoint + '/{proxy}', {
+        const authIntegration = new HttpIntegration(`${ec2Endpoint}/v1/auth/{proxy}`, {
             httpMethod: 'ANY',
             options: {
                 cacheKeyParameters: ['method.request.path.proxy'],
@@ -41,15 +41,47 @@ export class ApiGatewayStack extends Stack {
             },
         });
 
+        const staticFilesIntegration = new HttpIntegration(`${ec2Endpoint}/auth/{proxy}`, {
+            httpMethod: 'ANY',
+            options: {
+                cacheKeyParameters: ['method.request.path.proxy'],
+                requestParameters: {
+                    'integration.request.path.proxy': 'method.request.path.proxy',
+                },
+            },
+        });
+
+        const globalIntegration = new HttpIntegration(`${ec2Endpoint}/{proxy}`, {
+            httpMethod: 'ANY',
+            options: {
+                cacheKeyParameters: ['method.request.path.proxy'],
+                requestParameters: {
+                    'integration.request.path.proxy': 'method.request.path.proxy',
+                },
+            },
+        });
+
+        const v1 = api.root.addResource('v1');
+        const v1Auth = v1.addResource('auth');
+        v1Auth.addProxy({
+            defaultIntegration: authIntegration,
+            anyMethod: true
+        });
+
+
+        const staticAuth = api.root.addResource('auth');
+        staticAuth.addProxy({
+            defaultIntegration: staticFilesIntegration,
+            anyMethod: true
+        });
+
         api.root.addProxy({
-            defaultIntegration: httpIntegration,
+            defaultIntegration: globalIntegration,
             anyMethod: true,
             defaultMethodOptions: {
                 authorizer: authorizer,
-                requestParameters: {
-                    'method.request.path.proxy': true,
-                },
-            },
+                authorizationType: AuthorizationType.CUSTOM
+            }
         });
     }
 }
