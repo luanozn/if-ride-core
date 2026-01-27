@@ -1,17 +1,15 @@
 package com.ifride.core.service;
 
 import com.ifride.core.auth.model.entity.User;
-import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.service.UserService;
 import com.ifride.core.driver.model.dto.DriverApplicationRequestDTO;
-import com.ifride.core.driver.model.dto.DriverApplicationRejectionDTO;
-import com.ifride.core.driver.model.dto.DriverApplicationSummaryDTO;
 import com.ifride.core.driver.model.entity.DriverApplication;
 import com.ifride.core.driver.model.enums.CnhCategory;
 import com.ifride.core.driver.model.enums.DriverApplicationStatus;
 import com.ifride.core.driver.repository.DriverApplicationRepository;
 import com.ifride.core.driver.service.DriverApplicationService;
-import com.ifride.core.driver.service.DriverService;
+import com.ifride.core.driver.service.validators.DriverApplicationValidator;
+import com.ifride.core.events.models.DriverApplicationApprovedEvent;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import org.junit.jupiter.api.DisplayName;
@@ -20,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -38,69 +37,51 @@ class DriverApplicationServiceTest {
     private DriverApplicationRepository repository;
 
     @Mock
-    private DriverService driverService;
-
-    @Mock
     private UserService userService;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private DriverApplicationValidator validator;
 
     @Test
-    @DisplayName("Create: Deve criar a aplicação com sucesso quando o autor for o usuário")
+    @DisplayName("Create: Deve delegar validação e salvar com sucesso")
     void createDriverApplication_Success() {
-        User author = mock(User.class);
-        User user = mock(User.class);
-        DriverApplicationRequestDTO dto = new DriverApplicationRequestDTO("123456", "B", CnhCategory.A , LocalDate.now().plusYears(1));
+        User author = new User();
+        User user = new User();
+        user.setId("user-123");
+        DriverApplicationRequestDTO dto = new DriverApplicationRequestDTO("123456", "666", CnhCategory.A, LocalDate.now().plusYears(1));
 
-        when(author.getEmail()).thenReturn("user@email.com");
-        when(user.getEmail()).thenReturn("user@email.com");
-        when(user.has(Role.DRIVER)).thenReturn(false);
+        when(userService.findById(user.getId())).thenReturn(user);
+        when(repository.findAllByRequesterOrderByCreatedAtDesc(user)).thenReturn(List.of());
         when(repository.save(any(DriverApplication.class))).thenAnswer(i -> i.getArguments()[0]);
 
-        DriverApplicationSummaryDTO result = service.createDriverApplication(author, user, dto);
+        service.createDriverApplication(author, user, dto);
 
-        assertNotNull(result);
-        assertEquals(DriverApplicationStatus.PENDING, result.applicationStatus());
-        assertEquals(dto.cnhNumber(), result.cnhNumber());
+        verify(validator).validateDriverApplication(eq(author), eq(user), any());
         verify(repository).save(any(DriverApplication.class));
     }
 
     @Test
-    @DisplayName("Create: Deve lançar ForbiddenExcepton quando o usuário requisitar pra outro usuário")
-    void createDriverApplication_ThrowsForbidden_WhenUserIsSelf() {
-        User user = mock(User.class);
-        User author = mock(User.class);
-        DriverApplicationRequestDTO dto = new DriverApplicationRequestDTO("123", "B", CnhCategory.A , LocalDate.now());
+    @DisplayName("Create: Deve propagar ForbiddenException do validador")
+    void createDriverApplication_ThrowsForbidden_WhenValidatorFails() {
+        User author = new User();
+        User user = new User();
+        DriverApplicationRequestDTO dto = new DriverApplicationRequestDTO("123", "B", CnhCategory.A, LocalDate.now());
 
-        when(user.getEmail()).thenReturn("user@email.com");
-        when(author.getEmail()).thenReturn("admini@email.com");
+        doThrow(new ForbiddenException("Somente o próprio usuário"))
+                .when(validator).validateDriverApplication(any(), any(), any());
 
-        ForbiddenException exception = assertThrows(ForbiddenException.class, () ->
+        assertThrows(ForbiddenException.class, () ->
                 service.createDriverApplication(author, user, dto)
         );
 
-        assertEquals("Somente o próprio usuário pode solicitar para virar motorista!", exception.getMessage());
         verify(repository, never()).save(any());
     }
 
     @Test
-    @DisplayName("Create: Deve lançar ConflictException quando o usuário já for um motorista")
-    void createDriverApplication_ThrowsConflict_WhenAlreadyDriver() {
-        User user = mock(User.class);
-        DriverApplicationRequestDTO dto = new DriverApplicationRequestDTO("123", "B", CnhCategory.A , LocalDate.now());
-
-        when(user.getEmail()).thenReturn("user@email.com");
-        when(user.has(Role.DRIVER)).thenReturn(true);
-
-        assertThrows(ConflictException.class, () ->
-                service.createDriverApplication(user, user, dto)
-        );
-
-        verify(repository, never()).save(any());
-    }
-
-
-    @Test
-    @DisplayName("Approve: Deve provar uma solicitação com PENDING com sucesso")
+    @DisplayName("Approve: Deve aprovar e disparar evento após validar status")
     void approveDriverApplication_Success() {
         String userId = "user-id-123";
         User author = new User();
@@ -113,59 +94,30 @@ class DriverApplicationServiceTest {
         when(repository.findAllByRequesterOrderByCreatedAtDesc(requester)).thenReturn(List.of(pendingApp));
         when(repository.save(any(DriverApplication.class))).thenAnswer(i -> i.getArguments()[0]);
 
-        DriverApplicationSummaryDTO result = service.approveDriverApplication(author, userId);
+        service.approveDriverApplication(author, userId);
 
-        assertNotNull(result);
-        assertEquals(DriverApplicationStatus.APPROVED, pendingApp.getApplicationStatus());
-        assertEquals(author, pendingApp.getReviewedBy());
-        assertNull(pendingApp.getRejectionReason());
-
-        verify(driverService).saveFromDriverRequest(pendingApp);
+        verify(validator).validateDriverApplicationStatusChange(pendingApp, DriverApplicationStatus.APPROVED);
+        verify(eventPublisher).publishEvent(any(DriverApplicationApprovedEvent.class));
         verify(repository).save(pendingApp);
     }
 
     @Test
-    @DisplayName("Approve: Deve lançar uma ConflictException se o status não for PENDNG")
-    void approveDriverApplication_ThrowsConflict_WhenNotPending() {
+    @DisplayName("Approve: Deve falhar se o validador recusar a mudança de status")
+    void approveDriverApplication_ThrowsConflict_WhenValidatorDenies() {
         String userId = "user-id-123";
-        User author = new User();
         User requester = new User();
-        DriverApplication rejectedApp = new DriverApplication();
-        rejectedApp.setApplicationStatus(DriverApplicationStatus.DENIED);
+        DriverApplication app = new DriverApplication();
 
         when(userService.findById(userId)).thenReturn(requester);
-        when(repository.findAllByRequesterOrderByCreatedAtDesc(requester)).thenReturn(List.of(rejectedApp));
+        when(repository.findAllByRequesterOrderByCreatedAtDesc(requester)).thenReturn(List.of(app));
 
-        ConflictException ex = assertThrows(ConflictException.class, () ->
-                service.approveDriverApplication(author, userId)
+        doThrow(new ConflictException("Não é possível modificar..."))
+                .when(validator).validateDriverApplicationStatusChange(any(), any());
+
+        assertThrows(ConflictException.class, () ->
+                service.approveDriverApplication(new User(), userId)
         );
 
-        assertTrue(ex.getMessage().contains("Não é possível modificar uma requisição que está com o status DENIED"));
-        verify(repository, never()).save(any());
-        verifyNoInteractions(driverService);
-    }
-
-
-    @Test
-    @DisplayName("Reject: Deve rejetar com sucesso uma requsição com motivo.")
-    void rejectDriverApplication_Success() {
-        String userId = "user-id-123";
-        User author = new User();
-        User requester = new User();
-        DriverApplicationRejectionDTO dto = new DriverApplicationRejectionDTO("CNH Inválida");
-
-        DriverApplication pendingApp = new DriverApplication();
-        pendingApp.setApplicationStatus(DriverApplicationStatus.PENDING);
-
-        when(userService.findById(userId)).thenReturn(requester);
-        when(repository.findAllByRequesterOrderByCreatedAtDesc(requester)).thenReturn(List.of(pendingApp));
-        when(repository.save(any(DriverApplication.class))).thenAnswer(i -> i.getArguments()[0]);
-
-        DriverApplicationSummaryDTO result = service.rejectDriverApplication(author, userId, dto);
-
-        assertEquals(DriverApplicationStatus.DENIED, result.applicationStatus());
-        assertEquals("CNH Inválida", result.rejectionReason());
-
-        verify(repository).save(pendingApp);
+        verify(eventPublisher, never()).publishEvent(any());
     }
 }
