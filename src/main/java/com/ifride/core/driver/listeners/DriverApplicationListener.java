@@ -1,4 +1,4 @@
-package com.ifride.core.events.listeners;
+package com.ifride.core.driver.listeners;
 
 import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.service.UserService;

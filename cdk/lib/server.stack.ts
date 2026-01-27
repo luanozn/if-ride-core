@@ -5,51 +5,83 @@ import {Instance, InstanceType, KeyPair, MachineImage, SecurityGroup, SubnetType
 import {ParameterUtils} from "./utils/parameter-utils";
 import {ConfigProps} from "./utils/config-props";
 import {Bucket} from "aws-cdk-lib/aws-s3";
+import {Effect, PolicyStatement, Role, ServicePrincipal} from "aws-cdk-lib/aws-iam";
+import {SSM_PREFIX} from "./utils/constants";
+import {EmailIdentity, Identity} from "aws-cdk-lib/aws-ses";
 
 export class ServerStack extends Stack {
-  constructor(scope: Construct, id: string, props: ConfigProps) {
-    super(scope, id, props);
+    constructor(scope: Construct, id: string, props: ConfigProps) {
+        super(scope, id, props);
 
-    const vpc = Vpc.fromLookup(this, "CoreVPC", {
-      vpcName: props.vpc.name,
-    })
+        const vpc = Vpc.fromLookup(this, "CoreVPC", {
+            vpcName: props.vpc.name,
+        })
 
-    const bucketName = ParameterUtils.retrieveParameter(this, "BucketName", props.parameterNames.assetsBucketName).stringValue
-    const bucket = Bucket.fromBucketName(this, "Bucket", bucketName)
+        const bucketName = ParameterUtils.retrieveParameter(this, "BucketName", props.parameterNames.assetsBucketName).stringValue
+        const bucket = Bucket.fromBucketName(this, "Bucket", bucketName)
 
 
-    const securityGroup = new SecurityGroup(this, 'InstanceSG', {
-      vpc,
-      description: 'Permitir acesso HTTP e SSH',
-      allowAllOutbound: true,
-    });
+        const securityGroup = new SecurityGroup(this, 'InstanceSG', {
+            vpc,
+            description: 'Permitir acesso HTTP e SSH',
+            allowAllOutbound: true,
+        });
 
-    securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(8080), 'API Spring Boot');
-    securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(22), 'Acesso SSH');
+        securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(8080), 'API Spring Boot');
+        securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(22), 'Acesso SSH');
 
-    const key = KeyPair.fromKeyPairName(this, 'IfRideKeyPair', 'if-ride-key');
+        const key = KeyPair.fromKeyPairName(this, 'IfRideKeyPair', 'if-ride-key');
 
-    const instance = new Instance(this, 'IfRideServer', {
-      vpc,
-      instanceType: InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
-      machineImage: MachineImage.latestAmazonLinux2023(),
-      securityGroup: securityGroup,
-      vpcSubnets: { subnetType: SubnetType.PUBLIC },
-      keyPair: key
-    });
+        const ec2Role = new Role(this, 'IFRideEc2Role', {
+            assumedBy: new ServicePrincipal('ec2.amazonaws.com'),
+            description: 'Role para a instância EC2 acessar SSM Parameter Store e SES',
+        });
 
-    ParameterUtils.createParameter(this, "Ec2InstanceUrl", `http://${instance.instancePublicDnsName}:8080`, props.parameterNames.ec2Url)
+        ec2Role.addToPolicy(new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['ssm:GetParametersByPath', 'ssm:GetParameter'],
+            resources: [`arn:aws:ssm:${this.region}:${this.account}:parameter${SSM_PREFIX}/*`],
+        }));
 
-    bucket.grantReadWrite(instance)
+        const emailIdentity = new EmailIdentity(this, 'IFGoianoIdentity', {
+            identity: Identity.email(props.ses.email),
+        });
 
-    instance.addUserData(
-        'sudo dnf update -y',
-        'sudo dnf install -y docker',
-        'sudo systemctl start docker',
-        'sudo systemctl enable docker',
-        'sudo usermod -aG docker ec2-user'
-    );
+        ec2Role.addToPolicy(new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+            resources: [
+                `arn:aws:ses:${this.region}:${this.account}:identity/${emailIdentity.emailIdentityName}`
+            ],
+            conditions: {
+                'StringEquals': {
+                    'ses:FromAddress': props.ses.email
+                }
+            }
+        }));
 
-    ParameterUtils.createParameter(this, "SecurityGroupId", securityGroup.securityGroupId, props.parameterNames.appSecurityGroupId);
-  }
+        const instance = new Instance(this, 'IfRideServer', {
+            vpc,
+            instanceType: InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
+            machineImage: MachineImage.latestAmazonLinux2023(),
+            securityGroup: securityGroup,
+            role: ec2Role,
+            vpcSubnets: {subnetType: SubnetType.PUBLIC},
+            keyPair: key
+        });
+
+        ParameterUtils.createParameter(this, "Ec2InstanceUrl", `http://${instance.instancePublicDnsName}:8080`, props.parameterNames.ec2Url)
+
+        bucket.grantReadWrite(instance)
+
+        instance.addUserData(
+            'sudo dnf update -y',
+            'sudo dnf install -y docker',
+            'sudo systemctl start docker',
+            'sudo systemctl enable docker',
+            'sudo usermod -aG docker ec2-user'
+        );
+
+        ParameterUtils.createParameter(this, "SecurityGroupId", securityGroup.securityGroupId, props.parameterNames.appSecurityGroupId);
+    }
 }

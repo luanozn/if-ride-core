@@ -1,6 +1,9 @@
 import {StackProps} from "aws-cdk-lib";
 
 export interface ConfigProps extends StackProps {
+    ses: {
+        email: string;
+    }
     vpc: {
         name: string;
     }

@@ -4,10 +4,12 @@ import com.ifride.core.auth.service.EmailVerificationTokenService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
+@RequestMapping("/v1/auth")
 @AllArgsConstructor
 public class WebVerificationController {
 
@@ -18,11 +20,11 @@ public class WebVerificationController {
     public String verifyEmail(@RequestParam("token") String token, RedirectAttributes redirectAttributes) {
         try {
             emailVerificationTokenService.confirmEmailVerification(token);
-            return "redirect:/verification-success.html";
+            return "redirect:/auth/verification-success.html";
         } catch (RuntimeException e) {
             redirectAttributes.addAttribute("errorMessage", e.getMessage());
 
-            return "redirect:/verification-error.html";
+            return "redirect:/auth/verification-error.html";
         }
     }
 }

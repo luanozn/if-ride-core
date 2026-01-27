@@ -1,4 +1,4 @@
-package com.ifride.core.events.listeners;
+package com.ifride.core.ride.listeners;
 
 import com.ifride.core.events.models.RideParticipationAcceptedEvent;
 import com.ifride.core.ride.repository.RideParticipantRepository;
