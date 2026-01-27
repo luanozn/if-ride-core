@@ -62,3 +62,4 @@ CREATE TABLE vehicles
 
 CREATE INDEX idx_driver_app_user ON driver_applications (user_id);
 CREATE INDEX idx_vehicles_driver ON vehicles (driver_id);
+CREATE UNIQUE INDEX idx_unique_active_driver_application ON driver_application (requester_id) WHERE application_status IN ('PENDING', 'APPROVED');
