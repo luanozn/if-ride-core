@@ -1,7 +1,6 @@
 import { Construct } from 'constructs';
 import {CfnOutput, RemovalPolicy, Stack} from "aws-cdk-lib";
 import {ConfigProps} from "./utils/config-props";
-import {ParameterUtils} from "./utils/parameter-utils";
 import {S3BucketOrigin} from "aws-cdk-lib/aws-cloudfront-origins";
 import {
     CachePolicy, Distribution,
@@ -9,13 +8,13 @@ import {
     ViewerProtocolPolicy
 } from "aws-cdk-lib/aws-cloudfront";
 import {PolicyStatement, ServicePrincipal} from "aws-cdk-lib/aws-iam";
-import {BlockPublicAccess, Bucket, BucketEncryption} from "aws-cdk-lib/aws-s3";
+import {BlockPublicAccess, Bucket, BucketEncryption, IBucket} from "aws-cdk-lib/aws-s3";
 
 export class AssetsStack extends Stack {
+    assetsBucket: IBucket;
+
     constructor(scope: Construct, id: string, props: ConfigProps) {
         super(scope, id, props);
-
-        Stack.of(this)
 
         const bucket = new Bucket(this, 'IfRideAssetsBucket', {
             bucketName: `if-ride-assets-${props?.env?.region}-${props?.env?.account}`,
@@ -25,8 +24,6 @@ export class AssetsStack extends Stack {
             removalPolicy: RemovalPolicy.DESTROY,
             autoDeleteObjects: true,
         });
-
-        ParameterUtils.createParameter(this, "BucketParameterName", bucket.bucketName, props.parameterNames.assetsBucketName, "Nome do bucket S3 para armazenamento de ficheiros do IF Ride")
 
         const distribution = new Distribution(this, 'IfRideDistribution', {
             defaultBehavior: {
@@ -54,6 +51,8 @@ export class AssetsStack extends Stack {
 
 
         bucket.addToResourcePolicy(cloudFrontAllowedPolicy);
+
+        this.assetsBucket = bucket;
 
         new CfnOutput(this, 'CloudFrontURL', {
             value: distribution.distributionDomainName,

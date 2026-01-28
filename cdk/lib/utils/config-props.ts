@@ -1,16 +1,18 @@
 import {StackProps} from "aws-cdk-lib";
+import {IInstance, ISecurityGroup, IVpc} from "aws-cdk-lib/aws-ec2";
+import {IBucket} from "aws-cdk-lib/aws-s3";
 
 export interface ConfigProps extends StackProps {
     ses: {
         email: string;
-    }
-    vpc: {
-        name: string;
+    },
+    resources?: {
+        vpc?: IVpc;
+        bucket?: IBucket;
+        instance?: IInstance;
+        securityGroup?: ISecurityGroup;
     }
     parameterNames: {
-        ec2Url: string;
-        assetsBucketName: string;
         databaseUsername: string;
-        appSecurityGroupId: string
     }
 }

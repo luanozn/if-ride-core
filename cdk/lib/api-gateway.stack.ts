@@ -30,7 +30,7 @@ export class ApiGatewayStack extends Stack {
             },
         });
 
-        const ec2Endpoint = ParameterUtils.retrieveParameter(this, 'Ec2Endpoint', props.parameterNames.ec2Url);
+        const ec2Endpoint = `http://${props.resources?.instance?.instancePublicDnsName}:8080`
         const authIntegration = new HttpIntegration(`${ec2Endpoint}/v1/auth/{proxy}`, {
             httpMethod: 'ANY',
             options: {
@@ -61,7 +61,7 @@ export class ApiGatewayStack extends Stack {
             },
         });
 
-        const globalIntegration = new HttpIntegration(`${ec2Endpoint}/{proxy}`, {
+        const globalIntegration = new HttpIntegration(`${ec2Endpoint}/{proxy+}`, {
             httpMethod: 'ANY',
             options: {
                 cacheKeyParameters: ['method.request.path.proxy'],
@@ -75,20 +75,35 @@ export class ApiGatewayStack extends Stack {
         const v1Auth = v1.addResource('auth');
         v1Auth.addProxy({
             defaultIntegration: authIntegration,
-            anyMethod: true
+            anyMethod: true,
+            defaultMethodOptions: {
+                requestParameters: {
+                    'method.request.path.proxy': true,
+                },
+            },
         });
 
 
         const staticAuth = api.root.addResource('auth');
         staticAuth.addProxy({
             defaultIntegration: staticFilesIntegration,
-            anyMethod: true
+            anyMethod: true,
+            defaultMethodOptions: {
+                requestParameters: {
+                    'method.request.path.proxy': true,
+                },
+            },
         });
 
         const swaggerAuth = api.root.addResource('swagger-ui')
         swaggerAuth.addProxy({
             defaultIntegration: swaggerIntegration,
-            anyMethod: true
+            anyMethod: true,
+            defaultMethodOptions: {
+                requestParameters: {
+                    'method.request.path.proxy': true,
+                },
+            },
         })
 
         api.root.addProxy({
@@ -96,7 +111,10 @@ export class ApiGatewayStack extends Stack {
             anyMethod: true,
             defaultMethodOptions: {
                 authorizer: authorizer,
-                authorizationType: AuthorizationType.CUSTOM
+                authorizationType: AuthorizationType.CUSTOM,
+                requestParameters: {
+                    'method.request.path.proxy': true,
+                }
             }
         });
     }

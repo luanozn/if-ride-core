@@ -1,15 +1,16 @@
 import { Construct } from 'constructs';
 import {ParameterUtils} from "./utils/parameter-utils";
-import {SubnetType, Vpc} from "aws-cdk-lib/aws-ec2";
+import {IVpc, SubnetType, Vpc} from "aws-cdk-lib/aws-ec2";
 import {Stack, StackProps} from "aws-cdk-lib";
 import {ConfigProps} from "./utils/config-props";
 
 export class VpcStack extends Stack {
+    vpc: IVpc;
+
     constructor(scope: Construct, id: string, props: ConfigProps) {
         super(scope, id, props);
 
-        const vpc = new Vpc(this, 'IfRideVpc', {
-            vpcName: props.vpc.name,
+        this.vpc = new Vpc(this, 'IfRideVpc', {
             maxAzs: 2,
             natGateways: 0,
             subnetConfiguration: [
@@ -25,12 +26,6 @@ export class VpcStack extends Stack {
                 },
             ],
         });
-
-        const publicSubnetIds = vpc.publicSubnets.map(s => s.subnetId).join(',');
-        ParameterUtils.createParameter(this, "PublicSubnetsParam", publicSubnetIds, 'public-subnets')
-
-        const privateSubnetIds = vpc.isolatedSubnets.map(s => s.subnetId).join(',');
-        ParameterUtils.createParameter(this, "PrivateSubnetsParam", privateSubnetIds, 'private-subnets')
 
     }
 }

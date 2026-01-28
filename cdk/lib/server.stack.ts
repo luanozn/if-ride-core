@@ -1,7 +1,16 @@
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import {Stack} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
-import {Instance, InstanceType, KeyPair, MachineImage, SecurityGroup, SubnetType, Vpc} from "aws-cdk-lib/aws-ec2";
+import {
+    IInstance,
+    Instance,
+    InstanceType, ISecurityGroup,
+    KeyPair,
+    MachineImage,
+    SecurityGroup,
+    SubnetType,
+    Vpc
+} from "aws-cdk-lib/aws-ec2";
 import {ParameterUtils} from "./utils/parameter-utils";
 import {ConfigProps} from "./utils/config-props";
 import {Bucket} from "aws-cdk-lib/aws-s3";
@@ -10,15 +19,14 @@ import {SSM_PREFIX} from "./utils/constants";
 import {EmailIdentity, Identity} from "aws-cdk-lib/aws-ses";
 
 export class ServerStack extends Stack {
+    instance: IInstance;
+    securityGroup: ISecurityGroup;
+
     constructor(scope: Construct, id: string, props: ConfigProps) {
         super(scope, id, props);
 
-        const vpc = Vpc.fromLookup(this, "CoreVPC", {
-            vpcName: props.vpc.name,
-        })
-
-        const bucketName = ParameterUtils.retrieveParameter(this, "BucketName", props.parameterNames.assetsBucketName).stringValue
-        const bucket = Bucket.fromBucketName(this, "Bucket", bucketName)
+        const vpc = props.resources!.vpc!;
+        const bucket = props.resources!.bucket!;
 
 
         const securityGroup = new SecurityGroup(this, 'InstanceSG', {
@@ -70,8 +78,6 @@ export class ServerStack extends Stack {
             keyPair: key
         });
 
-        ParameterUtils.createParameter(this, "Ec2InstanceUrl", `http://${instance.instancePublicDnsName}:8080`, props.parameterNames.ec2Url)
-
         bucket.grantReadWrite(instance)
 
         instance.addUserData(
@@ -82,6 +88,7 @@ export class ServerStack extends Stack {
             'sudo usermod -aG docker ec2-user'
         );
 
-        ParameterUtils.createParameter(this, "SecurityGroupId", securityGroup.securityGroupId, props.parameterNames.appSecurityGroupId);
+        this.instance = instance;
+        this.securityGroup = securityGroup;
     }
 }
