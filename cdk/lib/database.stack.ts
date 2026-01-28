@@ -17,9 +17,7 @@ export class DatabaseStack extends Stack {
     constructor(scope: Construct, id: string, props: ConfigProps) {
         super(scope, id, props);
 
-        const vpc = Vpc.fromLookup(this, "CoreVPC", {
-            vpcName: props.vpc.name
-        })
+        const vpc = props.resources?.vpc!
 
         const rdsSecurityGroup = new SecurityGroup(this, 'RdsSG', {
             vpc,
@@ -27,13 +25,12 @@ export class DatabaseStack extends Stack {
             description: 'Acesso ao RDS PostgreSQL para o Backend',
         });
 
-        const appSgId = ParameterUtils.retrieveParameter(this, "SecurityGroupID", props.parameterNames.appSecurityGroupId).stringValue
-        const appSecurityGroup = SecurityGroup.fromSecurityGroupId(this, 'ImportedAppSG', appSgId);
+        const appSecurityGroup = props.resources?.securityGroup!
 
         rdsSecurityGroup.addIngressRule(
             appSecurityGroup,
             Port.tcp(5432),
-            'Permitir conexões do backend Spring Boot'
+            'Permitir-Backend-SpringBoot'
         );
 
         const databaseUsername = ParameterUtils.retrieveParameter(this, "DatabaseUser", props.parameterNames.databaseUsername).stringValue;
@@ -61,8 +58,5 @@ export class DatabaseStack extends Stack {
             deletionProtection: false,
         });
 
-        ParameterUtils.createParameter(this, "DbEndpointParam", dbInstance.dbInstanceEndpointAddress, "database/endpoint", "Endpoint do banco de dados RDS");
-
     }
-
 }

@@ -19,32 +19,42 @@ const configProps: ConfigProps = {
     ses: {
         email: "luan.ribeiro@estudante.ifgoiano.edu.br"
     },
-    vpc: {
-        name: "if-ride-vpc"
-    },
     parameterNames: {
-        ec2Url: "ec2.url",
-        assetsBucketName: "assets.bucket.name",
         databaseUsername: "database.username",
-        appSecurityGroupId: "network.app.security-group.id"
     }
 }
 
 new GithubPipelineStack(app, "IfRideFoundation", { env })
 
-const apiGateway = new ApiGatewayStack(app, "IfRideGateway",configProps);
-const vpc = new VpcStack(app, "IfRideNetwork", configProps);
+const vpcStack = new VpcStack(app, "IfRideNetwork", configProps);
+
 const assets = new AssetsStack(app, "IfRideStaticAssets", configProps);
-const database = new DatabaseStack(app, "IfRidePersistence", configProps);
-const server = new ServerStack(app, "IfRideServer", configProps);
 
-server.addDependency(vpc)
-server.addDependency(assets)
+const server = new ServerStack(app, "IfRideServer", {
+    ...configProps,
+    resources: {
+        vpc: vpcStack.vpc,
+        bucket: assets.assetsBucket
+    }
+});
 
-database.addDependency(vpc)
+const database = new DatabaseStack(app, "IfRidePersistence", {
+    ...configProps,
+    resources: {
+        vpc: vpcStack.vpc,
+        securityGroup: server.securityGroup,
+
+    }
+});
+
+const gateway = new ApiGatewayStack(app, "IfRideGateway", {
+    ...configProps,
+    resources: {
+        instance: server.instance
+    }
+});
+
+
 database.addDependency(server)
 
-apiGateway.addDependency(server)
-
-
-
+gateway.addDependency(server)
