@@ -30,3 +30,5 @@ else
     ls -la "$ROOT_DIR/functions" || true
     exit 1
 fi
+
+cd "$CDK_DIR"
