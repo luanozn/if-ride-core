@@ -9,6 +9,7 @@ import {
 } from "aws-cdk-lib/aws-cloudfront";
 import {PolicyStatement, ServicePrincipal} from "aws-cdk-lib/aws-iam";
 import {BlockPublicAccess, Bucket, BucketEncryption, IBucket} from "aws-cdk-lib/aws-s3";
+import { Repository } from "aws-cdk-lib/aws-ecr";
 
 export class AssetsStack extends Stack {
     assetsBucket: IBucket;
@@ -49,6 +50,17 @@ export class AssetsStack extends Stack {
             },
         });
 
+        new Repository(this, 'IfRideCoreRepo', {
+            repositoryName: 'if-ride-core',
+            removalPolicy: RemovalPolicy.DESTROY,
+            emptyOnDelete: true,
+            lifecycleRules: [
+                {
+                    maxImageCount: 1,
+                    description: 'Limpeza de imagens antigas para economia de custo',
+                },
+            ],
+        });
 
         bucket.addToResourcePolicy(cloudFrontAllowedPolicy);
 
