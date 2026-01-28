@@ -79,6 +79,7 @@ export class ServerStack extends Stack {
         });
 
         bucket.grantReadWrite(instance)
+        props.resources?.ecrRepo!.grantPull(instance)
 
         instance.addUserData(
             'sudo dnf update -y',

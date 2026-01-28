@@ -34,7 +34,8 @@ const server = new ServerStack(app, "IfRideServer", {
     ...configProps,
     resources: {
         vpc: vpcStack.vpc,
-        bucket: assets.assetsBucket
+        bucket: assets.assetsBucket,
+        ecrRepo: assets.ecrRepo,
     }
 });
 

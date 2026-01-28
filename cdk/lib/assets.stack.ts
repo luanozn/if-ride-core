@@ -9,10 +9,11 @@ import {
 } from "aws-cdk-lib/aws-cloudfront";
 import {PolicyStatement, ServicePrincipal} from "aws-cdk-lib/aws-iam";
 import {BlockPublicAccess, Bucket, BucketEncryption, IBucket} from "aws-cdk-lib/aws-s3";
-import { Repository } from "aws-cdk-lib/aws-ecr";
+import {IRepository, Repository} from "aws-cdk-lib/aws-ecr";
 
 export class AssetsStack extends Stack {
     assetsBucket: IBucket;
+    ecrRepo: IRepository;
 
     constructor(scope: Construct, id: string, props: ConfigProps) {
         super(scope, id, props);
@@ -50,7 +51,7 @@ export class AssetsStack extends Stack {
             },
         });
 
-        new Repository(this, 'IfRideCoreRepo', {
+        this.ecrRepo = new Repository(this, 'IfRideCoreRepo', {
             repositoryName: 'if-ride-core',
             removalPolicy: RemovalPolicy.DESTROY,
             emptyOnDelete: true,
