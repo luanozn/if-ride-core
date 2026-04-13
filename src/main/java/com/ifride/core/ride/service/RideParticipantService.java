@@ -12,10 +12,12 @@ import com.ifride.core.ride.model.enums.RideStatus;
 import com.ifride.core.ride.repository.RideParticipantRepository;
 import com.ifride.core.ride.service.validators.RideParticipantValidator;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
+import jakarta.persistence.OptimisticLockException;
 import jakarta.transaction.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -42,6 +44,7 @@ public class RideParticipantService {
     }
 
     @Transactional
+    @Retryable(retryFor = OptimisticLockException.class)
     public void acceptParticipation(String participantId, String driverId) {
         var participant = getById(participantId);
 
