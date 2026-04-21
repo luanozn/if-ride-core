@@ -5,6 +5,7 @@ import com.ifride.core.ride.model.dto.RideParticipantRequestDTO;
 import com.ifride.core.ride.model.dto.RideParticipantResponseDTO;
 import com.ifride.core.ride.model.dto.RideRequestDTO;
 import com.ifride.core.ride.model.dto.RideResponseDTO;
+import com.ifride.core.ride.model.enums.ParticipantStatus;
 import com.ifride.core.ride.service.RideParticipantService;
 import com.ifride.core.ride.service.RideService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -36,14 +38,14 @@ public class RideController {
     @Operation(
             summary = "Ofertar nova carona",
             description = """
-            Registra uma oferta de trajeto no sistema.
-        
-            **Regras de Negócio (RN):**
-            * **Propriedade:** O veículo informado deve pertencer ao motorista logado.
-            * **Antecedência:** A partida deve ser posterior ao horário atual ($t_{partida} > t_{agora}$).
-            * **Capacidade:** O número de vagas ofertadas não pode exceder a lotação do veículo.
-            * **Intersecção:** O motorista não pode ter outra carona em um intervalo de 60 minutos.
-        """
+                        Registra uma oferta de trajeto no sistema.
+                    
+                        **Regras de Negócio (RN):**
+                        * **Propriedade:** O veículo informado deve pertencer ao motorista logado.
+                        * **Antecedência:** A partida deve ser posterior ao horário atual ($t_{partida} > t_{agora}$).
+                        * **Capacidade:** O número de vagas ofertadas não pode exceder a lotação do veículo.
+                        * **Intersecção:** O motorista não pode ter outra carona em um intervalo de 60 minutos.
+                    """
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Oferta criada com sucesso"),
@@ -73,6 +75,26 @@ public class RideController {
     @ResponseStatus(HttpStatus.CREATED)
     public RideParticipantResponseDTO createRideParticipant(@AuthenticationPrincipal User author, @PathVariable String rideId, @RequestBody RideParticipantRequestDTO dto) {
         return rideParticipantService.requestSeat(author, rideId, dto);
+    }
+
+    @Operation(
+            summary = "Busca participantes de uma carona",
+            description = """
+                                Lista todos os passageiros que participaram, ou solicitaram participação em uma carona.
+                    
+                            **Regras de Negócio (RN):**
+                            * **Permissões:** Somente o motorista responsável pela carona e os administradores do sistema podem requisitar participantes.
+                    """
+    )
+    @GetMapping("/{rideId}/participants")
+    @PreAuthorize("hasRole('DRIVER') or hasRole('ADMIN')")
+    public Page<RideParticipantResponseDTO> getRideParticipants(
+            @AuthenticationPrincipal User author,
+            @PathVariable String rideId,
+            @RequestParam(required = false) List<ParticipantStatus> statuses,
+            @PageableDefault(sort = "requestedAt", direction = Sort.Direction.ASC) Pageable pageable
+    ) {
+        return rideParticipantService.findBy(author, rideId, statuses, pageable);
     }
 
     @Operation(
