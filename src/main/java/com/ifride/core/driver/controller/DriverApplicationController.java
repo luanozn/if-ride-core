@@ -5,14 +5,20 @@ import com.ifride.core.auth.service.UserService;
 import com.ifride.core.driver.model.dto.DriverApplicationRejectionDTO;
 import com.ifride.core.driver.model.dto.DriverApplicationRequestDTO;
 import com.ifride.core.driver.model.dto.DriverApplicationSummaryDTO;
+import com.ifride.core.driver.model.enums.DriverApplicationStatus;
 import com.ifride.core.driver.service.DriverApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -83,6 +89,17 @@ public class DriverApplicationController {
     @PreAuthorize("hasRole('PASSENGER')")
     public void deleteDriverRequest(@AuthenticationPrincipal User author, @PathVariable String requestId) {
         driverApplicationService.delete(requestId, author);
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public Page<DriverApplicationSummaryDTO> getApplications(
+            @RequestParam(required = false) List<DriverApplicationStatus> statuses,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String name,
+            @PageableDefault(sort = "createdAt", direction = Direction.DESC) Pageable pageable) {
+
+        return driverApplicationService.findBy(statuses, email, name, pageable);
     }
 
 }

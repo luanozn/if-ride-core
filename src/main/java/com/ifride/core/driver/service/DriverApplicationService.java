@@ -12,9 +12,12 @@ import com.ifride.core.driver.service.validators.DriverApplicationValidator;
 import com.ifride.core.events.models.DriverApplicationApprovedEvent;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import jakarta.transaction.Transactional;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -65,11 +68,15 @@ public class DriverApplicationService {
     }
 
     @Transactional
-
     public void delete(String applicationId, User author) {
         var application = repository.findById(applicationId).orElseThrow(() -> new NotFoundException("Não foi possível encontrar uma solicitação com o id %s", applicationId));
         driverApplicationValidator.checkOwnership(author, application.getRequester());
         repository.delete(application);
+    }
+
+    public Page<DriverApplicationSummaryDTO> findBy(List<DriverApplicationStatus> statuses, String email, String name, Pageable pageable) {
+        var applications = repository.findApplications(statuses, email, name, pageable);
+        return applications.map(DriverApplicationSummaryDTO::fromEntity);
     }
 
     private DriverApplication changeDriverApplicationStatus(String userId, DriverApplicationStatus status, User author, String rejectionReason) {
