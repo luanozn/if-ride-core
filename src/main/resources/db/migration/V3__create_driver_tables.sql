@@ -60,6 +60,8 @@ CREATE TABLE vehicles
     CONSTRAINT uk_owner_plate UNIQUE (driver_id, plate)
 );
 
+
 CREATE INDEX idx_driver_app_user ON driver_applications (user_id);
 CREATE INDEX idx_vehicles_driver ON vehicles (driver_id);
+CREATE INDEX idx_driver_app_status_created ON driver_applications (application_status, created_at DESC);
 CREATE UNIQUE INDEX idx_unique_active_driver_application ON driver_applications (user_id) WHERE application_status IN ('PENDING', 'APPROVED');

@@ -3,9 +3,13 @@ package com.ifride.core.ride.repository;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.ride.model.RideParticipant;
 import com.ifride.core.ride.model.enums.ParticipantStatus;
+import com.ifride.core.shared.model.enums.Status;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -53,4 +57,10 @@ public interface RideParticipantRepository extends JpaRepository<RideParticipant
             String passengerId,
             Collection<ParticipantStatus> statuses
     );
+
+    Page<RideParticipant> findByRideIdAndParticipantStatusIn(String rideId, List<ParticipantStatus> statuses, Pageable pageable);
+
+    Page<RideParticipant> findByRideId(String rideId, Pageable pageable);
+
+    List<ParticipantStatus> status(Status status);
 }

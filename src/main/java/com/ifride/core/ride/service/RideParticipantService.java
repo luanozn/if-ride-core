@@ -1,9 +1,11 @@
 package com.ifride.core.ride.service;
 
 import com.ifride.core.auth.model.entity.User;
+import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.events.models.RideParticipationAcceptedEvent;
 import com.ifride.core.events.models.RideParticipationCancelledEvent;
 import com.ifride.core.events.models.RideParticipationRejectedEvent;
+import com.ifride.core.ride.model.Ride;
 import com.ifride.core.ride.model.RideParticipant;
 import com.ifride.core.ride.model.dto.RideParticipantRequestDTO;
 import com.ifride.core.ride.model.dto.RideParticipantResponseDTO;
@@ -11,12 +13,17 @@ import com.ifride.core.ride.model.enums.ParticipantStatus;
 import com.ifride.core.ride.model.enums.RideStatus;
 import com.ifride.core.ride.repository.RideParticipantRepository;
 import com.ifride.core.ride.service.validators.RideParticipantValidator;
+import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.transaction.Transactional;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
@@ -100,6 +107,32 @@ public class RideParticipantService {
 
         // TODO: implementar evento para notificar o passageiro (Consistência Eventual)
         eventPublisher.publishEvent(new RideParticipationCancelledEvent(participant.getRide().getDriver().getId(), participant.getRide().getId()));
+    }
+
+    public Page<RideParticipantResponseDTO> findBy(User author, String rideId, List<ParticipantStatus> statuses, Pageable pageable) {
+        var ride = rideService.findById(rideId);
+        validateRequester(author, ride);
+
+        var participants = findParticipants(rideId, statuses, pageable);
+        return participants.map(RideParticipantResponseDTO::from);
+    }
+
+    private void validateRequester(User author, Ride ride) {
+        if(!authorHasPermissionOnRide(author, ride)) {
+            throw new ForbiddenException("O usuário %s não pode solicitar os participantes desta carona.", author.getEmail());
+        }
+    }
+
+    private boolean authorHasPermissionOnRide(User author, Ride ride) {
+        return author.has(Role.ADMIN) || author.getId().equals(ride.getDriver().getId());
+    }
+
+    private Page<RideParticipant> findParticipants(String rideId, List<ParticipantStatus> statuses, Pageable pageable) {
+        if(ObjectUtils.isEmpty(statuses)) {
+            return repository.findByRideId(rideId, pageable);
+        }
+
+        return repository.findByRideIdAndParticipantStatusIn(rideId, statuses, pageable);
     }
 
     private RideParticipant getById(String id) {

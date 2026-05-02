@@ -15,4 +15,6 @@ CREATE TABLE users (
    version            BIGINT NOT NULL DEFAULT 0
 );
 
-CREATE INDEX idx_users_email ON users(email);
+CREATE UNIQUE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_name_prefix ON users (name varchar_pattern_ops);
+CREATE INDEX idx_users_status on users (status);
