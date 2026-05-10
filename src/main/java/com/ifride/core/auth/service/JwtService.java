@@ -31,6 +31,7 @@ public class JwtService {
                 .withIssuer(ISSUER)
                 .withSubject(user.getEmail())
                 .withExpiresAt(expirationDate)
+                .withClaim("role", user.getRole().getRole())
                 .sign(ALGORITHM);
     }
 
