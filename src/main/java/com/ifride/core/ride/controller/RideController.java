@@ -60,6 +60,20 @@ public class RideController {
         return rideService.createRide(author.getId(), rideRequestDTO);
     }
 
+    @PatchMapping("/{rideId}/start")
+    @PreAuthorize("hasRole('DRIVER')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void startRide(@AuthenticationPrincipal User author, @PathVariable String rideId) {
+        rideService.startRide(rideId, author);
+    }
+
+    @PatchMapping("/{rideId}/finish")
+    @PreAuthorize("hasRole('DRIVER')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void finishRide(@AuthenticationPrincipal User author, @PathVariable String rideId) {
+        rideService.finishRide(rideId, author);
+    }
+
     @Operation(
             summary = "Solicita uma vaga em uma carona",
             description = "Passageiros solicitam entrada. O motorista precisará aceitar posteriormente."
