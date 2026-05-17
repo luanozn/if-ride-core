@@ -1,9 +1,13 @@
 package com.ifride.core.ride.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.ifride.core.ride.model.Ride;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -27,5 +31,30 @@ public record RideRequestDTO(
         Integer availableSeats,
 
         @Schema(description = "Preço por passageiro (0.00 se for gratuita)", example = "5.50")
-        BigDecimal price
-) { }
+        BigDecimal price,
+
+        @Schema(description = "Cadastra uma carona recorrente (Que se repete toda semana) - Não necessário se a carona não for recorrente", defaultValue = "false")
+        boolean isRecurrent,
+
+        @Schema(description = "Dia da semana que essa carona ocorrerá - É obrigatório caso isRecurrent seja verdadeiro", example = "MONDAY")
+        DayOfWeek recurrentDay,
+
+        @Schema(description = "Horário em que a carona recorrente acontecerá - É obrigatório caso isRecurrent seja verdadeiro", example = "14:30:00")
+        @JsonFormat(pattern = "HH:mm:ss")
+        LocalTime recurrencyDeparture
+) {
+        public static RideRequestDTO fromRideForRecurrency(Ride ride) {
+                return new RideRequestDTO(
+                        ride.getVehicle().getId(),
+                        ride.getOrigin(),
+                        ride.getDestination(),
+                        ride.getPickupPoints(),
+                        ride.getDepartureTime().plusWeeks(1),
+                        ride.getAvailableSeats(),
+                        ride.getPrice(),
+                        ride.isRecurrent(),
+                        ride.getRecurrentDay(),
+                        ride.getRecurrencyDeparture()
+                );
+        }
+}
