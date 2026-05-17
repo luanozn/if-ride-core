@@ -58,4 +58,6 @@ public interface RideRepository extends JpaRepository<Ride, String> {
             "(:includeFull = true OR r.availableSeats > 0) AND " +
             "r.departureTime > CURRENT_TIMESTAMP")
     Page<Ride> findAvailableRides(String origin, String destination, boolean includeFull, Pageable pageable);
+
+    boolean existsByDriverIdAndRideStatus(String driverId, RideStatus status);
 }

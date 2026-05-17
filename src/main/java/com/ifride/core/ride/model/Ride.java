@@ -7,7 +7,9 @@ import com.ifride.core.shared.model.BaseEntity;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
@@ -38,6 +40,16 @@ public class Ride extends BaseEntity {
 
     @Column(name = "departure_time")
     private LocalDateTime departureTime;
+
+    @Column(name = "is_recurrent")
+    private boolean isRecurrent = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "recurrent_day")
+    private DayOfWeek recurrentDay;
+
+    @Column(name="recurrency_departure")
+    private LocalTime recurrencyDeparture;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
