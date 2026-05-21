@@ -60,6 +60,24 @@ public class RideController {
         return rideService.createRide(author.getId(), rideRequestDTO);
     }
 
+    @Operation(
+            summary = "Iniciar uma carona previamente ofertada",
+            description = """
+                    Inicia uma carona, alterando seu status para em andamento.
+                
+                    **Regras de Negócio (RN):**
+                    * **Propriedade:** Apenas o motorista criador da oferta pode iniciá-la.
+                    * **Status da Carona:** A carona não pode estar previamente iniciada ou finalizada.
+                    * **Unicidade:** O motorista não pode possuir outra carona em andamento.
+                    * **Antecedência:** O início só é permitido a partir de 30 minutos antes do horário de partida planejado ($t_{agora} \\ge t_{partida} - 30\\text{ min}$).
+                """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Carona iniciada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "O usuário não é o dono da carona ou a carona já está em andamento/finalizada"),
+            @ApiResponse(responseCode = "403", description = "Usuário sem permissão de motorista"),
+            @ApiResponse(responseCode = "409", description = "Motorista já possui carona em andamento ou tentativa de início com mais de 30 minutos de antecedência")
+    })
     @PatchMapping("/{rideId}/start")
     @PreAuthorize("hasRole('DRIVER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -67,6 +85,23 @@ public class RideController {
         rideService.startRide(rideId, author);
     }
 
+    @Operation(
+            summary = "Finalizar uma carona em andamento",
+            description = """
+                    Finaliza uma carona, alterando seu status.
+                
+                    **Regras de Negócio (RN):**
+                    * **Propriedade:** Apenas o motorista criador da carona pode finalizá-la.
+                    * **Status da Carona:** A carona deve estar obrigatoriamente em andamento (`IN_PROGRESS`).
+                    * **Recorrência (Assíncrono):** A finalização dispara um evento que cria automaticamente uma nova oferta de carona para a próxima data correspondente, caso a carona original seja recorrente.
+                """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Carona finalizada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Usuário não é o dono da carona ou a carona não está em andamento"),
+            @ApiResponse(responseCode = "403", description = "Usuário sem permissão de motorista"),
+            @ApiResponse(responseCode = "409", description = "Conflito nas validações de estado da carona")
+    })
     @PatchMapping("/{rideId}/finish")
     @PreAuthorize("hasRole('DRIVER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
