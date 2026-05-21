@@ -24,7 +24,7 @@ public record RideRequestDTO(
         @Schema(description = "Lista de pontos onde o motorista pode parar no caminho", example = "[\"Supermercado União\", \"Hotel Carvalho\", \"Trevo\"]")
         List<String> pickupPoints,
 
-        @Schema(description = "Data e hora da partida (deve ser no futuro)", example = "2026-02-20T14:30:00")
+        @Schema(description = "Data e hora da partida (deve ser no futuro) (Opcional se a carona for recorrente)", example = "2026-02-20T14:30:00")
         LocalDateTime departureTime,
 
         @Schema(description = "Número de vagas disponíveis (não pode exceder a capacidade do veículo)", example = "3")
