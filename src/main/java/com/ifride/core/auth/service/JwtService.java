@@ -23,7 +23,7 @@ public class JwtService {
     public LoginResponseDTO generateLoginResponse(User user) {
         var expirationDate = generateExpirationDate();
         var token = generateToken(user, expirationDate);
-        return new LoginResponseDTO(token, user.getEmail(), expirationDate.toEpochMilli());
+        return new LoginResponseDTO(token, user.getEmail(), expirationDate.toEpochMilli(), user.getId(), user.getName());
     }
 
     public String generateToken(User user, Instant expirationDate) {

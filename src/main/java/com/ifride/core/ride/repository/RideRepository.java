@@ -60,4 +60,6 @@ public interface RideRepository extends JpaRepository<Ride, String> {
     Page<Ride> findAvailableRides(String origin, String destination, boolean includeFull, Pageable pageable);
 
     boolean existsByDriverIdAndRideStatus(String driverId, RideStatus status);
+
+    Page<Ride> findByDriverIdOrderByDepartureTimeDesc(String driverId, Pageable pageable);
 }

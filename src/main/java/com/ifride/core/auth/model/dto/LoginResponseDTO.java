@@ -10,5 +10,11 @@ public record LoginResponseDTO(
         String login,
 
         @Schema(description = "Timestamp de expiração do token")
-        Long expireDate
+        Long expireDate,
+
+        @Schema(description = "ID do usuário logado")
+        String id,
+
+        @Schema(description = "Nome do usuário logado", example = "Trillian")
+        String name
 ) {}
