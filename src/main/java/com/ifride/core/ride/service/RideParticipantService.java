@@ -16,8 +16,10 @@ import com.ifride.core.ride.service.validators.RideParticipantValidator;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import jakarta.persistence.OptimisticLockException;
-import jakarta.transaction.Transactional;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
@@ -45,13 +47,14 @@ public class RideParticipantService {
         var rideParticipant = new RideParticipant();
         rideParticipant.setPassenger(author);
         rideParticipant.setRide(ride);
+        rideParticipant.setPickupPoint(dto.pickupPoint());
 
         repository.save(rideParticipant);
         return RideParticipantResponseDTO.from(rideParticipant);
     }
 
     @Transactional
-    @Retryable(retryFor = OptimisticLockException.class)
+    @Retryable(retryFor = {OptimisticLockException.class, ObjectOptimisticLockingFailureException.class})
     public void acceptParticipation(String participantId, String driverId) {
         var participant = getById(participantId);
 
@@ -59,19 +62,30 @@ public class RideParticipantService {
 
         rideValidator.validateAcceptance(participant, driverId);
 
+        // Resolve lazy associations antes do decrementAvailableSeats limpar o EntityManager
+        String passengerId = participant.getPassenger().getId();
+        String passengerName = participant.getPassenger().getName();
+        String rideId = ride.getId();
+        String rideDriverId = ride.getDriver().getId();
+        String driverName = ride.getDriver().getUser().getName();
+        LocalDateTime departureTime = ride.getDepartureTime();
+
         rideService.decrementAvailableSeats(ride);
 
         participant.setParticipantStatus(ParticipantStatus.ACCEPTED);
         repository.save(participant);
 
-        if (rideService.getCurrentAvailableSeats(ride.getId()) == 0) {
-            rideService.updateStatus(ride.getId(), RideStatus.FULL);
+        if (rideService.getCurrentAvailableSeats(rideId) == 0) {
+            rideService.updateStatus(rideId, RideStatus.FULL);
         }
 
         eventPublisher.publishEvent(new RideParticipationAcceptedEvent(
-                participant.getPassenger().getId(),
-                ride.getId(),
-                ride.getDepartureTime()
+                passengerId,
+                passengerName,
+                rideId,
+                rideDriverId,
+                driverName,
+                departureTime
         ));
     }
 
@@ -133,6 +147,12 @@ public class RideParticipantService {
         }
 
         return repository.findByRideIdAndParticipantStatusIn(rideId, statuses, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<RideParticipantResponseDTO> findMyParticipations(String passengerId, Pageable pageable) {
+        return repository.findByPassengerIdOrderByRequestedAtDesc(passengerId, pageable)
+                .map(RideParticipantResponseDTO::from);
     }
 
     private RideParticipant getById(String id) {

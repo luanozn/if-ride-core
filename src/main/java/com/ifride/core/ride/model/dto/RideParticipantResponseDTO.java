@@ -7,6 +7,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
 public record RideParticipantResponseDTO(
+        @Schema(description = "ID da participação")
+        String id,
+
         @Schema(description = "Dados completos da carona solicitada")
         RideResponseDTO ride,
 
@@ -22,6 +25,7 @@ public record RideParticipantResponseDTO(
 
     public static RideParticipantResponseDTO from(RideParticipant rideParticipant) {
         return new RideParticipantResponseDTO(
+                rideParticipant.getId(),
                 RideResponseDTO.fromEntity(rideParticipant.getRide()),
                 UserDto.fromEntity(rideParticipant.getPassenger()),
                 rideParticipant.getParticipantStatus(),

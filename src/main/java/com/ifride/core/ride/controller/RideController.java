@@ -146,6 +146,16 @@ public class RideController {
         return rideParticipantService.findBy(author, rideId, statuses, pageable);
     }
 
+    @Operation(summary = "Busca as caronas criadas pelo motorista logado")
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('DRIVER')")
+    public Page<RideResponseDTO> getMyRides(
+            @AuthenticationPrincipal User author,
+            @ParameterObject @PageableDefault(sort = "departureTime", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return rideService.findMyRidesAsDriver(author.getId(), pageable);
+    }
+
     @Operation(
             summary = "Busca caronas disponíveis",
             description = "Filtra caronas por origem e destino. Por padrão, oculta caronas lotadas."

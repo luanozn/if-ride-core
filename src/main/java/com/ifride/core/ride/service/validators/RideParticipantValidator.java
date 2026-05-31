@@ -26,7 +26,6 @@ public class RideParticipantValidator {
         checkRideAvailability(ride);
         checkTimeConflict(author, ride.getDepartureTime());
         checkOwnership(author, ride);
-        checkPickupPointInRide(ride, pickupPoint);
     }
 
     public void validateAcceptance(RideParticipant participant, String driverId) {
@@ -77,9 +76,9 @@ public class RideParticipantValidator {
     }
 
     private void checkPickupPointInRide(Ride ride, String pickupPoint) {
-        boolean pointExists = ride.getPickupPoints().contains(pickupPoint);
+        if (ride.getPickupPoints().isEmpty()) return;
 
-        if (!pointExists) {
+        if (!ride.getPickupPoints().contains(pickupPoint)) {
             throw new BadRequestException("O ponto de embarque '" + pickupPoint + "' não faz parte desta carona.");
         }
     }

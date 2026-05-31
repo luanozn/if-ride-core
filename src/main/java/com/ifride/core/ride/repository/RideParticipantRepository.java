@@ -62,5 +62,7 @@ public interface RideParticipantRepository extends JpaRepository<RideParticipant
 
     Page<RideParticipant> findByRideId(String rideId, Pageable pageable);
 
+    Page<RideParticipant> findByPassengerIdOrderByRequestedAtDesc(String passengerId, Pageable pageable);
+
     List<ParticipantStatus> status(Status status);
 }

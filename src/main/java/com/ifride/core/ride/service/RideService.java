@@ -89,6 +89,12 @@ public class RideService {
                 .map(RideResponseDTO::fromEntity);
     }
 
+    @Transactional(readOnly = true)
+    public Page<RideResponseDTO> findMyRidesAsDriver(String driverId, Pageable pageable) {
+        return rideRepository.findByDriverIdOrderByDepartureTimeDesc(driverId, pageable)
+                .map(RideResponseDTO::fromEntity);
+    }
+
     @Transactional
     public void updateStatus(String rideId, RideStatus newStatus) {
         rideRepository.updateStatus(rideId, newStatus);
