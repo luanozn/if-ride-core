@@ -9,6 +9,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 
 public record DriverApplicationSummaryDTO(
+        @Schema(description = "Identificador único da aplicação")
+        String id,
+
         @Schema(description = "Dados resumidos do solicitante")
         UserDto requester,
 
@@ -35,6 +38,7 @@ public record DriverApplicationSummaryDTO(
         var reviewedByDto = application.getReviewedBy() != null ? UserDto.fromEntity(application.getReviewedBy()) : null;
 
         return new DriverApplicationSummaryDTO(
+                application.getId(),
                 UserDto.fromEntity(application.getRequester()),
                 application.getApplicationStatus(),
                 application.getCnhNumber(),
