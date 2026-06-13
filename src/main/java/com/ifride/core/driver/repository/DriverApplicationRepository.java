@@ -16,12 +16,12 @@ public interface DriverApplicationRepository extends JpaRepository<DriverApplica
     List<DriverApplication> findAllByRequesterOrderByCreatedAtDesc(User requester);
 
     @Query("""
-        SELECT app FROM DriverApplication app
-        JOIN FETCH app.requester
-        WHERE (:email IS NULL OR app.requester.email LIKE CONCAT(:email, '%'))
-          AND (:name IS NULL OR app.requester.name LIKE CONCAT(:name, '%'))
-          AND (COALESCE(:statuses, NULL) IS NULL OR app.status IN :statuses)
-    """)
+    SELECT app FROM DriverApplication app
+    JOIN FETCH app.requester
+    WHERE (:email = '' OR app.requester.email LIKE CONCAT(:email, '%'))
+      AND (:name = '' OR app.requester.name LIKE CONCAT(:name, '%'))
+      AND (app.applicationStatus IN :statuses)
+""")
     Page<DriverApplication> findApplications(
             @Param("statuses") List<DriverApplicationStatus> statuses,
             @Param("email") String email,

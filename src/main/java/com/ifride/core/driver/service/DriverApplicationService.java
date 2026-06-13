@@ -12,6 +12,7 @@ import com.ifride.core.driver.service.validators.DriverApplicationValidator;
 import com.ifride.core.events.models.DriverApplicationApprovedEvent;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import jakarta.transaction.Transactional;
+import java.util.Arrays;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -74,9 +75,21 @@ public class DriverApplicationService {
         repository.delete(application);
     }
 
-    public Page<DriverApplicationSummaryDTO> findBy(List<DriverApplicationStatus> statuses, String email, String name, Pageable pageable) {
-        var applications = repository.findApplications(statuses, email, name, pageable);
-        return applications.map(DriverApplicationSummaryDTO::fromEntity);
+    public Page<DriverApplicationSummaryDTO> findBy(
+            List<DriverApplicationStatus> statuses,
+            String email,
+            String name,
+            Pageable pageable) {
+
+        String safeEmail = (email == null || email.isBlank()) ? "" : email;
+        String safeName = (name == null || name.isBlank()) ? "" : name;
+
+        List<DriverApplicationStatus> safeStatuses = (statuses == null || statuses.isEmpty())
+                ? Arrays.asList(DriverApplicationStatus.values())
+                : statuses;
+
+        return repository.findApplications(safeStatuses, safeEmail, safeName, pageable)
+                .map(DriverApplicationSummaryDTO::fromEntity);
     }
 
     private DriverApplication changeDriverApplicationStatus(String userId, DriverApplicationStatus status, User author, String rejectionReason) {
