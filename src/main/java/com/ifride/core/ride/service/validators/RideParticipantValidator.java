@@ -26,6 +26,7 @@ public class RideParticipantValidator {
         checkRideAvailability(ride);
         checkTimeConflict(author, ride.getDepartureTime());
         checkOwnership(author, ride);
+        checkPickupPointInRide(ride, pickupPoint);
     }
 
     public void validateAcceptance(RideParticipant participant, String driverId) {

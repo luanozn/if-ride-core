@@ -34,6 +34,17 @@ public class DriverApplicationController {
     private final UserService userService;
     private final DriverApplicationService driverApplicationService;
 
+    @Operation(summary = "Retorna a última solicitação do passageiro logado")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Solicitação encontrada"),
+            @ApiResponse(responseCode = "404", description = "Nenhuma solicitação encontrada para o usuário")
+    })
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('PASSENGER')")
+    public DriverApplicationSummaryDTO getMyApplication(@AuthenticationPrincipal User author) {
+        return driverApplicationService.getMyApplication(author);
+    }
+
     @Operation(
             summary = "Inicia um pedido para tornar-se motorista",
             description = "Valida se o usuário já não é motorista e se não possui pedidos pendentes ou aprovados ativos."
