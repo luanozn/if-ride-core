@@ -28,4 +28,8 @@ public class UserService {
         return save(user);
     }
 
+    public void deleteAccount(User user) {
+        repository.delete(user);
+    }
+
 }

@@ -28,8 +28,10 @@ public class RideValidator {
     public void validateRideUpdate(Ride ride, User requester, RideStatus newStatus) {
         checkOwnership(ride, requester);
         checkStatus(ride, newStatus);
-        checkRideStartUnicity(ride);
-        checkMinimumDepartureTime(ride);
+        if (newStatus == RideStatus.IN_PROGRESS) {
+            checkRideStartUnicity(ride);
+            checkMinimumDepartureTime(ride);
+        }
     }
 
     public void validateRideCreation(Driver driver, Vehicle vehicle, RideRequestDTO rideRequest) {
@@ -79,6 +81,16 @@ public class RideValidator {
 
         if(!rideRequest.isRecurrent() && Objects.isNull(rideRequest.departureTime())) {
             throw new BadRequestException("A data de partida é obrigatória se a carona não é recorrente!");
+        }
+    }
+
+    public void validateDisableRecurrence(Ride ride, User requester) {
+        checkOwnership(ride, requester);
+        if (!ride.isRecurrent()) {
+            throw new BadRequestException("Esta carona não é recorrente.");
+        }
+        if (ride.getRideStatus() == RideStatus.FINISHED || ride.getRideStatus() == RideStatus.CANCELLED) {
+            throw new BadRequestException("Não é possível alterar uma carona já finalizada ou cancelada.");
         }
     }
 
