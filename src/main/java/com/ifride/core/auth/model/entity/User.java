@@ -21,6 +21,7 @@ public class User extends BaseEntity implements UserDetails {
     private String name;
     private String email;
     private String password;
+    private String cpf;
 
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified;

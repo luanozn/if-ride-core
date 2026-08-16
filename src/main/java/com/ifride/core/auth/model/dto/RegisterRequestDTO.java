@@ -12,6 +12,6 @@ public record RegisterRequestDTO(
         @Schema(description = "Nome completo", example = "Tricia McMillan")
         String name,
 
-        @Schema(description = "CPF ou documento acadêmico", example = "123.456.789-00")
+        @Schema(description = "CPF", example = "123.456.789-00")
         String documentNumber
 ) {}

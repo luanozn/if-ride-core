@@ -2,6 +2,7 @@ package com.ifride.core.auth.model.dto;
 
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.model.enums.Role;
+import com.ifride.core.shared.utils.CpfViewConverter;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record UserDto(
@@ -14,6 +15,9 @@ public record UserDto(
         @Schema(description = "E-mail institucional ou pessoal", example = "trillian@ifride.com")
         String email,
 
+        @Schema(description = "Cadastro de pessoa física", example = "123.456.789-00")
+        String cpf,
+
         @Schema(description = "Papel/Nível de acesso do usuário no sistema", example = "DRIVER")
         Role role
 ) {
@@ -23,6 +27,7 @@ public record UserDto(
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
+                CpfViewConverter.convert(user.getCpf()),
                 user.getRole()
         );
     }

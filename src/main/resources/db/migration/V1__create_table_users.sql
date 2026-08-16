@@ -1,20 +1,22 @@
-CREATE TABLE users (
-   id VARCHAR(36) PRIMARY KEY,
-   status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+CREATE TABLE users
+(
+    id             VARCHAR(36) PRIMARY KEY,
+    status         VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
 
-   name VARCHAR(255) NOT NULL,
-   email VARCHAR(255) NOT NULL UNIQUE,
-   password VARCHAR(255) NOT NULL,
-   email_verified BOOLEAN NOT NULL DEFAULT FALSE,
-   role VARCHAR(50) NOT NULL,
+    name           VARCHAR(255) NOT NULL,
+    email          VARCHAR(255) NOT NULL UNIQUE,
+    cpf            VARCHAR(11)  NOT NULL UNIQUE,
+    password       VARCHAR(255) NOT NULL,
+    email_verified BOOLEAN      NOT NULL DEFAULT FALSE,
+    role           VARCHAR(50)  NOT NULL,
 
-   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-   created_by VARCHAR(255),
-   updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-   updated_by VARCHAR(255),
-   version            BIGINT NOT NULL DEFAULT 0
+    created_at     TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by     VARCHAR(255),
+    updated_at     TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by     VARCHAR(255),
+    version        BIGINT       NOT NULL DEFAULT 0
 );
 
-CREATE UNIQUE INDEX idx_users_email ON users(email);
+CREATE UNIQUE INDEX idx_users_email ON users (email);
 CREATE INDEX idx_users_name_prefix ON users (name varchar_pattern_ops);
 CREATE INDEX idx_users_status on users (status);
