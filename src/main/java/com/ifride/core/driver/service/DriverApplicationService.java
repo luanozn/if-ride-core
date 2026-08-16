@@ -75,6 +75,12 @@ public class DriverApplicationService {
         repository.delete(application);
     }
 
+    public DriverApplicationSummaryDTO getMyApplication(User requester) {
+        return getLastDriverApplicationByUser(requester.getId())
+                .map(DriverApplicationSummaryDTO::fromEntity)
+                .orElseThrow(() -> new NotFoundException("Nenhuma solicitação encontrada para o usuário."));
+    }
+
     public Page<DriverApplicationSummaryDTO> findBy(
             List<DriverApplicationStatus> statuses,
             String email,

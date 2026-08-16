@@ -146,6 +146,22 @@ public class RideController {
         return rideParticipantService.findBy(author, rideId, statuses, pageable);
     }
 
+    @Operation(
+            summary = "Desativa a recorrência de uma carona",
+            description = "Impede que a carona gere uma nova ocorrência automática ao ser finalizada."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Recorrência desativada"),
+            @ApiResponse(responseCode = "400", description = "Carona não é recorrente, ou já foi finalizada/cancelada"),
+            @ApiResponse(responseCode = "403", description = "Usuário não é o dono da carona")
+    })
+    @PatchMapping("/{rideId}/disable-recurrence")
+    @PreAuthorize("hasRole('DRIVER')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void disableRecurrence(@AuthenticationPrincipal User author, @PathVariable String rideId) {
+        rideService.disableRecurrence(rideId, author);
+    }
+
     @Operation(summary = "Busca as caronas criadas pelo motorista logado")
     @GetMapping("/me")
     @PreAuthorize("hasRole('DRIVER')")

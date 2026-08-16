@@ -125,4 +125,12 @@ public class RideService {
             throw new ConflictException("Não foi possível devolver a vaga: Limite do veículo atingido.");
         }
     }
+
+    @Transactional
+    public void disableRecurrence(String rideId, User requester) {
+        Ride ride = findById(rideId);
+        rideValidator.validateDisableRecurrence(ride, requester);
+        ride.setRecurrent(false);
+        rideRepository.save(ride);
+    }
 }
