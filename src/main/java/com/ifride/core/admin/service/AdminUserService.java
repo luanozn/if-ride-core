@@ -6,9 +6,10 @@ import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.repository.UserRepository;
 import com.ifride.core.auth.service.converter.UserConverter;
-import com.ifride.core.driver.model.dto.DriverApplicationRequestDTO;
 import com.ifride.core.driver.service.DriverService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -26,5 +27,9 @@ public class AdminUserService {
     public User registerDriverDirectly(DriverDirectlyDTO driverDirectlyDTO) {
         driverService.saveFromDTO(driverDirectlyDTO.driverInformation());
         return this.repository.save(userConverter.from(driverDirectlyDTO.userInfo(), Role.DRIVER));
+    }
+
+    public Page<User> findAll(Role role, Pageable pageable) {
+        return this.repository.findAllByRole(role, pageable);
     }
 }
