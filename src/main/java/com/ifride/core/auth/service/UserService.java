@@ -5,6 +5,8 @@ import com.ifride.core.shared.exceptions.api.NotFoundException;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 
@@ -32,4 +34,11 @@ public class UserService {
         repository.delete(user);
     }
 
+    public Page<User> findAllByRole(Role role, Pageable pageable) {
+        return repository.findAllByRole(role, pageable);
+    }
+
+    public Page<User> findAllByRoleAndDocument(Role role, String document, Pageable pageable) {
+        return repository.findAllByRoleAndCpf(role, document, pageable);
+    }
 }
