@@ -9,6 +9,7 @@ import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.repository.UserRepository;
 import com.ifride.core.auth.service.converter.UserConverter;
+import com.ifride.core.auth.utils.UserValidator;
 import com.ifride.core.events.models.UserRegisteredEvent;
 import com.ifride.core.shared.exceptions.api.BadRequestException;
 import com.ifride.core.shared.exceptions.api.ConflictException;
@@ -23,21 +24,11 @@ public class AuthService {
 
     private final UserRepository repository;
     private final UserConverter userConverter;
+    private final UserValidator userValidator;
     private final ApplicationEventPublisher eventPublisher;
-    private final CPFValidator cpfValidator = new CPFValidator();
 
     public User register(RegisterRequestDTO registerRequest) {
-        try {
-            cpfValidator.assertValid(convertFormatted(registerRequest.documentNumber()));
-        } catch (InvalidStateException e) {
-            throw new BadRequestException("O CPF inserido é inválido.");
-        }
-
-        if (repository.existsUserByEmail(registerRequest.email())) {
-            throw new ConflictException("Não é possível cadastrar o usuário. O email %s já está cadastrado!", registerRequest.email());
-        } else if (repository.existsUserByCpf(convertFormatted(registerRequest.documentNumber()))) {
-            throw new ConflictException("Não é possível cadastrar o usuário. O CPF %s já está cadastrado", CpfViewConverter.convert(registerRequest.documentNumber()));
-        }
+        userValidator.validateDocument(registerRequest);
 
         var saved = repository.save(userConverter.from(registerRequest, Role.PASSENGER));
         eventPublisher.publishEvent(new UserRegisteredEvent(saved));
