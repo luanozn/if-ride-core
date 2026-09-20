@@ -1,5 +1,5 @@
 import {Construct} from 'constructs';
-import {FederatedPrincipal, ManagedPolicy, OpenIdConnectProvider, Role} from "aws-cdk-lib/aws-iam";
+import {Effect, FederatedPrincipal, ManagedPolicy, OpenIdConnectProvider, PolicyStatement, Role} from "aws-cdk-lib/aws-iam";
 import {CfnOutput, Duration, Stack, StackProps} from "aws-cdk-lib";
 
 export class GithubPipelineStack extends Stack {
@@ -30,6 +30,16 @@ export class GithubPipelineStack extends Stack {
         });
 
         githubRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));
+
+        githubRole.addToPolicy(new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: [
+                'ssm:SendCommand',
+                'ssm:GetCommandInvocation',
+                'ssm:ListCommandInvocations',
+            ],
+            resources: ['*'],
+        }));
 
         new CfnOutput(this, 'GitHubRoleArn', { value: githubRole.roleArn });
     }
