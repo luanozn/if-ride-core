@@ -57,6 +57,5 @@ export class DatabaseStack extends Stack {
             removalPolicy: RemovalPolicy.DESTROY,
             deletionProtection: false,
         });
-
     }
 }

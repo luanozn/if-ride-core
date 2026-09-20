@@ -1,7 +1,6 @@
 import {App} from "aws-cdk-lib/core";
 import {VpcStack} from "./lib/vpc.stack";
 import {ConfigProps} from "./lib/utils/config-props";
-import {AssetsStack} from "./lib/assets.stack";
 import {ServerStack} from "./lib/server.stack";
 import {DatabaseStack} from "./lib/database.stack";
 import {GithubPipelineStack} from "./lib/github-pipeline.stack";
@@ -21,6 +20,7 @@ const configProps: ConfigProps = {
     },
     parameterNames: {
         databaseUsername: "database.username",
+        secret: "api.security.token.secret"
     }
 }
 
@@ -28,14 +28,10 @@ new GithubPipelineStack(app, "IfRideFoundation", { env })
 
 const vpcStack = new VpcStack(app, "IfRideNetwork", configProps);
 
-const assets = new AssetsStack(app, "IfRideStaticAssets", configProps);
-
 const server = new ServerStack(app, "IfRideServer", {
     ...configProps,
     resources: {
         vpc: vpcStack.vpc,
-        bucket: assets.assetsBucket,
-        ecrRepo: assets.ecrRepo,
     }
 });
 
@@ -43,15 +39,16 @@ const database = new DatabaseStack(app, "IfRidePersistence", {
     ...configProps,
     resources: {
         vpc: vpcStack.vpc,
+        instance: server.instance,
         securityGroup: server.securityGroup,
-
     }
 });
 
 const gateway = new ApiGatewayStack(app, "IfRideGateway", {
     ...configProps,
     resources: {
-        instance: server.instance
+        instance: server.instance,
+        eip: server.eIP
     }
 });
 

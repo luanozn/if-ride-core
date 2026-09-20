@@ -1,7 +1,8 @@
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import {Stack} from 'aws-cdk-lib';
+import {CfnOutput, RemovalPolicy, Stack} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {
+    CfnEIP,
     IInstance,
     Instance,
     InstanceType, ISecurityGroup,
@@ -9,46 +10,64 @@ import {
     MachineImage,
     SecurityGroup,
     SubnetType,
-    Vpc
 } from "aws-cdk-lib/aws-ec2";
-import {ParameterUtils} from "./utils/parameter-utils";
 import {ConfigProps} from "./utils/config-props";
-import {Bucket} from "aws-cdk-lib/aws-s3";
-import {Effect, PolicyStatement, Role, ServicePrincipal} from "aws-cdk-lib/aws-iam";
+import {Effect, ManagedPolicy, PolicyStatement, Role, ServicePrincipal} from "aws-cdk-lib/aws-iam";
 import {SSM_PREFIX} from "./utils/constants";
 import {EmailIdentity, Identity} from "aws-cdk-lib/aws-ses";
+import {Repository} from "aws-cdk-lib/aws-ecr";
 
 export class ServerStack extends Stack {
     instance: IInstance;
     securityGroup: ISecurityGroup;
+    eIP: CfnEIP;
 
     constructor(scope: Construct, id: string, props: ConfigProps) {
         super(scope, id, props);
 
         const vpc = props.resources!.vpc!;
-        const bucket = props.resources!.bucket!;
-
 
         const securityGroup = new SecurityGroup(this, 'InstanceSG', {
             vpc,
-            description: 'Permitir acesso HTTP e SSH',
+            description: 'Permitir acesso HTTP',
             allowAllOutbound: true,
         });
 
         securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(8080), 'API Spring Boot');
-        securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(22), 'Acesso SSH');
-
-        const key = KeyPair.fromKeyPairName(this, 'IfRideKeyPair', 'if-ride-key');
 
         const ec2Role = new Role(this, 'IFRideEc2Role', {
             assumedBy: new ServicePrincipal('ec2.amazonaws.com'),
             description: 'Role para a instância EC2 acessar SSM Parameter Store e SES',
         });
 
+        ec2Role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'))
+
         ec2Role.addToPolicy(new PolicyStatement({
             effect: Effect.ALLOW,
             actions: ['ssm:GetParametersByPath', 'ssm:GetParameter'],
             resources: [`arn:aws:ssm:${this.region}:${this.account}:parameter${SSM_PREFIX}/*`],
+        }));
+
+        ec2Role.addToPolicy(new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['kms:Decrypt'],
+            resources: [`arn:aws:kms:${this.region}:${this.account}:key/*`],
+            conditions: {
+                StringEquals: {
+                    'kms:ViaService': [
+                        `ssm.${this.region}.amazonaws.com`,
+                        `secretsmanager.${this.region}.amazonaws.com`,
+                    ],
+                },
+            },
+        }));
+
+        ec2Role.addToPolicy(new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['secretsmanager:GetSecretValue'],
+            resources: [
+                `arn:aws:secretsmanager:${this.region}:${this.account}:secret:${SSM_PREFIX}/*`,
+            ],
         }));
 
         const emailIdentity = new EmailIdentity(this, 'IFGoianoIdentity', {
@@ -68,6 +87,18 @@ export class ServerStack extends Stack {
             }
         }));
 
+        const ecrRepo = new Repository(this, 'IfRideCoreRepo', {
+            repositoryName: 'if-ride-core',
+            removalPolicy: RemovalPolicy.DESTROY,
+            emptyOnDelete: true,
+            lifecycleRules: [
+                {
+                    maxImageCount: 1,
+                    description: 'Limpeza de imagens antigas para economia de custo',
+                },
+            ],
+        });
+
         const instance = new Instance(this, 'IfRideServer', {
             vpc,
             instanceType: InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
@@ -75,11 +106,11 @@ export class ServerStack extends Stack {
             securityGroup: securityGroup,
             role: ec2Role,
             vpcSubnets: {subnetType: SubnetType.PUBLIC},
-            keyPair: key
         });
 
-        bucket.grantReadWrite(instance)
-        props.resources?.ecrRepo!.grantPull(instance)
+        const elasticIp = new CfnEIP(this, 'ElasticIp', { instanceId: instance.instanceId, domain: "vpc" })
+
+        ecrRepo!.grantPull(instance)
 
         instance.addUserData(
             'sudo dnf update -y',
@@ -91,5 +122,17 @@ export class ServerStack extends Stack {
 
         this.instance = instance;
         this.securityGroup = securityGroup;
+        this.eIP = elasticIp;
+
+        new CfnOutput(this, 'InstanceId', {
+            value: instance.instanceId,
+            exportName: 'IfRideInstanceId',
+            description: 'Instance ID para uso do pipeline via SSM',
+        });
+
+        new CfnOutput(this, 'ElasticIpPublicIp', {
+            value: elasticIp.attrPublicIp,
+            exportName: 'IfRideElasticIp',
+        });
     }
 }
