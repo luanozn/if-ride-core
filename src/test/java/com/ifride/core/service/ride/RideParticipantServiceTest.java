@@ -59,6 +59,7 @@ class RideParticipantServiceTest {
     void setUp() {
         passenger = new User();
         passenger.setId("passenger-1");
+        passenger.setCpf("36900423051");
 
         User driverUser = new User();
         driverUser.setId("driver-1");

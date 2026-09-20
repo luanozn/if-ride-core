@@ -51,6 +51,7 @@ class DriverApplicationServiceTest {
         User author = new User();
         User user = new User();
         user.setId("user-123");
+        user.setCpf("36900423051");
         DriverApplicationRequestDTO dto = new DriverApplicationRequestDTO("123456", "666", CnhCategory.A, LocalDate.now().plusYears(1));
 
         when(userService.findById(user.getId())).thenReturn(user);
@@ -68,6 +69,7 @@ class DriverApplicationServiceTest {
     void createDriverApplication_ThrowsForbidden_WhenValidatorFails() {
         User author = new User();
         User user = new User();
+        user.setCpf("36900423051");
         DriverApplicationRequestDTO dto = new DriverApplicationRequestDTO("123", "B", CnhCategory.A, LocalDate.now());
 
         doThrow(new ForbiddenException("Somente o próprio usuário"))
@@ -85,7 +87,9 @@ class DriverApplicationServiceTest {
     void approveDriverApplication_Success() {
         String userId = "user-id-123";
         User author = new User();
+        author.setCpf("36900423051");
         User requester = new User();
+        requester.setCpf("36900423051");
         DriverApplication pendingApp = new DriverApplication();
         pendingApp.setApplicationStatus(DriverApplicationStatus.PENDING);
         pendingApp.setRequester(requester);
