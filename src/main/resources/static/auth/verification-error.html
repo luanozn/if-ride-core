@@ -10,7 +10,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             background-color: #f8f0f0;
         }
@@ -20,20 +20,60 @@
             background-color: white;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            max-width: 420px;
+            width: 90%;
         }
         p {
             color: #333;
             font-size: 1.1em;
         }
-
         h1 {
             color: #dc3545;
         }
-
         .icon {
             font-size: 4em;
             color: #dc3545;
         }
+        form {
+            margin-top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        input[type="email"] {
+            padding: 12px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        input[type="email"]:focus {
+            outline: none;
+            border-color: #dc3545;
+        }
+        button {
+            padding: 12px;
+            font-size: 1em;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover:not(:disabled) {
+            background-color: #b02a37;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 12px;
+            font-size: 0.95em;
+            min-height: 1.2em;
+        }
+        .status.success { color: #198754; }
+        .status.error { color: #dc3545; }
     </style>
 </head>
 <body>
@@ -42,17 +82,48 @@
 
     <h1>Ocorreu um Problema!</h1>
     <p id="dynamic-error-message"></p>
-    <p>Por favor, tente solicitar um novo link de verificação pelo aplicativo.</p>
+
+    <p>Informe seu email para receber um novo link de verificação:</p>
+
+    <form id="resend-form" method="POST" action="resend-verification-form">
+        <label for="email-input">Email</label>
+        <input type="email" name="email" id="email-input" required placeholder="seu@email.com" />
+        <button type="submit" id="submit-btn">Reenviar email</button>
+        <div class="status" id="status-message"></div>
+    </form>
+</div>
+
 <script>
     window.onload = function() {
         const params = new URLSearchParams(window.location.search);
         const errorMessage = params.get('errorMessage');
-        const messageElement = document.getElementById('dynamic-error-message');
         if (errorMessage) {
-            messageElement.textContent = errorMessage;
+            document.getElementById('dynamic-error-message').textContent = errorMessage;
+        }
+
+        const email = params.get('email');
+        if (email) {
+            document.getElementById('email-input').value = email;
         }
     };
+
+    document.getElementById('resend-form').addEventListener('submit', function(event) {
+        const btn = document.getElementById('submit-btn');
+        const status = document.getElementById('status-message');
+
+        const email = document.getElementById('email-input').value.trim();
+        if (!email) {
+            event.preventDefault();
+            status.textContent = 'Por favor, informe seu email.';
+            status.className = 'status error';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Enviando...';
+        status.textContent = '';
+        status.className = 'status';
+    });
 </script>
-</div>
 </body>
 </html>
