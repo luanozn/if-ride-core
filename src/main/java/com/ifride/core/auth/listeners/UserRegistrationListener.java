@@ -15,20 +15,11 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class UserRegistrationListener {
 
     private final EmailVerificationTokenService tokenService;
-    private final EmailService emailService;
-
-    @Value("${api.gateway.url}")
-    private String apiGatewayUrl;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleUserRegisteredEvent(UserRegisteredEvent event) {
         var user = event.user();
-        var actionToken = tokenService.generateToken(user);
-
-        String verificationUrl = apiGatewayUrl + "/v1/auth/verify-email?token=" + actionToken.getToken();
-        String htmlBody = "<h1>Verifique seu e-mail</h1><p>Clique <a href=\"" + verificationUrl + "\">aqui</a> para validar sua conta no IF Ride.</p>";
-
-        emailService.sendHtmlEmail(user.getEmail(), "Verificação de Conta - IF Ride", htmlBody);
+        tokenService.generateTokenAndSendEmail(user);
     }
 }
