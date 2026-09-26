@@ -17,6 +17,16 @@ public class AwsEmailService implements EmailService {
 
     @Value("${aws.ses.email}")
     private String from;
+    @Value("${api.gateway.url}")
+    private String apiGatewayUrl;
+
+    @Override
+    public void sendEmailVerificationEmail(String to, String token) {
+        String verificationUrl = apiGatewayUrl + "/v1/auth/verify-email?token=" + token;
+        String htmlBody = "<h1>Verifique seu e-mail</h1><p>Clique <a href=\"" + verificationUrl + "\">aqui</a> para validar sua conta no IF Ride.</p>";
+
+        sendHtmlEmail(to, "Verificação de Conta - IF Ride", htmlBody);
+    }
 
     @Override
     public void sendHtmlEmail(String to, String subject, String htmlContent) {

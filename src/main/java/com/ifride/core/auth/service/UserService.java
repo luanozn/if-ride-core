@@ -20,6 +20,10 @@ public class UserService {
         return repository.findById(id).orElseThrow(() -> new NotFoundException("Usuário %s não encontrado", id));
     }
 
+    public User findByEmail(String email) {
+        return repository.findByEmail(email);
+    }
+
     public User save(User user) {
         return repository.save(user);
     }
