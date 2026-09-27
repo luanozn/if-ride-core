@@ -8,11 +8,11 @@ import com.ifride.core.driver.model.entity.DriverApplication;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.driver.model.enums.DriverApplicationStatus;
 import com.ifride.core.driver.repository.DriverApplicationRepository;
+import com.ifride.core.driver.repository.specs.DriverApplicationSpecs;
 import com.ifride.core.driver.service.validators.DriverApplicationValidator;
 import com.ifride.core.events.models.DriverApplicationApprovedEvent;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import jakarta.transaction.Transactional;
-import java.util.Arrays;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -87,14 +87,8 @@ public class DriverApplicationService {
             String name,
             Pageable pageable) {
 
-        String safeEmail = (email == null || email.isBlank()) ? "" : email;
-        String safeName = (name == null || name.isBlank()) ? "" : name;
-
-        List<DriverApplicationStatus> safeStatuses = (statuses == null || statuses.isEmpty())
-                ? Arrays.asList(DriverApplicationStatus.values())
-                : statuses;
-
-        return repository.findApplications(safeStatuses, safeEmail, safeName, pageable)
+        var spec = DriverApplicationSpecs.buildSearchSpec(statuses, email, name);
+        return repository.findAll(spec, pageable)
                 .map(DriverApplicationSummaryDTO::fromEntity);
     }
 
