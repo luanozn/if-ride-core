@@ -62,7 +62,6 @@ public class RideParticipantService {
 
         rideValidator.validateAcceptance(participant, driverId);
 
-        // Resolve lazy associations antes do decrementAvailableSeats limpar o EntityManager
         String passengerId = participant.getPassenger().getId();
         String passengerName = participant.getPassenger().getName();
         String rideId = ride.getId();
