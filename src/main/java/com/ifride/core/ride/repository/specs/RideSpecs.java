@@ -1,16 +1,26 @@
 package com.ifride.core.ride.repository.specs;
 
+
 import com.ifride.core.ride.model.Ride;
 import java.time.Instant;
 import org.springframework.data.jpa.domain.Specification;
 
 public class RideSpecs {
 
-//    @Query("SELECT r FROM Ride r WHERE " +
-//            "(:origin IS NULL OR r.origin LIKE :origin%) AND " +
-//            "(:destination IS NULL OR r.destination LIKE :destination%) AND " +
-//            "(:includeFull = true OR r.availableSeats > 0) AND " +
-//            "r.departureTime > CURRENT_TIMESTAMP")
+    public static Specification<Ride> buildFindAllSpecs(String origin, String destination, boolean includeFull, Instant minDepartureTime) {
+        var spec = Specification.where(includeFull(includeFull));
+
+        if(origin != null && !origin.isBlank()) {
+            spec = spec.and(origin(origin));
+        }
+        if(destination != null && !destination.isBlank()) {
+            spec = spec.and(destination(destination));
+        }
+
+        spec = spec.and(minDepartureTime(minDepartureTime));
+
+        return spec;
+    }
 
 
     private static Specification<Ride> origin(String origin) {

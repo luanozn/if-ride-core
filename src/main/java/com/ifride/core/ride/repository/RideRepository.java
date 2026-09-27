@@ -7,13 +7,14 @@ import java.time.Instant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface RideRepository extends JpaRepository<Ride, String> {
+public interface RideRepository extends JpaRepository<Ride, String>, JpaSpecificationExecutor<Ride> {
 
     @Query("""
         SELECT COUNT(r) > 0
@@ -51,13 +52,6 @@ public interface RideRepository extends JpaRepository<Ride, String> {
     @Modifying
     @Query("UPDATE Ride r SET r.rideStatus = :status WHERE r.id = :id")
     void updateStatus(@Param("id") String id, @Param("status") RideStatus status);
-
-    @Query("SELECT r FROM Ride r WHERE " +
-            "(:origin IS NULL OR r.origin LIKE :origin%) AND " +
-            "(:destination IS NULL OR r.destination LIKE :destination%) AND " +
-            "(:includeFull = true OR r.availableSeats > 0) AND " +
-            "r.departureTime > CURRENT_TIMESTAMP")
-    Page<Ride> findAvailableRides(String origin, String destination, boolean includeFull, Pageable pageable);
 
     boolean existsByDriverIdAndRideStatus(String driverId, RideStatus status);
 

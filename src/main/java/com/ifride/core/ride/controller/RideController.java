@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
@@ -182,8 +183,9 @@ public class RideController {
             @RequestParam(required = false) String origin,
             @RequestParam(required = false) String destination,
             @RequestParam(defaultValue = "false") boolean includeFull,
+            @RequestParam(required = false) Instant minDepartureTime,
             @ParameterObject @PageableDefault(sort = "departureTime", direction = Sort.Direction.ASC) Pageable pageable
     ) {
-        return rideService.findAvailableRides(origin, destination, includeFull, pageable);
+        return rideService.findAvailableRides(origin, destination, includeFull, minDepartureTime, pageable);
     }
 }
