@@ -2,7 +2,7 @@ package com.ifride.core.ride.repository;
 
 import com.ifride.core.ride.model.Ride;
 import com.ifride.core.ride.model.enums.RideStatus;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,8 +29,8 @@ public interface RideRepository extends JpaRepository<Ride, String> {
         AND r.departureTime < :endTime
     """)
     boolean existsOverlap(@Param("driverId") String driverId,
-                          @Param("startTime") LocalDateTime startTime,
-                          @Param("endTime") LocalDateTime endTime);
+                          @Param("startTime") Instant startTime,
+                          @Param("endTime") Instant endTime);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""

@@ -8,7 +8,7 @@ import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +39,7 @@ public class Ride extends BaseEntity {
     private String destination;
 
     @Column(name = "departure_time")
-    private LocalDateTime departureTime;
+    private Instant departureTime;
 
     @Column(name = "is_recurrent")
     private boolean isRecurrent = false;

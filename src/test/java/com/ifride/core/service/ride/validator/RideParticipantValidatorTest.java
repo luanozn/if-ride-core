@@ -15,7 +15,8 @@ import com.ifride.core.ride.service.validators.RideParticipantValidator;
 import com.ifride.core.shared.exceptions.api.BadRequestException;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -56,7 +57,7 @@ class RideParticipantValidatorTest {
         ride.setDriver(driver);
         ride.setRideStatus(RideStatus.SCHEDULED);
         ride.setAvailableSeats(2);
-        ride.setDepartureTime(LocalDateTime.now().plusHours(2));
+        ride.setDepartureTime(Instant.now().plus(2, ChronoUnit.HOURS));
         ride.setPickupPoints(List.of("Trevo", "Hotel"));
 
         participant = new RideParticipant();
@@ -158,7 +159,7 @@ class RideParticipantValidatorTest {
         @Test
         @DisplayName("Deve falhar se tentar cancelar após o horário de partida")
         void shouldThrowConflictAfterDeparture() {
-            ride.setDepartureTime(LocalDateTime.now().minusMinutes(1));
+            ride.setDepartureTime(Instant.now().minus(1, ChronoUnit.MINUTES));
             assertThrows(ConflictException.class, () -> validator.validateCancelling(participant, "user-1"));
         }
     }

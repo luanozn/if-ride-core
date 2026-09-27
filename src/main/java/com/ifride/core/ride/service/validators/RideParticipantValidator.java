@@ -9,10 +9,11 @@ import com.ifride.core.ride.repository.RideParticipantRepository;
 import com.ifride.core.shared.exceptions.api.BadRequestException;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -62,9 +63,9 @@ public class RideParticipantValidator {
         }
     }
 
-    private void checkTimeConflict(User user, LocalDateTime departure) {
-        var start = departure.minusHours(1);
-        var end = departure.plusHours(1);
+    private void checkTimeConflict(User user, Instant departure) {
+        var start = departure.minus(1, ChronoUnit.HOURS);
+        var end = departure.plus(1, ChronoUnit.HOURS);
         if (rideParticipantRepository.hasConflict(user, start, end)) {
             throw new ConflictException("Conflito de horário detectado.");
         }
@@ -103,7 +104,7 @@ public class RideParticipantValidator {
     }
 
     private void checkDepartureTime(RideParticipant participant) {
-        if (participant.getRide().getDepartureTime().isBefore(LocalDateTime.now())) {
+        if (participant.getRide().getDepartureTime().isBefore(Instant.now())) {
             throw new ConflictException("Não é possível cancelar uma participação após o horário de partida.");
         }
     }

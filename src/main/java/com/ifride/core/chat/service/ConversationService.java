@@ -3,10 +3,10 @@ package com.ifride.core.chat.service;
 import com.ifride.core.chat.model.dto.ConversationDTO;
 import com.ifride.core.chat.model.entity.Conversation;
 import com.ifride.core.chat.repository.ConversationRepository;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 
@@ -39,7 +39,7 @@ public class ConversationService {
                 .findByRideIdAndDriverIdAndPassengerId(rideId, driverId, passengerId)
                 .ifPresent(conv -> {
                     conv.setLastMessage(content);
-                    conv.setLastMessageAt(LocalDateTime.now());
+                    conv.setLastMessageAt(Instant.now());
                     conversationRepository.save(conv);
                 });
     }

@@ -5,7 +5,7 @@ import com.ifride.core.ride.model.enums.ParticipantStatus;
 import com.ifride.core.shared.model.BaseEntity;
 import jakarta.persistence.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -30,5 +30,5 @@ public class RideParticipant extends BaseEntity {
     private ParticipantStatus participantStatus = ParticipantStatus.PENDING;
 
 
-    private LocalDateTime requestedAt = LocalDateTime.now();
+    private Instant requestedAt = Instant.now();
 }
