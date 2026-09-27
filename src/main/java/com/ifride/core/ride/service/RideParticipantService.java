@@ -16,10 +16,10 @@ import com.ifride.core.ride.service.validators.RideParticipantValidator;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import jakarta.persistence.OptimisticLockException;
+import java.time.Instant;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
@@ -62,13 +62,12 @@ public class RideParticipantService {
 
         rideValidator.validateAcceptance(participant, driverId);
 
-        // Resolve lazy associations antes do decrementAvailableSeats limpar o EntityManager
         String passengerId = participant.getPassenger().getId();
         String passengerName = participant.getPassenger().getName();
         String rideId = ride.getId();
         String rideDriverId = ride.getDriver().getId();
         String driverName = ride.getDriver().getUser().getName();
-        LocalDateTime departureTime = ride.getDepartureTime();
+        Instant departureTime = ride.getDepartureTime();
 
         rideService.decrementAvailableSeats(ride);
 

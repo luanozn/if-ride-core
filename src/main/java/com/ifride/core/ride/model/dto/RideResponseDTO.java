@@ -6,7 +6,7 @@ import com.ifride.core.ride.model.Ride;
 import com.ifride.core.ride.model.enums.RideStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 public record RideResponseDTO(
@@ -35,7 +35,7 @@ public record RideResponseDTO(
         BigDecimal price,
 
         @Schema(description = "Data e hora de partida")
-        LocalDateTime departureTime,
+        Instant departureTime,
 
         @Schema(description = "Status da carona")
         RideStatus rideStatus

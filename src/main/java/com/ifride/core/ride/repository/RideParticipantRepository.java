@@ -5,7 +5,7 @@ import com.ifride.core.ride.model.RideParticipant;
 import com.ifride.core.ride.model.enums.ParticipantStatus;
 import com.ifride.core.shared.model.enums.Status;
 import jakarta.transaction.Transactional;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -32,8 +32,8 @@ public interface RideParticipantRepository extends JpaRepository<RideParticipant
     AND rp.ride.departureTime BETWEEN :startTime AND :endTime
 """)
     boolean hasConflict(@Param("passenger") User passenger,
-                        @Param("startTime") LocalDateTime startTime,
-                        @Param("endTime") LocalDateTime endTime);
+                        @Param("startTime") Instant startTime,
+                        @Param("endTime") Instant endTime);
 
     @Modifying
     @Transactional
@@ -48,8 +48,8 @@ public interface RideParticipantRepository extends JpaRepository<RideParticipant
     void rejectOverlappingRequests(
             @Param("passengerId") String passengerId,
             @Param("acceptedRideId") String acceptedRideId,
-            @Param("startTime") LocalDateTime startTime,
-            @Param("endTime") LocalDateTime endTime
+            @Param("startTime") Instant startTime,
+            @Param("endTime") Instant endTime
     );
 
     boolean existsByRideIdAndPassengerIdAndParticipantStatusIn(

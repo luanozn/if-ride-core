@@ -13,11 +13,12 @@ import com.ifride.core.ride.repository.RideRepository;
 import com.ifride.core.shared.exceptions.api.BadRequestException;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
@@ -48,9 +49,9 @@ public class RideValidator {
         }
     }
 
-    private void checkOverlap(Driver driver, LocalDateTime newDeparture) {
-        LocalDateTime start = newDeparture.minusHours(1);
-        LocalDateTime end = newDeparture.plusHours(1);
+    private void checkOverlap(Driver driver, Instant newDeparture) {
+        Instant start = newDeparture.minus(1, ChronoUnit.HOURS);
+        Instant end = newDeparture.plus(1, ChronoUnit.HOURS);
 
         if (rideRepository.existsOverlap(driver.getId(), start, end)) {
             throw new ConflictException("Conflito de Horário! Você já possui uma carona agendada próxima a este horário.");
@@ -58,8 +59,8 @@ public class RideValidator {
     }
 
     private void checkDepartureTime(RideRequestDTO rideRequest) {
-        LocalDateTime currentDepartureTime = getDepartureTime(rideRequest);
-        if (currentDepartureTime.isBefore(LocalDateTime.now())) {
+        Instant currentDepartureTime = getDepartureTime(rideRequest);
+        if (currentDepartureTime.isBefore(Instant.now())) {
             throw new ForbiddenException("A data de partida não pode ser no passado.");
         }
     }
@@ -123,8 +124,8 @@ public class RideValidator {
     }
 
     private void checkMinimumDepartureTime(Ride ride) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime allowedStartTime = ride.getDepartureTime().minusMinutes(30);
+        Instant now = Instant.now();
+        Instant allowedStartTime = ride.getDepartureTime().minus(30, ChronoUnit.MINUTES);
 
         if (now.isBefore(allowedStartTime)) {
             throw new ConflictException("A carona só pode ser iniciada 30 minutos antes da partida.");

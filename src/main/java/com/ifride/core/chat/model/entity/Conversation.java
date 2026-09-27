@@ -1,11 +1,11 @@
 package com.ifride.core.chat.model.entity;
 
+import java.time.Instant;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
 
 @Data
 @Document(collection = "conversations")
@@ -24,7 +24,7 @@ public class Conversation {
     private String passengerName;
 
     private String lastMessage;
-    private LocalDateTime lastMessageAt;
+    private Instant lastMessageAt;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private Instant createdAt = Instant.now();
 }

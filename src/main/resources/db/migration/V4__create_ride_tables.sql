@@ -9,7 +9,7 @@ CREATE TABLE rides
     total_seats          INT            NOT NULL,
     origin               VARCHAR(255)   NOT NULL,
     destination          VARCHAR(255)   NOT NULL,
-    departure_time       TIMESTAMP      NOT NULL,
+    departure_time       TIMESTAMPTZ      NOT NULL,
     ride_status          VARCHAR(20)    NOT NULL DEFAULT 'SCHEDULED',
     price                DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     created_at           TIMESTAMPTZ    NOT NULL DEFAULT CURRENT_TIMESTAMP,

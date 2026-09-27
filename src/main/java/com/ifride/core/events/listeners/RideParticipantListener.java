@@ -5,7 +5,8 @@ import com.ifride.core.events.models.RideParticipationAcceptedEvent;
 import com.ifride.core.events.models.RideParticipationCancelledEvent;
 import com.ifride.core.events.models.RideParticipationRejectedEvent;
 import com.ifride.core.ride.repository.RideParticipantRepository;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Async;
@@ -24,8 +25,8 @@ public class RideParticipantListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleParticipationAccepted(RideParticipationAcceptedEvent event) {
-        LocalDateTime startTime = event.departureTime().minusHours(1);
-        LocalDateTime endTime = event.departureTime().plusHours(1);
+        Instant startTime = event.departureTime().minus(1, ChronoUnit.HOURS);
+        Instant endTime = event.departureTime().plus(1, ChronoUnit.HOURS);
 
         participantRepository.rejectOverlappingRequests(
                 event.passengerId(),
@@ -47,13 +48,13 @@ public class RideParticipantListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleParticipationRejected(RideParticipationRejectedEvent event) {
         log.info("Solicitação do passageiro {} na carona {} foi rejeitada.", event.passengerId(), event.rideId());
-        // Ponto de extensão: enviar push notification ao passageiro quando disponível
+        // TODO: enviar push notification ao passageiro quando disponível
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleParticipationCancelled(RideParticipationCancelledEvent event) {
         log.info("Passageiro cancelou participação na carona {}. Motorista {} deve ser notificado.", event.rideId(), event.driverId());
-        // Ponto de extensão: enviar push notification ao motorista quando disponível
+        // TODO: enviar push notification ao motorista quando disponível
     }
 }
