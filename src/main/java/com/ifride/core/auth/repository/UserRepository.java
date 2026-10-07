@@ -1,16 +1,12 @@
 package com.ifride.core.auth.repository;
 
 import com.ifride.core.auth.model.entity.User;
-import com.ifride.core.auth.model.enums.Role;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface UserRepository extends JpaRepository<User, String> {
+public interface UserRepository extends JpaRepository<User, String>, JpaSpecificationExecutor<User> {
 
     User findByEmail(String email);
     boolean existsUserByEmail(String email);
     boolean existsUserByCpf(String cpf);
-    Page<User> findAllByRole(Role role, Pageable pageable);
-    Page<User> findAllByRoleAndCpf(Role role, String document, Pageable pageable);
 }

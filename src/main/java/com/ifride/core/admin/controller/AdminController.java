@@ -61,8 +61,8 @@ public class AdminController {
     }
 
     @GetMapping()
-    public Page<UserDto> findAll(@PageableDefault() Pageable pageable, @RequestParam(required = false) String document) {
-        return adminService.findAll(Role.ADMIN, pageable, document).map(UserDto::fromEntity);
+    public Page<UserDto> findAll(@PageableDefault() Pageable pageable, @RequestParam(required = false) String search) {
+        return adminService.findAll(search, pageable);
     }
 
     @DeleteMapping("/{administratorId}")

@@ -1,6 +1,7 @@
 package com.ifride.core.auth.service;
 
 import com.ifride.core.auth.model.enums.Role;
+import com.ifride.core.auth.repository.specs.UserSpecs;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.repository.UserRepository;
@@ -38,11 +39,7 @@ public class UserService {
         repository.delete(user);
     }
 
-    public Page<User> findAllByRole(Role role, Pageable pageable) {
-        return repository.findAllByRole(role, pageable);
-    }
-
-    public Page<User> findAllByRoleAndDocument(Role role, String document, Pageable pageable) {
-        return repository.findAllByRoleAndCpf(role, document, pageable);
+    public Page<User> findAll(Role role, String search, Pageable pageable) {
+        return repository.findAll(UserSpecs.buildSearchSpec(search, role), pageable);
     }
 }
