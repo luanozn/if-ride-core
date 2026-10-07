@@ -106,11 +106,10 @@ public class DriverApplicationController {
     @PreAuthorize("hasRole('ADMIN')")
     public Page<DriverApplicationSummaryDTO> getApplications(
             @RequestParam(required = false) List<DriverApplicationStatus> statuses,
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String search,
             @PageableDefault(sort = "createdAt", direction = Direction.DESC) Pageable pageable) {
 
-        return driverApplicationService.findBy(statuses, email, name, pageable);
+        return driverApplicationService.findBy(statuses, search, pageable);
     }
 
 }

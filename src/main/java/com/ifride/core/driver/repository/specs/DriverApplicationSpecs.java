@@ -9,7 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 public class DriverApplicationSpecs {
 
     public static Specification<DriverApplication> buildSearchSpec(
-            List<DriverApplicationStatus> statuses, String email, String name) {
+            List<DriverApplicationStatus> statuses, String search) {
 
         var spec = Specification.where(fetchRequester());
 
@@ -17,7 +17,7 @@ public class DriverApplicationSpecs {
             spec = spec.and(DriverApplicationSpecs.hasStatusIn(statuses));
         }
 
-        var emailOrName = buildEmailOrNameSpec(email, name);
+        var emailOrName = buildBySearch(search);
         if (emailOrName != null) {
             spec = spec.and(emailOrName);
         }
@@ -25,16 +25,13 @@ public class DriverApplicationSpecs {
         return spec;
     }
 
-    private static Specification<DriverApplication> buildEmailOrNameSpec(String email, String name) {
-        boolean hasEmail = email != null && !email.isBlank();
-        boolean hasName = name != null && !name.isBlank();
+    private static Specification<DriverApplication> buildBySearch(String search) {
+        boolean hasSearch = search != null && !search.isBlank();
 
-        if (hasEmail && hasName) {
-            return DriverApplicationSpecs.emailContains(email)
-                    .or(DriverApplicationSpecs.nameContains(name));
+        if (hasSearch) {
+            return DriverApplicationSpecs.emailContains(search)
+                    .or(DriverApplicationSpecs.nameContains(search));
         }
-        if (hasEmail) return DriverApplicationSpecs.emailContains(email);
-        if (hasName) return DriverApplicationSpecs.nameContains(name);
         return null;
     }
 
