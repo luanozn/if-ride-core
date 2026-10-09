@@ -107,9 +107,10 @@ public class DriverApplicationController {
     public Page<DriverApplicationSummaryDTO> getApplications(
             @RequestParam(required = false) List<DriverApplicationStatus> statuses,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) String cnh,
             @PageableDefault(sort = "createdAt", direction = Direction.DESC) Pageable pageable) {
 
-        return driverApplicationService.findBy(statuses, search, pageable);
+        return driverApplicationService.findBy(statuses, search, cnh, pageable);
     }
 
 }

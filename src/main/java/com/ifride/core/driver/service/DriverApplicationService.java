@@ -84,9 +84,10 @@ public class DriverApplicationService {
     public Page<DriverApplicationSummaryDTO> findBy(
             List<DriverApplicationStatus> statuses,
             String search,
+            String cnh,
             Pageable pageable) {
 
-        var spec = DriverApplicationSpecs.buildSearchSpec(statuses, search);
+        var spec = DriverApplicationSpecs.buildSearchSpec(statuses, search, cnh);
         return repository.findAll(spec, pageable)
                 .map(DriverApplicationSummaryDTO::fromEntity);
     }
