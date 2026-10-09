@@ -1,6 +1,6 @@
 package com.ifride.core.chat.model.dto;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record ChatMessageDTO(
         String id,
@@ -10,5 +10,5 @@ public record ChatMessageDTO(
         String recipientId,
         String content,
         String messageStatus,
-        LocalDateTime createdAt
+        Instant createdAt
 ) {}

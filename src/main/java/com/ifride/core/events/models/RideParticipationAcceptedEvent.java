@@ -1,6 +1,6 @@
 package com.ifride.core.events.models;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record RideParticipationAcceptedEvent(
         String passengerId,
@@ -8,5 +8,5 @@ public record RideParticipationAcceptedEvent(
         String acceptedRideId,
         String driverId,
         String driverName,
-        LocalDateTime departureTime
+        Instant departureTime
 ) {}

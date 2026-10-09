@@ -2,7 +2,7 @@ package com.ifride.core.chat.model.dto;
 
 import com.ifride.core.chat.model.entity.Conversation;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record ConversationDTO(
         String id,
@@ -12,8 +12,8 @@ public record ConversationDTO(
         String passengerId,
         String passengerName,
         String lastMessage,
-        LocalDateTime lastMessageAt,
-        LocalDateTime createdAt
+        Instant lastMessageAt,
+        Instant createdAt
 ) {
     public static ConversationDTO fromEntity(Conversation c) {
         return new ConversationDTO(

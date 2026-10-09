@@ -11,9 +11,12 @@ import com.ifride.core.ride.model.dto.RideRequestDTO;
 import com.ifride.core.ride.model.dto.RideResponseDTO;
 import com.ifride.core.ride.model.enums.RideStatus;
 import com.ifride.core.ride.repository.RideRepository;
+import com.ifride.core.ride.repository.specs.RideSpecs;
 import com.ifride.core.ride.service.validators.RideValidator;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
+import java.time.Clock;
+import java.time.Instant;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +34,7 @@ public class RideService {
     private final DriverService driverService;
     private final VehicleService vehicleService;
     private final RideValidator rideValidator;
+    private final Clock clock;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -84,8 +88,13 @@ public class RideService {
     }
 
     @Transactional(readOnly = true)
-    public Page<RideResponseDTO> findAvailableRides(String origin, String destination, boolean includeFull, Pageable pageable) {
-        return rideRepository.findAvailableRides(origin, destination, includeFull, pageable)
+    public Page<RideResponseDTO> findAvailableRides(String origin, String destination, boolean includeFull, Instant minDepartureTime, Pageable pageable) {
+        if(minDepartureTime == null) {
+            minDepartureTime = Instant.now(clock);
+        }
+
+        var specs = RideSpecs.buildFindAllSpecs(origin, destination, includeFull, minDepartureTime);
+        return rideRepository.findAll(specs, pageable)
                 .map(RideResponseDTO::fromEntity);
     }
 

@@ -2,30 +2,12 @@ package com.ifride.core.driver.repository;
 
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.driver.model.entity.DriverApplication;
-import com.ifride.core.driver.model.enums.DriverApplicationStatus;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface DriverApplicationRepository extends JpaRepository<DriverApplication, String> {
+public interface DriverApplicationRepository extends JpaRepository<DriverApplication, String>, JpaSpecificationExecutor<DriverApplication> {
 
     List<DriverApplication> findAllByRequesterOrderByCreatedAtDesc(User requester);
-
-    @Query("""
-    SELECT app FROM DriverApplication app
-    JOIN FETCH app.requester
-    WHERE (:email = '' OR app.requester.email LIKE CONCAT(:email, '%'))
-      AND (:name = '' OR app.requester.name LIKE CONCAT(:name, '%'))
-      AND (app.applicationStatus IN :statuses)
-""")
-    Page<DriverApplication> findApplications(
-            @Param("statuses") List<DriverApplicationStatus> statuses,
-            @Param("email") String email,
-            @Param("name") String name,
-            Pageable pageable
-    );
 }

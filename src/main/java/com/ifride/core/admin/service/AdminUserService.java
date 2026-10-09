@@ -2,14 +2,13 @@ package com.ifride.core.admin.service;
 
 import com.ifride.core.admin.DriverDirectlyDTO;
 import com.ifride.core.auth.model.dto.RegisterRequestDTO;
+import com.ifride.core.auth.model.dto.UserDto;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.service.UserService;
 import com.ifride.core.auth.service.converter.UserConverter;
 import com.ifride.core.driver.service.DriverService;
-import com.ifride.core.shared.utils.CpfViewConverter;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,12 +30,8 @@ public class AdminUserService {
         return this.userService.save(userConverter.from(driverDirectlyDTO.userInfo(), Role.DRIVER));
     }
 
-    public Page<User> findAll(Role role, Pageable pageable, String document) {
-        if(StringUtils.isNotBlank(document)) {
-            String formattedDocument = CpfViewConverter.convertFormatted(document);
-            return this.userService.findAllByRoleAndDocument(role, formattedDocument, pageable);
-        }
-        return this.userService.findAllByRole(role, pageable);
+    public Page<UserDto> findAll(String search, Pageable pageable) {
+        return this.userService.findAll(Role.ADMIN, search, pageable).map(UserDto::fromEntity);
     }
 
     public void delete(String administratorId) {

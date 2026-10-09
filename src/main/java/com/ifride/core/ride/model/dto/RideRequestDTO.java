@@ -6,8 +6,9 @@ import com.ifride.core.ride.model.Ride;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -25,7 +26,7 @@ public record RideRequestDTO(
         List<String> pickupPoints,
 
         @Schema(description = "Data e hora da partida (deve ser no futuro) (Opcional se a carona for recorrente)", example = "2026-02-20T14:30:00")
-        LocalDateTime departureTime,
+        Instant departureTime,
 
         @Schema(description = "Número de vagas disponíveis (não pode exceder a capacidade do veículo)", example = "3")
         Integer availableSeats,
@@ -49,7 +50,7 @@ public record RideRequestDTO(
                         ride.getOrigin(),
                         ride.getDestination(),
                         ride.getPickupPoints(),
-                        ride.getDepartureTime().plusWeeks(1),
+                        ride.getDepartureTime().plus(1, ChronoUnit.WEEKS),
                         ride.getAvailableSeats(),
                         ride.getPrice(),
                         ride.isRecurrent(),
