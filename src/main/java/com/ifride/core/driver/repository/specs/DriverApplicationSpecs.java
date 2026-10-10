@@ -23,7 +23,7 @@ public class DriverApplicationSpecs {
         }
 
         if (cnh != null && !cnh.isBlank()) {
-            spec = spec.and(DriverApplicationSpecs.cnhIs(cnh));
+            spec = spec.and(cnhIs(cnh));
         }
 
         return spec;
@@ -65,6 +65,6 @@ public class DriverApplicationSpecs {
     }
 
     private static Specification<DriverApplication> cnhIs(String cnh) {
-        return (root, query , cb) -> cb.equal(root.get("cnh_number"), cnh);
+        return (root, query , cb) -> cb.equal(root.get("cnhNumber"), cnh);
     }
 }
