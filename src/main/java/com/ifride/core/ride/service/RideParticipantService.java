@@ -15,9 +15,7 @@ import com.ifride.core.ride.repository.RideParticipantRepository;
 import com.ifride.core.ride.service.validators.RideParticipantValidator;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
-import jakarta.persistence.OptimisticLockException;
 import java.time.Instant;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -26,7 +24,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -54,7 +51,6 @@ public class RideParticipantService {
     }
 
     @Transactional
-    @Retryable(retryFor = {OptimisticLockException.class, ObjectOptimisticLockingFailureException.class})
     public void acceptParticipation(String participantId, String driverId) {
         var participant = getById(participantId);
 

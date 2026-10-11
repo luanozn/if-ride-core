@@ -9,7 +9,7 @@ import com.ifride.core.driver.model.enums.DriverApplicationStatus;
 import com.ifride.core.driver.repository.DriverApplicationRepository;
 import com.ifride.core.driver.service.DriverApplicationService;
 import com.ifride.core.driver.service.validators.DriverApplicationValidator;
-import com.ifride.core.events.models.DriverApplicationApprovedEvent;
+import com.ifride.core.driver.listeners.model.DriverApplicationApprovedEvent;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import org.junit.jupiter.api.DisplayName;

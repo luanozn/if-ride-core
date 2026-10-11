@@ -1,5 +1,6 @@
 package com.ifride.core.driver.controller;
 
+import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.driver.model.dto.VehicleCreationDTO;
 import com.ifride.core.driver.model.dto.VehicleResponseDTO;
 import com.ifride.core.driver.service.VehicleService;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,10 +39,11 @@ public class VehicleController {
     @PostMapping
     @PreAuthorize("hasRole('DRIVER')")
     public VehicleResponseDTO create(
+            @AuthenticationPrincipal User author,
             @Parameter(description = "ID do motorista (UUID)") @PathVariable String driverId,
             @RequestBody VehicleCreationDTO vehicle
     ) {
-        return vehicleService.saveBy(vehicle, driverId);
+        return vehicleService.saveBy(vehicle, driverId, author);
     }
 
 
@@ -54,7 +57,7 @@ public class VehicleController {
     })
     @GetMapping
     @PreAuthorize("hasRole('DRIVER')")
-    public List<VehicleResponseDTO> findByDriverId(@PathVariable String driverId) {
-        return vehicleService.getByOwner(driverId);
+    public List<VehicleResponseDTO> findByDriverId(@AuthenticationPrincipal User author, @PathVariable String driverId) {
+        return vehicleService.getByOwner(driverId, author);
     }
 }

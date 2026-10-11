@@ -41,11 +41,11 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
         try {
             String email = jwtService.validateToken(token);
             var user = userRepository.findByEmail(email);
-            if (user == null) {
+            if (user.isEmpty()) {
                 log.warn("WebSocket handshake rejected: user not found for email {}", email);
                 return false;
             }
-            var auth = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+            var auth = new UsernamePasswordAuthenticationToken(user, null, user.get().getAuthorities());
             attributes.put("auth", auth);
             return true;
         } catch (Exception e) {

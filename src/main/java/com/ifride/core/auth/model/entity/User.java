@@ -3,8 +3,9 @@ package com.ifride.core.auth.model.entity;
 import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.shared.model.BaseEntity;
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,7 +18,8 @@ import java.util.stream.Stream;
 @Table(name="users")
 @Entity(name = "users")
 @EqualsAndHashCode(callSuper = true)
-@Data
+@Getter
+@Setter
 @SQLDelete(sql = "UPDATE users SET status = 'DELETED' WHERE id = ? AND version = ?")
 @SQLRestriction("status <> 'DELETED'")
 public class User extends BaseEntity implements UserDetails {

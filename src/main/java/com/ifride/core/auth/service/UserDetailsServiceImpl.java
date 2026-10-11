@@ -4,6 +4,7 @@ import com.ifride.core.auth.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,6 +14,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) {
-        return repository.findByEmail(username);
+        return repository.findByEmail(username).orElseThrow(() -> new UsernameNotFoundException("Email não encontrado ou credenciais inválidas"));
     }
 }
