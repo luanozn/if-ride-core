@@ -4,6 +4,7 @@ import com.ifride.core.shared.services.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.*;
@@ -11,6 +12,7 @@ import software.amazon.awssdk.services.ses.model.*;
 @Service
 @Log4j2
 @RequiredArgsConstructor
+@Profile("!ci")
 public class AwsEmailService implements EmailService {
 
     private final SesClient emailClient;

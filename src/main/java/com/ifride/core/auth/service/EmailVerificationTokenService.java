@@ -70,7 +70,7 @@ public class EmailVerificationTokenService implements TokenManager {
             }
             if (current.quantity() >= MAX_ATTEMPTS) {
                 throw new EmailVerificationMaxAttemptsExceededException(
-                        "Limite atingido para: " + user.getEmail()
+                        "Limite de emails enviados atingido para: %s, tente novamente após 15 minutos" + user.getEmail()
                 );
             }
             return new Attempt(current.quantity() + 1, now);

@@ -30,7 +30,7 @@ public class UserValidatorTest {
         var mockedDTO = mock(RegisterRequestDTO.class);
 
         given(mockedDTO.documentNumber()).willReturn("123456789");
-        assertThatCode(() -> validator.validateDocument(mockedDTO)).isInstanceOf(BadRequestException.class);
+        assertThatCode(() -> validator.validateUser(mockedDTO)).isInstanceOf(BadRequestException.class);
     }
 
     @Test
@@ -39,7 +39,7 @@ public class UserValidatorTest {
         var mockedDTO = mock(RegisterRequestDTO.class);
 
         given(mockedDTO.documentNumber()).willReturn("123.456.789-11");
-        assertThatCode(() -> validator.validateDocument(mockedDTO)).isInstanceOf(BadRequestException.class);
+        assertThatCode(() -> validator.validateUser(mockedDTO)).isInstanceOf(BadRequestException.class);
     }
 
     @Test
@@ -55,7 +55,7 @@ public class UserValidatorTest {
         given(repository.existsUserByEmail(anyString())).willReturn(false);
         given(repository.existsUserByCpf(anyString())).willReturn(false);
 
-        assertThatCode(() -> validator.validateDocument(request)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validateUser(request)).doesNotThrowAnyException();
     }
 
     @Test
@@ -67,7 +67,7 @@ public class UserValidatorTest {
 
         given(mockedDTO.documentNumber()).willReturn("053.440.630-08");
         given(mockedDTO.email()).willReturn("email@email.com");
-        assertThatCode(() -> validator.validateDocument(mockedDTO)).isInstanceOf(ConflictException.class);
+        assertThatCode(() -> validator.validateUser(mockedDTO)).isInstanceOf(ConflictException.class);
     }
 
     @Test
@@ -80,6 +80,6 @@ public class UserValidatorTest {
 
         given(mockedDTO.documentNumber()).willReturn("053.440.630-08");
         given(mockedDTO.email()).willReturn("email@email.com");
-        assertThatCode(() -> validator.validateDocument(mockedDTO)).isInstanceOf(ConflictException.class);
+        assertThatCode(() -> validator.validateUser(mockedDTO)).isInstanceOf(ConflictException.class);
     }
 }

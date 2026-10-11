@@ -28,7 +28,7 @@ public class AuthService {
     private final ApplicationEventPublisher eventPublisher;
 
     public User register(RegisterRequestDTO registerRequest) {
-        userValidator.validateDocument(registerRequest);
+        userValidator.validateUser(registerRequest);
 
         var saved = repository.save(userConverter.from(registerRequest, Role.PASSENGER));
         eventPublisher.publishEvent(new UserRegisteredEvent(saved));
