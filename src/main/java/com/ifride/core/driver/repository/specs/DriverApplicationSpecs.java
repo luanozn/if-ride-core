@@ -11,7 +11,7 @@ public class DriverApplicationSpecs {
     public static Specification<DriverApplication> buildSearchSpec(
             List<DriverApplicationStatus> statuses, String search, String cnh) {
 
-        var spec = Specification.where(fetchRequester());
+        var spec = Specification.where(fetchEntities());
 
         if (statuses != null && !statuses.isEmpty()) {
             spec = spec.and(DriverApplicationSpecs.hasStatusIn(statuses));
@@ -39,10 +39,12 @@ public class DriverApplicationSpecs {
         return null;
     }
 
-    private static Specification<DriverApplication> fetchRequester() {
+    private static Specification<DriverApplication> fetchEntities() {
         return (root, query, cb) -> {
             if (query.getResultType() != Long.class && query.getResultType() != long.class) {
                 root.fetch("requester", JoinType.LEFT);
+                root.fetch("reviewedBy", JoinType.LEFT);
+
             }
             return cb.conjunction();
         };

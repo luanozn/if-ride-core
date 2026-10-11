@@ -5,7 +5,6 @@ import static com.ifride.core.shared.utils.DateTimeUtils.getDepartureTime;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.driver.model.entity.Driver;
 import com.ifride.core.driver.model.entity.Vehicle;
-import com.ifride.core.driver.service.DriverService;
 import com.ifride.core.ride.model.Ride;
 import com.ifride.core.ride.model.dto.RideRequestDTO;
 import com.ifride.core.ride.model.enums.RideStatus;
@@ -40,7 +39,7 @@ public class RideValidator {
         checkVehicleBelongsToDriver(vehicle, driver);
         checkDepartureTime(rideRequest);
         checkCapacity(rideRequest, vehicle);
-        checkOverlap(driver, rideRequest.departureTime());
+        checkOverlap(driver, getDepartureTime(rideRequest));
     }
 
     private void checkVehicleBelongsToDriver(Vehicle vehicle, Driver driver) {

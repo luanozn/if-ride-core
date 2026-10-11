@@ -1,17 +1,20 @@
 package com.ifride.core.auth.model.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 public record RegisterRequestDTO(
         @Schema(description = "E-mail institucional ou pessoal", example = "trillian@estudante.ifgoiano.edu.br")
-        String email,
+        @NotBlank @Email String email,
 
         @Schema(description = "Senha (mínimo 8 caracteres)", example = "galaxy123")
-        String password,
+        @NotBlank @Size(min = 8, max = 72) String password,
 
         @Schema(description = "Nome completo", example = "Tricia McMillan")
-        String name,
+        @NotBlank String name,
 
         @Schema(description = "CPF", example = "123.456.789-00")
-        String documentNumber
+        @NotBlank String documentNumber
 ) {}
