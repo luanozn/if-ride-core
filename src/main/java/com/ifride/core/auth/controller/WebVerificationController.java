@@ -26,7 +26,7 @@ public class WebVerificationController {
     private final UserService userService;
 
     @PostMapping(
-            value = "/v1/auth/resend-verification-form",
+            value = "/resend-verification-form",
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
     public ResponseEntity<String> resendVerificationForm(@RequestParam String email) throws IOException {

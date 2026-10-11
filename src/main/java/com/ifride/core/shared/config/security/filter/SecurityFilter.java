@@ -43,11 +43,11 @@ public class SecurityFilter extends OncePerRequestFilter {
            var subject = jwtService.validateToken(jwt);
            var user = repository.findByEmail(subject);
 
-            if (user != null) {
+            if (user.isPresent()) {
                 var authentication = new UsernamePasswordAuthenticationToken(
                         user,
                         null,
-                        user.getAuthorities()
+                        user.get().getAuthorities()
                 );
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }

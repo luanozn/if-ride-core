@@ -123,8 +123,7 @@ public class RideService {
         rideValidator.validateRideUpdate(ride, requester,RideStatus.FINISHED);
 
         updateStatus(rideId, RideStatus.FINISHED);
-        ride = findById(rideId);
-        eventPublisher.publishEvent(new RideFinishedEvent(ride));
+        eventPublisher.publishEvent(new RideFinishedEvent(ride.getId()));
     }
 
     @Transactional

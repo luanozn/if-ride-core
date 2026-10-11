@@ -22,7 +22,7 @@ public class UserService {
     }
 
     public User findByEmail(String email) {
-        return repository.findByEmail(email);
+        return repository.findByEmail(email).orElseThrow(() -> new NotFoundException("Usuário %s não encontrado", email));
     }
 
     public User save(User user) {

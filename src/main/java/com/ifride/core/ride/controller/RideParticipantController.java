@@ -65,6 +65,7 @@ public class RideParticipantController {
             @ApiResponse(responseCode = "409", description = "Solicitação já processada ou carona sem vagas")
     })
     @PatchMapping("/{id}/accept")
+    @PreAuthorize("hasRole('DRIVER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void accept(@AuthenticationPrincipal User author, @PathVariable String id) {
         rideParticipantService.acceptParticipation(id, author.getId());
@@ -89,6 +90,7 @@ public class RideParticipantController {
             @ApiResponse(responseCode = "409", description = "Solicitação já processada")
     })
     @PatchMapping("/{id}/reject")
+    @PreAuthorize("hasRole('DRIVER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void reject(@AuthenticationPrincipal User author, @PathVariable String id) {
         rideParticipantService.rejectParticipation(id, author.getId());

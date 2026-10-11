@@ -10,7 +10,7 @@ import com.ifride.core.driver.model.enums.DriverApplicationStatus;
 import com.ifride.core.driver.repository.DriverApplicationRepository;
 import com.ifride.core.driver.repository.specs.DriverApplicationSpecs;
 import com.ifride.core.driver.service.validators.DriverApplicationValidator;
-import com.ifride.core.events.models.DriverApplicationApprovedEvent;
+import com.ifride.core.driver.listeners.model.DriverApplicationApprovedEvent;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.List;
