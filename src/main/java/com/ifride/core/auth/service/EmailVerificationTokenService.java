@@ -12,6 +12,8 @@ import com.ifride.core.shared.exceptions.TokenExpiredException;
 import com.ifride.core.shared.exceptions.TokenNotFoundException;
 import com.ifride.core.shared.services.EmailService;
 import jakarta.transaction.Transactional;
+
+import java.time.Clock;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,6 +32,7 @@ public class EmailVerificationTokenService implements TokenManager {
     private final ActionTokenRepository tokenRepository;
     private final UserService userService;
     private final EmailService emailService;
+    private final Clock clock;
     private final ConcurrentHashMap<String, Attempt> emailVerificationAttempts = new ConcurrentHashMap<>();
     private static final int MAX_ATTEMPTS = 3;
     private static final Duration ATTEMPT_WINDOW = Duration.ofMinutes(15);
@@ -48,29 +51,29 @@ public class EmailVerificationTokenService implements TokenManager {
     }
 
     private ActionToken resolveToken(Optional<ActionToken> existing, User user) {
-        if (existing.isPresent() && existing.get().getExpires().isAfter(Instant.now())) {
+        if (existing.isPresent() && existing.get().getExpires().isAfter(Instant.now(clock))) {
             log.info("Reutilizando token existente para {} (expira em {})", user.getEmail(), existing.get().getExpires());
             return existing.get();
-        } else if (existing.isPresent() && existing.get().getExpires().isBefore(Instant.now())) {
+        } else if (existing.isPresent() && existing.get().getExpires().isBefore(Instant.now(clock))) {
             tokenRepository.delete(existing.get());
         }
 
         return new ActionToken(
-                Instant.now().plus(TOKEN_TTL),
+                Instant.now(clock).plus(TOKEN_TTL),
                 TokenType.EMAIL_VERIFICATION,
                 user
         );
     }
 
     private void enforceRateLimit(User user) {
-        var now = Instant.now();
+        var now = Instant.now(clock);
         emailVerificationAttempts.compute(user.getId(), (id, current) -> {
             if (current == null || current.lastAttempt().isBefore(now.minus(ATTEMPT_WINDOW))) {
                 return new Attempt(1, now);
             }
             if (current.quantity() >= MAX_ATTEMPTS) {
                 throw new EmailVerificationMaxAttemptsExceededException(
-                        "Limite de emails enviados atingido para: %s, tente novamente após 15 minutos" + user.getEmail()
+                        "Limite de emails enviados atingido para: %s, tente novamente após 15 minutos", user.getEmail()
                 );
             }
             return new Attempt(current.quantity() + 1, now);
@@ -98,7 +101,7 @@ public class EmailVerificationTokenService implements TokenManager {
             throw new InvalidTokenTypeException("O token encontrado não é de verificação de email!");
         }
 
-        if (foundToken.getExpires().isBefore(Instant.now())) {
+        if (foundToken.getExpires().isBefore(Instant.now(clock))) {
             throw new TokenExpiredException("O token está expirado!");
         }
 
