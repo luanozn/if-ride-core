@@ -12,7 +12,7 @@ import software.amazon.awssdk.services.ses.model.*;
 @Service
 @Log4j2
 @RequiredArgsConstructor
-@Profile("!ci")
+@Profile("!it")
 public class AwsEmailService implements EmailService {
 
     private final SesClient emailClient;

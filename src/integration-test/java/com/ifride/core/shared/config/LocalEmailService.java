@@ -1,14 +1,15 @@
-package com.ifride.core.shared.services.impl;
+package com.ifride.core.shared.config;
 
 import com.ifride.core.shared.services.EmailService;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
-@Component
-@Profile("ci")
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Profile;
+
+@TestConfiguration
+@Profile("it")
 public class LocalEmailService implements EmailService {
 
     public record EmailCall(String to, String subject, String body) {}
