@@ -19,12 +19,12 @@ public class UserValidator {
     private final CPFValidator cpfValidator = new CPFValidator();
     private final UserRepository repository;
 
-    public void validateDocument(RegisterRequestDTO registerRequest) {
-        validateValidity(registerRequest);
+    public void validateUser(RegisterRequestDTO registerRequest) {
+        validateDocument(registerRequest);
         validateUnicity(registerRequest);
     }
 
-    private void validateValidity(RegisterRequestDTO registerRequest) {
+    private void validateDocument(RegisterRequestDTO registerRequest) {
         try {
             cpfValidator.assertValid(convertFormatted(registerRequest.documentNumber()));
         } catch (InvalidStateException e) {

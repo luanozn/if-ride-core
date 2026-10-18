@@ -23,6 +23,27 @@ repositories {
 	mavenCentral()
 }
 
+sourceSets {
+	integrationTest {
+		java {
+			srcDir file('src/integration-test/java')
+		}
+		resources {
+			srcDir file('src/integration-test/resources')
+		}
+
+		compileClasspath += sourceSets.main.output
+		runtimeClasspath += sourceSets.main.output
+	}
+}
+
+configurations {
+	integrationTestImplementation.extendsFrom implementation, testImplementation
+	integrationTestRuntimeOnly.extendsFrom runtimeOnly, testRuntimeOnly
+	integrationTestCompileOnly.extendsFrom compileOnly, testCompileOnly
+	integrationTestAnnotationProcessor.extendsFrom annotationProcessor, testAnnotationProcessor
+}
+
 dependencies {
 	implementation(platform('software.amazon.awssdk:bom:2.27.21'))
 	implementation 'software.amazon.awssdk:ses'
@@ -46,11 +67,17 @@ dependencies {
 
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api'
+	testImplementation 'org.threeten:threeten-extra:1.10.0'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:postgresql'
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
 
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	runtimeOnly 'org.postgresql:postgresql'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	runtimeOnly 'org.postgresql:postgresql'
 
 	annotationProcessor 'org.projectlombok:lombok'
 }
@@ -58,3 +85,13 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+tasks.register('integrationTest', Test) {
+	description = 'Executa os testes de integração.'
+	group = 'verification'
+	useJUnitPlatform()
+
+	testClassesDirs = sourceSets.integrationTest.output.classesDirs
+	classpath = sourceSets.integrationTest.runtimeClasspath
+}
+

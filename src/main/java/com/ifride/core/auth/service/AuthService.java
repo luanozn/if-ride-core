@@ -23,7 +23,7 @@ public class AuthService {
 
     @Transactional
     public User register(RegisterRequestDTO registerRequest) {
-        userValidator.validateDocument(registerRequest);
+        userValidator.validateUser(registerRequest);
 
         var saved = repository.save(userConverter.from(registerRequest, Role.PASSENGER));
         eventPublisher.publishEvent(new UserRegisteredEvent(saved));
