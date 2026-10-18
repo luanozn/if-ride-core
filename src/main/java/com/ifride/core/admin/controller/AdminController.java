@@ -1,11 +1,11 @@
 package com.ifride.core.admin.controller;
 
+import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.admin.DriverDirectlyDTO;
 import com.ifride.core.admin.service.AdminUserService;
 import com.ifride.core.auth.model.dto.RegisterRequestDTO;
 import com.ifride.core.auth.model.dto.RegisterResponseDTO;
 import com.ifride.core.auth.model.dto.UserDto;
-import com.ifride.core.auth.model.enums.Role;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -61,8 +62,8 @@ public class AdminController {
     }
 
     @GetMapping()
-    public Page<UserDto> findAll(@PageableDefault() Pageable pageable, @RequestParam(required = false) String search) {
-        return adminService.findAll(search, pageable);
+    public Page<UserDto> findAll(@AuthenticationPrincipal User author, @PageableDefault() Pageable pageable, @RequestParam(required = false) String search) {
+        return adminService.findAll(search, pageable, author);
     }
 
     @DeleteMapping("/{administratorId}")

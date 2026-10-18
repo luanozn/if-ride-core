@@ -6,6 +6,7 @@ import br.com.caelum.stella.validation.CPFValidator;
 import br.com.caelum.stella.validation.InvalidStateException;
 import com.ifride.core.auth.model.dto.RegisterRequestDTO;
 import com.ifride.core.auth.repository.UserRepository;
+import com.ifride.core.auth.service.DeterministicEncryptorService;
 import com.ifride.core.shared.exceptions.api.BadRequestException;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.utils.CpfViewConverter;
@@ -18,6 +19,7 @@ public class UserValidator {
 
     private final CPFValidator cpfValidator = new CPFValidator();
     private final UserRepository repository;
+    private final DeterministicEncryptorService cryptoService;
 
     public void validateUser(RegisterRequestDTO registerRequest) {
         validateDocument(registerRequest);
@@ -33,10 +35,12 @@ public class UserValidator {
     }
 
     private void validateUnicity(RegisterRequestDTO registerRequest) {
+        var encryptedCpf = cryptoService.encrypt(convertFormatted(registerRequest.documentNumber()));
+
         if (repository.existsUserByEmail(registerRequest.email())) {
-            throw new ConflictException("Não é possível cadastrar o usuário. O email %s já está cadastrado!", registerRequest.email());
-        } else if (repository.existsUserByCpf(convertFormatted(registerRequest.documentNumber()))) {
-            throw new ConflictException("Não é possível cadastrar o usuário. O CPF %s já está cadastrado", CpfViewConverter.convert(registerRequest.documentNumber()));
+            throw new ConflictException("Não é possível cadastrar o usuário. O email já está em uso!", registerRequest.email());
+        } else if (repository.existsUserByCpfEncrypted(encryptedCpf)) {
+            throw new ConflictException("Não é possível cadastrar o usuário. O CPF já está cadastrado!", CpfViewConverter.convert(registerRequest.documentNumber()));
         }
     }
 }
