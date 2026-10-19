@@ -59,7 +59,7 @@ public class DriverApplicationController {
     public DriverApplicationSummaryDTO createDriverRequest(@AuthenticationPrincipal User author, @RequestBody DriverApplicationRequestDTO driverRequest) {
         var user = userService.findById(driverRequest.requesterId());
 
-        log.info("O usuário {} iniciou a requisição de motorista para o usuário {}", author.getEmail() , user.getEmail());
+        log.info("O usuário {} iniciou a requisição de motorista para o usuário {}", author.getId() , user.getId());
         return driverApplicationService.createDriverApplication(author, user, driverRequest);
     }
 
@@ -105,12 +105,19 @@ public class DriverApplicationController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public Page<DriverApplicationSummaryDTO> getApplications(
+            @AuthenticationPrincipal User author,
             @RequestParam(required = false) List<DriverApplicationStatus> statuses,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String cnh,
             @PageableDefault(sort = "createdAt", direction = Direction.DESC) Pageable pageable) {
 
-        return driverApplicationService.findBy(statuses, search, cnh, pageable);
+        return driverApplicationService.findBy(statuses, search, cnh, pageable, author);
+    }
+
+    @GetMapping("/{applicationId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public DriverApplicationSummaryDTO getApplication(@AuthenticationPrincipal User user, @PathVariable String applicationId) {
+        return driverApplicationService.findById(applicationId, user);
     }
 
 }
