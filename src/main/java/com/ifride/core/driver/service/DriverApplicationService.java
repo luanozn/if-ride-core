@@ -43,7 +43,7 @@ public class DriverApplicationService {
 
     public DriverApplicationSummaryDTO createDriverApplication(User author, User user, DriverApplicationRequestDTO dto) {
         var lastDriverApplication = getLastDriverApplicationByUser(user.getId());
-        driverApplicationValidator.validateDriverApplication(author, user, lastDriverApplication);
+        driverApplicationValidator.validateDriverApplication(author, user, lastDriverApplication, dto);
 
         var driverApplication = mapper.fromRequest(dto, author);
         driverApplication = repository.save(driverApplication);
