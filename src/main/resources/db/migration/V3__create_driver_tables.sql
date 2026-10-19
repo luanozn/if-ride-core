@@ -1,21 +1,21 @@
 CREATE TABLE driver_applications
 (
-    id                 VARCHAR(36) PRIMARY KEY,
-    status             VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    id                   VARCHAR(36) PRIMARY KEY,
+    status               VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
 
-    user_id            VARCHAR(36) NOT NULL,
-    application_status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
-    cnh_number         VARCHAR(20) NOT NULL,
-    cnh_category       VARCHAR(10) NOT NULL,
-    cnh_expiration     DATE        NOT NULL,
-    reviewed_by        VARCHAR(36),
-    rejection_reason   TEXT,
+    user_id              VARCHAR(36)  NOT NULL,
+    application_status   VARCHAR(50)  NOT NULL DEFAULT 'PENDING',
+    cnh_number_encrypted VARCHAR(255) NOT NULL,
+    cnh_category         VARCHAR(10)  NOT NULL,
+    cnh_expiration       DATE         NOT NULL,
+    reviewed_by          VARCHAR(36),
+    rejection_reason     TEXT,
 
-    created_at         TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by         VARCHAR(255),
-    updated_at         TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_by         VARCHAR(255),
-    version            BIGINT NOT NULL DEFAULT 0,
+    created_at           TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by           VARCHAR(255),
+    updated_at           TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by           VARCHAR(255),
+    version              BIGINT       NOT NULL DEFAULT 0,
 
     CONSTRAINT fk_app_user FOREIGN KEY (user_id) REFERENCES users (id),
     CONSTRAINT fk_app_reviewer FOREIGN KEY (reviewed_by) REFERENCES users (id)
@@ -23,18 +23,18 @@ CREATE TABLE driver_applications
 
 CREATE TABLE drivers
 (
-    id             VARCHAR(36) PRIMARY KEY,
-    status         VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    id                   VARCHAR(36) PRIMARY KEY,
+    status               VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
 
-    cnh_number     VARCHAR(20) NOT NULL,
-    cnh_category   VARCHAR(10) NOT NULL,
-    cnh_expiration DATE        NOT NULL,
+    cnh_number_encrypted VARCHAR(255) NOT NULL,
+    cnh_category         VARCHAR(10)  NOT NULL,
+    cnh_expiration       DATE         NOT NULL,
 
-    created_at     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by     VARCHAR(255),
-    updated_at     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_by     VARCHAR(255),
-    version        BIGINT NOT NULL DEFAULT 0,
+    created_at           TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by           VARCHAR(255),
+    updated_at           TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by           VARCHAR(255),
+    version              BIGINT       NOT NULL DEFAULT 0,
 
     CONSTRAINT fk_driver_user FOREIGN KEY (id) REFERENCES users (id)
 );
@@ -54,7 +54,7 @@ CREATE TABLE vehicles
     created_by VARCHAR(255),
     updated_at TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_by VARCHAR(255),
-    version    BIGINT NOT NULL DEFAULT 0,
+    version    BIGINT       NOT NULL DEFAULT 0,
 
     CONSTRAINT fk_vehicle_driver FOREIGN KEY (driver_id) REFERENCES drivers (id),
     CONSTRAINT uk_owner_plate UNIQUE (driver_id, plate)
@@ -64,4 +64,6 @@ CREATE TABLE vehicles
 CREATE INDEX idx_driver_app_user ON driver_applications (user_id);
 CREATE INDEX idx_vehicles_driver ON vehicles (driver_id);
 CREATE INDEX idx_driver_app_status_created ON driver_applications (application_status, created_at DESC);
+CREATE UNIQUE INDEX idx_unique_driver_cnh on drivers (cnh_number_encrypted);
 CREATE UNIQUE INDEX idx_unique_active_driver_application ON driver_applications (user_id) WHERE application_status IN ('PENDING', 'APPROVED');
+CREATE UNIQUE INDEX idx_unique_active_driver_application_cnh ON driver_applications (cnh_number_encrypted) WHERE application_status IN ('PENDING', 'APPROVED');
