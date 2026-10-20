@@ -43,6 +43,7 @@ public class RideParticipantValidator {
     public void validateCancelling(RideParticipant participant, String passengerId) {
         checkPassengerCancelling(participant, passengerId);
         checkDepartureTime(participant);
+        checkParticipantStatus(participant);
     }
 
     private void checkActiveParticipant(Ride ride, User author) {
@@ -106,6 +107,12 @@ public class RideParticipantValidator {
     private void checkDepartureTime(RideParticipant participant) {
         if (participant.getRide().getDepartureTime().isBefore(Instant.now())) {
             throw new ConflictException("Não é possível cancelar uma participação após o horário de partida.");
+        }
+    }
+
+    private void checkParticipantStatus(RideParticipant participant) {
+        if (participant.getParticipantStatus() == ParticipantStatus.REJECTED || participant.getParticipantStatus() == ParticipantStatus.CANCELLED) {
+            throw new ConflictException("Não é possível cancelar uma participação com status %s", participant.getParticipantStatus());
         }
     }
 }
