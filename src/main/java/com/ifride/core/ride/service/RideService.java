@@ -141,4 +141,8 @@ public class RideService {
         ride.setRecurrent(false);
         rideRepository.save(ride);
     }
+
+    public boolean isDriverOfRide(String userId, String rideId) {
+        return rideRepository.isDriverOfRide(userId, rideId);
+    }
 }

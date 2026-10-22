@@ -127,6 +127,11 @@ public class RideParticipantService {
         return participants.map(participant -> mapper.from(participant, author));
     }
 
+
+    public boolean existsByRideIdAndPassengerIdAndParticipantStatus(String rideId, String passengerId, ParticipantStatus status) {
+        return repository.existsByRideIdAndPassengerIdAndParticipantStatusIn(rideId, passengerId, List.of(status));
+    }
+
     private void validateRequester(User author, Ride ride) {
         if(!authorHasPermissionOnRide(author, ride)) {
             throw new ForbiddenException("O usuário %s não pode solicitar os participantes desta carona.", author.getEmail());
