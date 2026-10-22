@@ -2,7 +2,7 @@ package com.ifride.core.driver.service.validators;
 
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.model.enums.Role;
-import com.ifride.core.auth.service.DeterministicEncryptorService;
+import com.ifride.core.shared.services.DeterministicEncryptorService;
 import com.ifride.core.driver.model.dto.DriverApplicationRequestDTO;
 import com.ifride.core.driver.model.entity.DriverApplication;
 import com.ifride.core.driver.model.enums.DriverApplicationStatus;

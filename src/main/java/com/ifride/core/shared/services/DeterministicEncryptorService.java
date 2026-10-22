@@ -1,4 +1,4 @@
-package com.ifride.core.auth.service;
+package com.ifride.core.shared.services;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ public class DeterministicEncryptorService {
 
     private final SecretKey key;
 
-    public DeterministicEncryptorService(@Value("${app.cpf.aes-key}") String rawKey) throws Exception {
+    public DeterministicEncryptorService(@Value("${app.deterministic.aes-key}") String rawKey) throws Exception {
         if (rawKey == null || rawKey.isBlank()) {
             throw new IllegalStateException(
                     "app.cpf.aes-key não configurada. " +

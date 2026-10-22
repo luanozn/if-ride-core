@@ -3,7 +3,7 @@ package com.ifride.core.driver.model.mapper;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.model.mapper.UserMapper;
-import com.ifride.core.auth.service.DeterministicEncryptorService;
+import com.ifride.core.shared.services.DeterministicEncryptorService;
 import com.ifride.core.driver.model.dto.DriverApplicationRequestDTO;
 import com.ifride.core.driver.model.dto.DriverApplicationSummaryDTO;
 import com.ifride.core.driver.model.entity.Driver;
@@ -52,10 +52,10 @@ public class DriverMapper {
         return driverApplication;
     }
 
-    public DriverApplicationSummaryDTO toListItem(DriverApplication app, User currentUser) {
-        var requesterDto = userMapper.toDto(app.getRequester(), currentUser);
+    public DriverApplicationSummaryDTO toListItem(DriverApplication app) {
+        var requesterDto = userMapper.toDto(app.getRequester(), null);
         var reviewedByDto = app.getReviewedBy() != null
-                ? userMapper.toDto(app.getReviewedBy(), currentUser)
+                ? userMapper.toDto(app.getReviewedBy(), null)
                 : null;
 
         return new DriverApplicationSummaryDTO(

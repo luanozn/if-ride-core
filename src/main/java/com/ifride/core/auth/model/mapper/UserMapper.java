@@ -4,9 +4,8 @@ import com.ifride.core.auth.model.dto.RegisterRequestDTO;
 import com.ifride.core.auth.model.dto.UserDto;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.model.enums.Role;
-import com.ifride.core.auth.service.DeterministicEncryptorService;
+import com.ifride.core.shared.services.DeterministicEncryptorService;
 import com.ifride.core.shared.utils.CpfViewConverter;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 

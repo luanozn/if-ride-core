@@ -105,13 +105,12 @@ public class DriverApplicationController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public Page<DriverApplicationSummaryDTO> getApplications(
-            @AuthenticationPrincipal User author,
             @RequestParam(required = false) List<DriverApplicationStatus> statuses,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String cnh,
             @PageableDefault(sort = "createdAt", direction = Direction.DESC) Pageable pageable) {
 
-        return driverApplicationService.findBy(statuses, search, cnh, pageable, author);
+        return driverApplicationService.findBy(statuses, search, cnh, pageable);
     }
 
     @GetMapping("/{applicationId}")

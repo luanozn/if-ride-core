@@ -45,7 +45,7 @@ public class SecurityFilter extends OncePerRequestFilter {
 
             if (user.isPresent()) {
                 var authentication = new UsernamePasswordAuthenticationToken(
-                        user,
+                        user.get(),
                         null,
                         user.get().getAuthorities()
                 );

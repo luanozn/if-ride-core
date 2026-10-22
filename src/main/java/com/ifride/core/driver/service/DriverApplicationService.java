@@ -1,6 +1,6 @@
 package com.ifride.core.driver.service;
 
-import com.ifride.core.auth.service.DeterministicEncryptorService;
+import com.ifride.core.shared.services.DeterministicEncryptorService;
 import com.ifride.core.auth.service.UserService;
 import com.ifride.core.driver.model.dto.DriverApplicationRejectionDTO;
 import com.ifride.core.driver.model.dto.DriverApplicationRequestDTO;
@@ -86,13 +86,12 @@ public class DriverApplicationService {
             List<DriverApplicationStatus> statuses,
             String search,
             String cnh,
-            Pageable pageable,
-            User author) {
+            Pageable pageable) {
 
         var cnhEncrypted = (cnh != null && !cnh.isBlank()) ? crypto.encrypt(cnh) : null;
         var spec = DriverApplicationSpecs.buildSearchSpec(statuses, search, cnhEncrypted);
         return repository.findAll(spec, pageable)
-                .map(item -> mapper.toListItem(item, author));
+                .map(mapper::toListItem);
     }
 
     private DriverApplication changeDriverApplicationStatus(String userId, DriverApplicationStatus status, User author, String rejectionReason) {

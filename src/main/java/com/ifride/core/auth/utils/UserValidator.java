@@ -6,7 +6,7 @@ import br.com.caelum.stella.validation.CPFValidator;
 import br.com.caelum.stella.validation.InvalidStateException;
 import com.ifride.core.auth.model.dto.RegisterRequestDTO;
 import com.ifride.core.auth.repository.UserRepository;
-import com.ifride.core.auth.service.DeterministicEncryptorService;
+import com.ifride.core.shared.services.DeterministicEncryptorService;
 import com.ifride.core.shared.exceptions.api.BadRequestException;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.utils.CpfViewConverter;
