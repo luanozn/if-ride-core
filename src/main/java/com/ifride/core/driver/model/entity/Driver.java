@@ -32,8 +32,8 @@ public class Driver extends AuditEntity {
     @JoinColumn(name = "id", nullable = false)
     private User user;
 
-    @Column(name = "cnh_number", nullable = false)
-    private String cnhNumber;
+    @Column(name = "cnh_number_encrypted", nullable = false)
+    private String cnhNumberEncrypted;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "cnh_category", nullable = false)

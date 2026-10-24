@@ -7,7 +7,9 @@ import com.ifride.core.chat.model.dto.SendMessageRequest;
 import com.ifride.core.chat.model.entity.ChatMessage;
 import com.ifride.core.chat.model.enums.MessageStatus;
 import com.ifride.core.chat.repository.ChatMessageRepository;
+import com.ifride.core.chat.utils.ChatValidator;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
+import com.ifride.core.shared.services.RandomizedEncryptorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -21,9 +23,14 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final RandomizedEncryptorService crypto;
+    private final ChatValidator validator;
     private final ConversationService conversationService;
 
     public ChatMessageDTO sendMessage(User sender, SendMessageRequest request) {
+        validator.validateUserInRide(request.rideId(), sender.getId());
+        validator.validateUserInRide(request.rideId(), request.recipientId());
+
         var recipient = userRepository.findById(request.recipientId())
                 .orElseThrow(() -> new NotFoundException("Destinatário não encontrado."));
 
@@ -32,7 +39,7 @@ public class ChatService {
         message.setSenderId(sender.getId());
         message.setSenderName(sender.getName());
         message.setRecipientId(recipient.getId());
-        message.setContent(request.content());
+        message.setContent(crypto.encrypt(request.content()));
         message.setMessageStatus(MessageStatus.SENT);
 
         var saved = chatMessageRepository.save(message);
@@ -44,7 +51,9 @@ public class ChatService {
         return dto;
     }
 
-    public List<ChatMessageDTO> getMessagesByRide(String rideId) {
+    public List<ChatMessageDTO> getMessagesByRide(User currentUser, String rideId) {
+        validator.validateUserInRide(rideId, currentUser.getId());
+
         return chatMessageRepository
                 .findByRideIdOrderByCreatedAtAsc(rideId)
                 .stream()
@@ -52,9 +61,11 @@ public class ChatService {
                 .toList();
     }
 
-    public long getUnreadCount(String rideId, String userId) {
+    public long getUnreadCount(String rideId, User user) {
+        validator.validateUserInRide(rideId, user.getId());
+
         return chatMessageRepository
-                .countByRideIdAndRecipientIdAndMessageStatusNot(rideId, userId, MessageStatus.READ);
+                .countByRideIdAndRecipientIdAndMessageStatusNot(rideId, user.getId(), MessageStatus.READ);
     }
 
     public ChatMessageDTO markAsRead(String messageId, User currentUser) {
@@ -70,13 +81,20 @@ public class ChatService {
     }
 
     private ChatMessageDTO toDTO(ChatMessage msg) {
+        String content;
+        try {
+            content = crypto.decrypt(msg.getContent());
+        } catch (Exception e) {
+            content = "[Mensagem corrompida ou indisponível]";
+        }
+
         return new ChatMessageDTO(
                 msg.getId(),
                 msg.getRideId(),
                 msg.getSenderId(),
                 msg.getSenderName(),
                 msg.getRecipientId(),
-                msg.getContent(),
+                crypto.decrypt(content),
                 msg.getMessageStatus().name(),
                 msg.getCreatedAt()
         );

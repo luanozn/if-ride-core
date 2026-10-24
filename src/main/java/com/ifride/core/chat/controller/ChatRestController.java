@@ -27,15 +27,15 @@ public class ChatRestController {
     }
 
     @GetMapping("/messages/{rideId}")
-    public ResponseEntity<List<ChatMessageDTO>> getMessages(@PathVariable String rideId) {
-        return ResponseEntity.ok(chatService.getMessagesByRide(rideId));
+    public ResponseEntity<List<ChatMessageDTO>> getMessages(@AuthenticationPrincipal User currentUser, @PathVariable String rideId) {
+        return ResponseEntity.ok(chatService.getMessagesByRide(currentUser, rideId));
     }
 
     @GetMapping("/rides/{rideId}/unread-count")
     public ResponseEntity<Map<String, Long>> getUnreadCount(
             @PathVariable String rideId,
             @AuthenticationPrincipal User currentUser) {
-        long count = chatService.getUnreadCount(rideId, currentUser.getId());
+        long count = chatService.getUnreadCount(rideId, currentUser);
         return ResponseEntity.ok(Map.of("unreadCount", count));
     }
 

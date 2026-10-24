@@ -6,6 +6,7 @@ import com.ifride.core.driver.model.dto.DriverApplicationRequestDTO;
 import com.ifride.core.driver.model.entity.DriverApplication;
 import com.ifride.core.driver.model.enums.CnhCategory;
 import com.ifride.core.driver.model.enums.DriverApplicationStatus;
+import com.ifride.core.driver.model.mapper.DriverMapper;
 import com.ifride.core.driver.repository.DriverApplicationRepository;
 import com.ifride.core.driver.service.DriverApplicationService;
 import com.ifride.core.driver.service.validators.DriverApplicationValidator;
@@ -43,6 +44,9 @@ class DriverApplicationServiceTest {
     private ApplicationEventPublisher eventPublisher;
 
     @Mock
+    private DriverMapper mapper;
+
+    @Mock
     private DriverApplicationValidator validator;
 
     @Test
@@ -51,16 +55,17 @@ class DriverApplicationServiceTest {
         User author = new User();
         User user = new User();
         user.setId("user-123");
-        user.setCpf("36900423051");
+        user.setCpfEncrypted("36900423051");
         DriverApplicationRequestDTO dto = new DriverApplicationRequestDTO("123456", "666", CnhCategory.A, LocalDate.now().plusYears(1));
 
+        when(mapper.fromRequest(eq(dto), any(User.class))).thenReturn(new DriverApplication());
         when(userService.findById(user.getId())).thenReturn(user);
         when(repository.findAllByRequesterOrderByCreatedAtDesc(user)).thenReturn(List.of());
         when(repository.save(any(DriverApplication.class))).thenAnswer(i -> i.getArguments()[0]);
 
         service.createDriverApplication(author, user, dto);
 
-        verify(validator).validateDriverApplication(eq(author), eq(user), any());
+        verify(validator).validateDriverApplication(eq(author), eq(user), any(), any());
         verify(repository).save(any(DriverApplication.class));
     }
 
@@ -69,11 +74,11 @@ class DriverApplicationServiceTest {
     void createDriverApplication_ThrowsForbidden_WhenValidatorFails() {
         User author = new User();
         User user = new User();
-        user.setCpf("36900423051");
+        user.setCpfEncrypted("36900423051");
         DriverApplicationRequestDTO dto = new DriverApplicationRequestDTO("123", "B", CnhCategory.A, LocalDate.now());
 
         doThrow(new ForbiddenException("Somente o próprio usuário"))
-                .when(validator).validateDriverApplication(any(), any(), any());
+                .when(validator).validateDriverApplication(any(), any(), any(), any());
 
         assertThrows(ForbiddenException.class, () ->
                 service.createDriverApplication(author, user, dto)
@@ -87,9 +92,9 @@ class DriverApplicationServiceTest {
     void approveDriverApplication_Success() {
         String userId = "user-id-123";
         User author = new User();
-        author.setCpf("36900423051");
+        author.setCpfEncrypted("36900423051");
         User requester = new User();
-        requester.setCpf("36900423051");
+        requester.setCpfEncrypted("36900423051");
         DriverApplication pendingApp = new DriverApplication();
         pendingApp.setApplicationStatus(DriverApplicationStatus.PENDING);
         pendingApp.setRequester(requester);

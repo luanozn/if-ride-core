@@ -67,6 +67,6 @@ public class DriverApplicationSpecs {
     }
 
     private static Specification<DriverApplication> cnhIs(String cnh) {
-        return (root, query , cb) -> cb.equal(root.get("cnhNumber"), cnh);
+        return (root, query , cb) -> cb.equal(root.get("cnhNumberEncrypted"), cnh);
     }
 }

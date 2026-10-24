@@ -64,7 +64,7 @@ public class EmailVerificationTokenServiceTest {
         user.setEmail("john.doe@email.com");
         user.setPassword("superSecretPassword");
         user.setName("John Doe");
-        user.setCpf("057.772.470-32");
+        user.setCpfEncrypted("057.772.470-32");
         return user;
     }
 

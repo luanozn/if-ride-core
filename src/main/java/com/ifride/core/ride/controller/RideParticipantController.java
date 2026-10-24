@@ -40,7 +40,7 @@ public class RideParticipantController {
             @AuthenticationPrincipal User author,
             @ParameterObject @PageableDefault(sort = "requestedAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return rideParticipantService.findMyParticipations(author.getId(), pageable);
+        return rideParticipantService.findMyParticipations(author, pageable);
     }
 
     @Operation(

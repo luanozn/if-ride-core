@@ -3,8 +3,8 @@ package com.ifride.core.auth.service;
 import com.ifride.core.auth.model.dto.RegisterRequestDTO;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.model.enums.Role;
+import com.ifride.core.auth.model.mapper.UserMapper;
 import com.ifride.core.auth.repository.UserRepository;
-import com.ifride.core.auth.service.converter.UserConverter;
 import com.ifride.core.auth.utils.UserValidator;
 import com.ifride.core.events.models.UserRegisteredEvent;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final UserRepository repository;
-    private final UserConverter userConverter;
+    private final UserMapper userMapper;
     private final UserValidator userValidator;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -25,7 +25,7 @@ public class AuthService {
     public User register(RegisterRequestDTO registerRequest) {
         userValidator.validateUser(registerRequest);
 
-        var saved = repository.save(userConverter.from(registerRequest, Role.PASSENGER));
+        var saved = repository.save(userMapper.userFromRegisterRequest(registerRequest, Role.PASSENGER));
         eventPublisher.publishEvent(new UserRegisteredEvent(saved));
 
         return saved;

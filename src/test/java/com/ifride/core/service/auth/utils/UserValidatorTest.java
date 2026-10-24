@@ -9,6 +9,7 @@ import com.ifride.core.auth.repository.UserRepository;
 import com.ifride.core.auth.utils.UserValidator;
 import com.ifride.core.shared.exceptions.api.BadRequestException;
 import com.ifride.core.shared.exceptions.api.ConflictException;
+import com.ifride.core.shared.services.DeterministicEncryptorService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,8 @@ class UserValidatorTest {
 
     @Mock
     UserRepository repository;
+    @Mock
+    DeterministicEncryptorService encryptor;
 
     @InjectMocks
     UserValidator validator;
@@ -56,7 +59,7 @@ class UserValidatorTest {
             var request = requestWith(VALID_EMAIL, invalidCpf);
 
             assertThatCode(() -> validator.validateUser(request))
-                    .as("CPF inválido %s deveria ser rejeitado por %s", invalidCpf)
+                    .as("CPF inválido %s deveria ser rejeitado por %s", invalidCpf, reason)
                     .isInstanceOf(BadRequestException.class);
         }
 
@@ -70,7 +73,8 @@ class UserValidatorTest {
         @DisplayName("Não deve lançar exceção de formato para CPFs válidos")
         void shouldNotThrowForValidCpf(String validCpf) {
             given(repository.existsUserByEmail(anyString())).willReturn(false);
-            given(repository.existsUserByCpf(anyString())).willReturn(false);
+            given(repository.existsUserByCpfEncrypted(anyString())).willReturn(false);
+            given(encryptor.encrypt(anyString())).willReturn("encrypted-cpf");
 
             var request = requestWith(VALID_EMAIL, validCpf);
 
@@ -108,7 +112,8 @@ class UserValidatorTest {
         @DisplayName("Deve lançar ConflictException quando CPF já existe")
         void shouldThrowConflictWhenCpfAlreadyExists(String duplicatedCpf) {
             given(repository.existsUserByEmail(anyString())).willReturn(false);
-            given(repository.existsUserByCpf(anyString())).willReturn(true);
+            given(repository.existsUserByCpfEncrypted(anyString())).willReturn(true);
+            given(encryptor.encrypt(anyString())).willReturn("encrypted-cpf");
 
             var request = requestWith(VALID_EMAIL, duplicatedCpf);
 
@@ -122,7 +127,8 @@ class UserValidatorTest {
     @DisplayName("Não deve lançar exceção quando todos os dados forem válidos e únicos")
     void shouldNotThrowWhenAllDataIsValidAndUnique() {
         given(repository.existsUserByEmail(anyString())).willReturn(false);
-        given(repository.existsUserByCpf(anyString())).willReturn(false);
+        given(repository.existsUserByCpfEncrypted(anyString())).willReturn(false);
+        given(encryptor.encrypt(anyString())).willReturn("encrypted-cpf");
 
         var request = requestWith(VALID_EMAIL, VALID_CPF_FORMATTED);
 

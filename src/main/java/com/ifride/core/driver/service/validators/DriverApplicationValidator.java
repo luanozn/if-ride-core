@@ -2,15 +2,19 @@ package com.ifride.core.driver.service.validators;
 
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.model.enums.Role;
+import com.ifride.core.shared.services.DeterministicEncryptorService;
+import com.ifride.core.driver.model.dto.DriverApplicationRequestDTO;
 import com.ifride.core.driver.model.entity.DriverApplication;
 import com.ifride.core.driver.model.enums.DriverApplicationStatus;
 import com.ifride.core.driver.repository.DriverApplicationRepository;
+import com.ifride.core.shared.exceptions.api.BadRequestException;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import com.ifride.core.shared.model.enums.Status;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -22,11 +26,13 @@ import static com.ifride.core.driver.model.enums.DriverApplicationStatus.PENDING
 public class DriverApplicationValidator {
 
     private final DriverApplicationRepository repository;
+    private final DeterministicEncryptorService crypto;
 
-    public void validateDriverApplication(User author, User user, Optional<DriverApplication> driverApplication) {
+    public void validateDriverApplication(User author, User user, Optional<DriverApplication> driverApplication, DriverApplicationRequestDTO dto) {
         checkDriverExists(user);
         checkOwnership(author, user);
         checkDriverApplicationValidity(driverApplication);
+        checkCnhUniqueness(dto);
     }
 
     public void validateDriverApplicationStatusChange(DriverApplication driverApplication, DriverApplicationStatus newStatus) {
@@ -45,17 +51,21 @@ public class DriverApplicationValidator {
         return !Objects.equals(author.getEmail(), requested.getEmail());
     }
 
-    private void checkDriverExists(User user) {
-        if(user.has(Role.DRIVER)) {
-            throw new ConflictException("O usuário %s já é um MOTORISTA", user.getEmail());
+    private void checkDriverExists(User requester) {
+        if(requester.has(Role.DRIVER)) {
+            throw new ConflictException("O usuário já é um motorista!");
+        }
+        if(repository.existsByRequesterAndApplicationStatus(requester, APPROVED)) {
+            throw new ConflictException("Há uma inconsistência no seu cadastro: sua solicitação foi aprovada, " +
+                    "mas a permissão de motorista não está ativa. Contate o suporte.");
         }
     }
+
 
     private void checkDriverApplicationValidity(Optional<DriverApplication> application) {
         application.ifPresent((driverApplication) -> {
             if(!driverApplication.getStatus().equals(Status.DELETED)) {
                 checkDriverApplicationPending(driverApplication);
-                checkDriverApplicationApproved(driverApplication);
             }
         });
     }
@@ -65,11 +75,15 @@ public class DriverApplicationValidator {
             throw new ConflictException("O usuário %s ainda tem uma requisição pendente!", driverApplication.getRequester().getEmail());
         }
     }
+    
+    private void checkCnhUniqueness(DriverApplicationRequestDTO requestDTO) {
+        if(requestDTO.cnhNumber() == null || requestDTO.cnhNumber().isBlank()) {
+            throw new BadRequestException("Nenhuma CNH foi especificada para a aplicação");
+        }
 
-    private void checkDriverApplicationApproved(DriverApplication driverApplication) {
-        if(driverApplication.getApplicationStatus() == APPROVED) {
-            throw new ConflictException("O usuário %s já tem uma requisição aprovada!", driverApplication.getRequester().getEmail());
+        var foundApp = repository.findByCnhNumberEncryptedAndApplicationStatusIn(crypto.encrypt(requestDTO.cnhNumber()), List.of(PENDING, APPROVED));
+        if(foundApp.isPresent()) {
+            throw new ConflictException("A CNH especificada na requisição já está cadastrada para outra aplicação!");
         }
     }
-
 }

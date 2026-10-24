@@ -6,6 +6,7 @@ import com.ifride.core.events.models.RideParticipationAcceptedEvent;
 import com.ifride.core.events.models.RideParticipationCancelledEvent;
 import com.ifride.core.events.models.RideParticipationRejectedEvent;
 import com.ifride.core.ride.model.Ride;
+import com.ifride.core.ride.model.RideMapper;
 import com.ifride.core.ride.model.RideParticipant;
 import com.ifride.core.ride.model.dto.RideParticipantRequestDTO;
 import com.ifride.core.ride.model.dto.RideParticipantResponseDTO;
@@ -30,6 +31,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RideParticipantService {
 
+    private final RideMapper mapper;
+
     private final RideParticipantRepository repository;
     private final RideService rideService;
     private final RideParticipantValidator rideValidator;
@@ -47,7 +50,7 @@ public class RideParticipantService {
         rideParticipant.setPickupPoint(dto.pickupPoint());
 
         repository.save(rideParticipant);
-        return RideParticipantResponseDTO.from(rideParticipant);
+        return mapper.from(rideParticipant, author);
     }
 
     @Transactional
@@ -93,7 +96,6 @@ public class RideParticipantService {
         participant.setParticipantStatus(ParticipantStatus.REJECTED);
         repository.save(participant);
 
-        // TODO: implementar evento para notificar o passageiro (Consistência Eventual)
         eventPublisher.publishEvent(new RideParticipationRejectedEvent(participant.getPassenger().getId(), participant.getRide().getId()));
     }
 
@@ -114,7 +116,6 @@ public class RideParticipantService {
         participant.setParticipantStatus(ParticipantStatus.CANCELLED);
         repository.save(participant);
 
-        // TODO: implementar evento para notificar o passageiro (Consistência Eventual)
         eventPublisher.publishEvent(new RideParticipationCancelledEvent(participant.getRide().getDriver().getId(), participant.getRide().getId()));
     }
 
@@ -123,7 +124,12 @@ public class RideParticipantService {
         validateRequester(author, ride);
 
         var participants = findParticipants(rideId, statuses, pageable);
-        return participants.map(RideParticipantResponseDTO::from);
+        return participants.map(participant -> mapper.from(participant, author));
+    }
+
+
+    public boolean existsByRideIdAndPassengerIdAndParticipantStatus(String rideId, String passengerId, ParticipantStatus status) {
+        return repository.existsByRideIdAndPassengerIdAndParticipantStatusIn(rideId, passengerId, List.of(status));
     }
 
     private void validateRequester(User author, Ride ride) {
@@ -145,9 +151,9 @@ public class RideParticipantService {
     }
 
     @Transactional(readOnly = true)
-    public Page<RideParticipantResponseDTO> findMyParticipations(String passengerId, Pageable pageable) {
-        return repository.findByPassengerIdOrderByRequestedAtDesc(passengerId, pageable)
-                .map(RideParticipantResponseDTO::from);
+    public Page<RideParticipantResponseDTO> findMyParticipations(User author, Pageable pageable) {
+        return repository.findByPassengerIdOrderByRequestedAtDesc(author.getId(), pageable)
+                .map(participant -> mapper.from(participant, author));
     }
 
     private RideParticipant getById(String id) {

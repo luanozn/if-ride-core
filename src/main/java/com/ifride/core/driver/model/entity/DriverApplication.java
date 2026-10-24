@@ -28,8 +28,8 @@ public class DriverApplication extends BaseEntity {
     @Column(name = "application_status", nullable = false)
     private DriverApplicationStatus applicationStatus = DriverApplicationStatus.PENDING;
 
-    @Column(name = "cnh_number", nullable = false)
-    private String cnhNumber;
+    @Column(name = "cnh_number_encrypted", nullable = false)
+    private String cnhNumberEncrypted;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "cnh_category", nullable = false)

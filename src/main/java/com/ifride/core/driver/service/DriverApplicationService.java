@@ -1,5 +1,6 @@
 package com.ifride.core.driver.service;
 
+import com.ifride.core.shared.services.DeterministicEncryptorService;
 import com.ifride.core.auth.service.UserService;
 import com.ifride.core.driver.model.dto.DriverApplicationRejectionDTO;
 import com.ifride.core.driver.model.dto.DriverApplicationRequestDTO;
@@ -7,6 +8,7 @@ import com.ifride.core.driver.model.dto.DriverApplicationSummaryDTO;
 import com.ifride.core.driver.model.entity.DriverApplication;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.driver.model.enums.DriverApplicationStatus;
+import com.ifride.core.driver.model.mapper.DriverMapper;
 import com.ifride.core.driver.repository.DriverApplicationRepository;
 import com.ifride.core.driver.repository.specs.DriverApplicationSpecs;
 import com.ifride.core.driver.service.validators.DriverApplicationValidator;
@@ -32,6 +34,8 @@ public class DriverApplicationService {
 
     private final DriverApplicationRepository repository;
     private final UserService userService;
+    private final DriverMapper mapper;
+    private final DeterministicEncryptorService crypto;
 
     private final ApplicationEventPublisher eventPublisher;
     private final DriverApplicationValidator driverApplicationValidator;
@@ -39,19 +43,12 @@ public class DriverApplicationService {
 
     public DriverApplicationSummaryDTO createDriverApplication(User author, User user, DriverApplicationRequestDTO dto) {
         var lastDriverApplication = getLastDriverApplicationByUser(user.getId());
+        driverApplicationValidator.validateDriverApplication(author, user, lastDriverApplication, dto);
 
-        driverApplicationValidator.validateDriverApplication(author, user, lastDriverApplication);
-
-        var driverApplication = new DriverApplication();
-        driverApplication.setRequester(user);
-        driverApplication.setCnhNumber(dto.cnhNumber());
-        driverApplication.setCnhCategory(dto.cnhCategory());
-        driverApplication.setCnhExpiration(dto.expiration());
-        driverApplication.setApplicationStatus(PENDING);
-
+        var driverApplication = mapper.fromRequest(dto, author);
         driverApplication = repository.save(driverApplication);
 
-        return DriverApplicationSummaryDTO.fromEntity(driverApplication);
+        return mapper.toDto(driverApplication, author);
     }
 
     @Transactional
@@ -59,13 +56,13 @@ public class DriverApplicationService {
         var application = changeDriverApplicationStatus(userId, APPROVED, author, null);
 
         eventPublisher.publishEvent(new DriverApplicationApprovedEvent(application, author));
-        return DriverApplicationSummaryDTO.fromEntity(application);
+        return mapper.toDto(application, author);
     }
 
     @Transactional
     public DriverApplicationSummaryDTO rejectDriverApplication(User author, String userId, DriverApplicationRejectionDTO dto) {
         var deniedApplication = changeDriverApplicationStatus(userId, DENIED, author, dto.rejectionReason());
-        return DriverApplicationSummaryDTO.fromEntity(deniedApplication);
+        return mapper.toDto(deniedApplication, author);
     }
 
     @Transactional
@@ -75,9 +72,13 @@ public class DriverApplicationService {
         repository.delete(application);
     }
 
+    public DriverApplicationSummaryDTO findById(String applicationId, User author) {
+        return repository.findById(applicationId).map(application -> mapper.toDto(application, author)).orElseThrow(() -> new NotFoundException("Não foi possível encontrar uma solicitação com o ID %s", applicationId));
+    }
+
     public DriverApplicationSummaryDTO getMyApplication(User requester) {
         return getLastDriverApplicationByUser(requester.getId())
-                .map(DriverApplicationSummaryDTO::fromEntity)
+                .map(app -> mapper.toDto(app, requester))
                 .orElseThrow(() -> new NotFoundException("Nenhuma solicitação encontrada para o usuário."));
     }
 
@@ -87,9 +88,10 @@ public class DriverApplicationService {
             String cnh,
             Pageable pageable) {
 
-        var spec = DriverApplicationSpecs.buildSearchSpec(statuses, search, cnh);
+        var cnhEncrypted = (cnh != null && !cnh.isBlank()) ? crypto.encrypt(cnh) : null;
+        var spec = DriverApplicationSpecs.buildSearchSpec(statuses, search, cnhEncrypted);
         return repository.findAll(spec, pageable)
-                .map(DriverApplicationSummaryDTO::fromEntity);
+                .map(mapper::toListItem);
     }
 
     private DriverApplication changeDriverApplicationStatus(String userId, DriverApplicationStatus status, User author, String rejectionReason) {
@@ -116,5 +118,4 @@ public class DriverApplicationService {
 
         return Optional.of(applications.getFirst());
     }
-
 }

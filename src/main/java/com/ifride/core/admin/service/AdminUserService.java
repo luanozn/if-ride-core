@@ -5,8 +5,8 @@ import com.ifride.core.auth.model.dto.RegisterRequestDTO;
 import com.ifride.core.auth.model.dto.UserDto;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.model.enums.Role;
+import com.ifride.core.auth.model.mapper.UserMapper;
 import com.ifride.core.auth.service.UserService;
-import com.ifride.core.auth.service.converter.UserConverter;
 import com.ifride.core.driver.service.DriverService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,20 +18,20 @@ import org.springframework.stereotype.Service;
 public class AdminUserService {
 
     private final UserService userService;
-    private final UserConverter userConverter;
     private final DriverService driverService;
+    private final UserMapper mapper;
 
     public User registerAdmin(RegisterRequestDTO registerRequest) {
-        return this.userService.save(userConverter.from(registerRequest, Role.ADMIN));
+        return this.userService.save(mapper.userFromRegisterRequest(registerRequest, Role.ADMIN));
     }
 
     public User registerDriverDirectly(DriverDirectlyDTO driverDirectlyDTO) {
         driverService.saveFromDTO(driverDirectlyDTO.driverInformation());
-        return this.userService.save(userConverter.from(driverDirectlyDTO.userInfo(), Role.DRIVER));
+        return this.userService.save(mapper.userFromRegisterRequest(driverDirectlyDTO.userInfo(), Role.DRIVER));
     }
 
-    public Page<UserDto> findAll(String search, Pageable pageable) {
-        return this.userService.findAll(Role.ADMIN, search, pageable).map(UserDto::fromEntity);
+    public Page<UserDto> findAll(String search, Pageable pageable, User author) {
+        return this.userService.findAll(Role.ADMIN, search, pageable, author);
     }
 
     public void delete(String administratorId) {

@@ -27,7 +27,9 @@ public class User extends BaseEntity implements UserDetails {
     private String name;
     private String email;
     private String password;
-    private String cpf;
+    @Column(name = "cpf_encrypted", nullable = false, unique = true, length = 64)
+    @EqualsAndHashCode.Exclude
+    private String cpfEncrypted;
 
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified;

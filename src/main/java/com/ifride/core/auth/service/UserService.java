@@ -1,6 +1,8 @@
 package com.ifride.core.auth.service;
 
+import com.ifride.core.auth.model.dto.UserDto;
 import com.ifride.core.auth.model.enums.Role;
+import com.ifride.core.auth.model.mapper.UserMapper;
 import com.ifride.core.auth.repository.specs.UserSpecs;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import com.ifride.core.auth.model.entity.User;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 public class UserService {
 
     private final UserRepository repository;
+    private final UserMapper mapper;
 
     public User findById(String id) {
         return repository.findById(id).orElseThrow(() -> new NotFoundException("Usuário %s não encontrado", id));
@@ -39,7 +42,7 @@ public class UserService {
         repository.delete(user);
     }
 
-    public Page<User> findAll(Role role, String search, Pageable pageable) {
-        return repository.findAll(UserSpecs.buildSearchSpec(search, role), pageable);
+    public Page<UserDto> findAll(Role role, String search, Pageable pageable, User author) {
+        return repository.findAll(UserSpecs.buildSearchSpec(search, role), pageable).map(item -> mapper.toDto(item, author));
     }
 }

@@ -53,6 +53,9 @@ public interface RideRepository extends JpaRepository<Ride, String>, JpaSpecific
     @Query("UPDATE Ride r SET r.rideStatus = :status WHERE r.id = :id")
     void updateStatus(@Param("id") String id, @Param("status") RideStatus status);
 
+    @Query("SELECT COUNT(r) > 0 FROM Ride r WHERE r.id = :rideId AND r.driver.user.id = :userId")
+    boolean isDriverOfRide(@Param("userId") String userId, @Param("rideId") String rideId);
+
     boolean existsByDriverIdAndRideStatus(String driverId, RideStatus status);
 
     Page<Ride> findByDriverIdOrderByDepartureTimeDesc(String driverId, Pageable pageable);

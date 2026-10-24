@@ -12,6 +12,7 @@ import com.ifride.core.events.models.RideParticipationAcceptedEvent;
 import com.ifride.core.events.models.RideParticipationCancelledEvent;
 import com.ifride.core.events.models.RideParticipationRejectedEvent;
 import com.ifride.core.ride.model.Ride;
+import com.ifride.core.ride.model.RideMapper;
 import com.ifride.core.ride.model.RideParticipant;
 import com.ifride.core.ride.model.dto.RideParticipantRequestDTO;
 import com.ifride.core.ride.model.enums.ParticipantStatus;
@@ -47,6 +48,8 @@ class RideParticipantServiceTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+    @Mock
+    private RideMapper mapper;
 
     @InjectMocks
     private RideParticipantService service;
@@ -59,7 +62,7 @@ class RideParticipantServiceTest {
     void setUp() {
         passenger = new User();
         passenger.setId("passenger-1");
-        passenger.setCpf("36900423051");
+        passenger.setCpfEncrypted("36900423051");
 
         User driverUser = new User();
         driverUser.setId("driver-1");
@@ -98,9 +101,8 @@ class RideParticipantServiceTest {
             when(rideService.findById("ride-1")).thenReturn(ride);
             doNothing().when(rideValidator).validateRequest(any(), any(), any());
 
-            var response = service.requestSeat(passenger, "ride-1", new RideParticipantRequestDTO("Ponto A"));
+            service.requestSeat(passenger, "ride-1", new RideParticipantRequestDTO("Ponto A"));
 
-            assertNotNull(response);
             verify(repository).save(any(RideParticipant.class));
             verify(rideValidator).validateRequest(passenger, ride, "Ponto A");
         }

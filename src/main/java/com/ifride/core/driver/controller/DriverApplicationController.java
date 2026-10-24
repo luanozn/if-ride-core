@@ -59,7 +59,7 @@ public class DriverApplicationController {
     public DriverApplicationSummaryDTO createDriverRequest(@AuthenticationPrincipal User author, @RequestBody DriverApplicationRequestDTO driverRequest) {
         var user = userService.findById(driverRequest.requesterId());
 
-        log.info("O usuário {} iniciou a requisição de motorista para o usuário {}", author.getEmail() , user.getEmail());
+        log.info("O usuário {} iniciou a requisição de motorista para o usuário {}", author.getId() , user.getId());
         return driverApplicationService.createDriverApplication(author, user, driverRequest);
     }
 
@@ -111,6 +111,12 @@ public class DriverApplicationController {
             @PageableDefault(sort = "createdAt", direction = Direction.DESC) Pageable pageable) {
 
         return driverApplicationService.findBy(statuses, search, cnh, pageable);
+    }
+
+    @GetMapping("/{applicationId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public DriverApplicationSummaryDTO getApplication(@AuthenticationPrincipal User user, @PathVariable String applicationId) {
+        return driverApplicationService.findById(applicationId, user);
     }
 
 }
