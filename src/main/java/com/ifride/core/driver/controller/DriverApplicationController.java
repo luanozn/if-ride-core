@@ -2,16 +2,20 @@ package com.ifride.core.driver.controller;
 
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.service.UserService;
+import com.ifride.core.driver.model.dto.CnhSecurityNumberDTO;
 import com.ifride.core.driver.model.dto.DriverApplicationRejectionDTO;
 import com.ifride.core.driver.model.dto.DriverApplicationRequestDTO;
 import com.ifride.core.driver.model.dto.DriverApplicationSummaryDTO;
 import com.ifride.core.driver.model.enums.DriverApplicationStatus;
 import com.ifride.core.driver.service.DriverApplicationService;
+import com.ifride.core.shared.audit.service.AuditLogService;
+import com.ifride.core.shared.utils.HttpRequestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -33,6 +37,7 @@ public class DriverApplicationController {
 
     private final UserService userService;
     private final DriverApplicationService driverApplicationService;
+    private final AuditLogService auditLogService;
 
     @Operation(summary = "Retorna a última solicitação do passageiro logado")
     @ApiResponses({
@@ -117,6 +122,22 @@ public class DriverApplicationController {
     @PreAuthorize("hasRole('ADMIN')")
     public DriverApplicationSummaryDTO getApplication(@AuthenticationPrincipal User user, @PathVariable String applicationId) {
         return driverApplicationService.findById(applicationId, user);
+    }
+
+    @GetMapping("/{applicationId}/security-code")
+    @PreAuthorize("hasRole('ADMIN')")
+    public CnhSecurityNumberDTO getSecurityCode(@AuthenticationPrincipal User adminUser, @PathVariable String applicationId, HttpServletRequest request) {
+        String ip = HttpRequestUtils.getClientIp(request);
+
+        auditLogService.logAction(
+                "VIEW_CNH_SECURITY_CODE",
+                applicationId,
+                "APPLICATION",
+                adminUser.getId(),
+                ip
+        );
+
+        return driverApplicationService.findByDriverApplication(applicationId);
     }
 
 }

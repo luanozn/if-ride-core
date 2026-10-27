@@ -31,6 +31,9 @@ public class DriverApplication extends BaseEntity {
     @Column(name = "cnh_number_encrypted", nullable = false)
     private String cnhNumberEncrypted;
 
+    @Column(name = "cnh_security_number_encrypted")
+    private String cnhSecurityNumberEncrypted;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "cnh_category", nullable = false)
     private CnhCategory cnhCategory;

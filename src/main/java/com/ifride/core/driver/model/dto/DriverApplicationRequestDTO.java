@@ -14,6 +14,9 @@ public record DriverApplicationRequestDTO(
         @Schema(description = "Categoria da CNH (A, B, AB, etc.)")
         CnhCategory cnhCategory,
 
+        @Schema(description = "Número de segurança da CNH")
+        String cnhSecurityNumber,
+
         @Schema(description = "Data de validade da CNH", example = "2030-12-31")
         LocalDate expiration
 ) {
