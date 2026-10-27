@@ -28,6 +28,7 @@ public class UserMapper {
         user.setEmail(registerRequestDTO.email());
         user.setPassword(encoder.encode(registerRequestDTO.password()));
         user.setName(registerRequestDTO.name());
+        user.setBirthDate(registerRequestDTO.birthDate());
         user.setCpfEncrypted(crypto.encrypt(convertFormatted(registerRequestDTO.documentNumber())));
         user.setRole(role);
 
@@ -52,6 +53,7 @@ public class UserMapper {
                 user.getEmail(),
                 CpfViewConverter.convert(crypto.decrypt(user.getCpfEncrypted())),
                 user.getRole(),
+                user.getBirthDate(),
                 user.isEmailVerified()
         );
     }
@@ -63,6 +65,7 @@ public class UserMapper {
                 null,
                 null,
                 user.getRole(),
+                null,
                 user.isEmailVerified()
         );
     }

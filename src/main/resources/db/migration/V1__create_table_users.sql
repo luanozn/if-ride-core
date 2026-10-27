@@ -9,6 +9,7 @@ CREATE TABLE users
     password       VARCHAR(255) NOT NULL,
     email_verified BOOLEAN      NOT NULL DEFAULT FALSE,
     role           VARCHAR(50)  NOT NULL,
+    birth_date     DATE NOT NULL,
 
     created_at     TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by     VARCHAR(255),
