@@ -43,6 +43,6 @@ public class UserService {
     }
 
     public Page<UserDto> findAll(Role role, String search, Pageable pageable, User author) {
-        return repository.findAll(UserSpecs.buildSearchSpec(search, role), pageable).map(item -> mapper.toDto(item, author));
+        return repository.findAll(UserSpecs.buildSearchSpec(search, role), pageable).map(mapper::toListItem);
     }
 }
