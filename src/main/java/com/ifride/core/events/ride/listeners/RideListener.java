@@ -1,6 +1,6 @@
-package com.ifride.core.events.listeners;
+package com.ifride.core.events.ride.listeners;
 
-import com.ifride.core.events.models.RideFinishedEvent;
+import com.ifride.core.events.ride.models.RideFinishedEvent;
 import com.ifride.core.ride.model.dto.RideRequestDTO;
 import com.ifride.core.ride.service.RideService;
 import lombok.RequiredArgsConstructor;

@@ -7,7 +7,7 @@ import com.ifride.core.auth.model.mapper.UserMapper;
 import com.ifride.core.auth.repository.UserRepository;
 import com.ifride.core.auth.service.AuthService;
 import com.ifride.core.auth.utils.UserValidator;
-import com.ifride.core.events.models.UserRegisteredEvent;
+import com.ifride.core.events.user.model.UserRegisteredEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

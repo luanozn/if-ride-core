@@ -2,9 +2,9 @@ package com.ifride.core.ride.service;
 
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.model.enums.Role;
-import com.ifride.core.events.models.RideParticipationAcceptedEvent;
-import com.ifride.core.events.models.RideParticipationCancelledEvent;
-import com.ifride.core.events.models.RideParticipationRejectedEvent;
+import com.ifride.core.events.ride.models.RideParticipationAcceptedEvent;
+import com.ifride.core.events.ride.models.RideParticipationCancelledEvent;
+import com.ifride.core.events.ride.models.RideParticipationRejectedEvent;
 import com.ifride.core.ride.model.Ride;
 import com.ifride.core.ride.model.RideMapper;
 import com.ifride.core.ride.model.RideParticipant;

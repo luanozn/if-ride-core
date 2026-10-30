@@ -5,7 +5,7 @@ import static com.ifride.core.shared.utils.DateTimeUtils.getDepartureTime;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.driver.service.DriverService;
 import com.ifride.core.driver.service.VehicleService;
-import com.ifride.core.events.models.RideFinishedEvent;
+import com.ifride.core.events.ride.models.RideFinishedEvent;
 import com.ifride.core.ride.model.Ride;
 import com.ifride.core.ride.model.dto.RideRequestDTO;
 import com.ifride.core.ride.model.dto.RideResponseDTO;

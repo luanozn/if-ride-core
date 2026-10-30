@@ -1,4 +1,4 @@
-package com.ifride.core.driver.listeners.model;
+package com.ifride.core.events.driver;
 
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.driver.model.entity.DriverApplication;

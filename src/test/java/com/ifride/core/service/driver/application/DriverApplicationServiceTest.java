@@ -11,7 +11,7 @@ import com.ifride.core.driver.model.mapper.DriverMapper;
 import com.ifride.core.driver.repository.DriverApplicationRepository;
 import com.ifride.core.driver.service.DriverApplicationService;
 import com.ifride.core.driver.service.validators.DriverApplicationValidator;
-import com.ifride.core.driver.listeners.model.DriverApplicationApprovedEvent;
+import com.ifride.core.events.driver.DriverApplicationApprovedEvent;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import com.ifride.core.shared.exceptions.api.NotFoundException;

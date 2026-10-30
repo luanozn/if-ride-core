@@ -1,9 +1,8 @@
-package com.ifride.core.driver.listeners;
+package com.ifride.core.events.driver;
 
 import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.service.UserService;
 import com.ifride.core.driver.service.DriverService;
-import com.ifride.core.driver.listeners.model.DriverApplicationApprovedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.context.event.EventListener;
