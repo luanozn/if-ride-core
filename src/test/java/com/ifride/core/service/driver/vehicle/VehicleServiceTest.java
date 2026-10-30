@@ -4,6 +4,7 @@ import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.driver.model.dto.VehicleCreationDTO;
 import com.ifride.core.driver.model.entity.Driver;
 import com.ifride.core.driver.model.entity.Vehicle;
+import com.ifride.core.driver.model.enums.CnhCategory;
 import com.ifride.core.driver.repository.VehicleRepository;
 import com.ifride.core.driver.service.DriverService;
 import com.ifride.core.driver.service.VehicleService;
@@ -45,6 +46,7 @@ class VehicleServiceTest {
         driver = new Driver();
         driver.setId("user-1");
         driver.setUser(author);
+        driver.setCnhCategory(CnhCategory.AB);
 
         dto = new VehicleCreationDTO("Fiat Argo", "ABC1234", "Prata", 4);
     }
