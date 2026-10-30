@@ -1,21 +1,22 @@
 CREATE TABLE driver_applications
 (
-    id                   VARCHAR(36) PRIMARY KEY,
-    status               VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
+    id                            VARCHAR(36) PRIMARY KEY,
+    status                        VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
 
-    user_id              VARCHAR(36)  NOT NULL,
-    application_status   VARCHAR(50)  NOT NULL DEFAULT 'PENDING',
-    cnh_number_encrypted VARCHAR(255) NOT NULL,
-    cnh_category         VARCHAR(10)  NOT NULL,
-    cnh_expiration       DATE         NOT NULL,
-    reviewed_by          VARCHAR(36),
-    rejection_reason     TEXT,
+    user_id                       VARCHAR(36)  NOT NULL,
+    application_status            VARCHAR(50)  NOT NULL DEFAULT 'PENDING',
+    cnh_number_encrypted          VARCHAR(255) NOT NULL,
+    cnh_security_number_encrypted varchar(255),
+    cnh_category                  VARCHAR(10)  NOT NULL,
+    cnh_expiration                DATE         NOT NULL,
+    reviewed_by                   VARCHAR(36),
+    rejection_reason              TEXT,
 
-    created_at           TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by           VARCHAR(255),
-    updated_at           TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_by           VARCHAR(255),
-    version              BIGINT       NOT NULL DEFAULT 0,
+    created_at                    TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by                    VARCHAR(255),
+    updated_at                    TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by                    VARCHAR(255),
+    version                       BIGINT       NOT NULL DEFAULT 0,
 
     CONSTRAINT fk_app_user FOREIGN KEY (user_id) REFERENCES users (id),
     CONSTRAINT fk_app_reviewer FOREIGN KEY (reviewed_by) REFERENCES users (id)

@@ -56,7 +56,7 @@ class DriverApplicationServiceTest {
         User user = new User();
         user.setId("user-123");
         user.setCpfEncrypted("36900423051");
-        DriverApplicationRequestDTO dto = new DriverApplicationRequestDTO("123456", "666", CnhCategory.A, LocalDate.now().plusYears(1));
+        DriverApplicationRequestDTO dto = new DriverApplicationRequestDTO("123456", "666", CnhCategory.A, "cnh-security-number", LocalDate.now().plusYears(1));
 
         when(mapper.fromRequest(eq(dto), any(User.class))).thenReturn(new DriverApplication());
         when(userService.findById(user.getId())).thenReturn(user);
@@ -75,7 +75,7 @@ class DriverApplicationServiceTest {
         User author = new User();
         User user = new User();
         user.setCpfEncrypted("36900423051");
-        DriverApplicationRequestDTO dto = new DriverApplicationRequestDTO("123", "B", CnhCategory.A, LocalDate.now());
+        DriverApplicationRequestDTO dto = new DriverApplicationRequestDTO("123", "B", CnhCategory.A, "cnh-security-number",LocalDate.now());
 
         doThrow(new ForbiddenException("Somente o próprio usuário"))
                 .when(validator).validateDriverApplication(any(), any(), any(), any());

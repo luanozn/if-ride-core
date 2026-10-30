@@ -3,6 +3,7 @@ package com.ifride.core.auth.model.entity;
 import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.shared.model.BaseEntity;
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,6 +38,9 @@ public class User extends BaseEntity implements UserDetails {
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private Role role;
+
+    @Column(name = "birth_date", nullable = false)
+    private LocalDate birthDate;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

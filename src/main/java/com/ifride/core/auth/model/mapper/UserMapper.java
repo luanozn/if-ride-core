@@ -28,16 +28,22 @@ public class UserMapper {
         user.setEmail(registerRequestDTO.email());
         user.setPassword(encoder.encode(registerRequestDTO.password()));
         user.setName(registerRequestDTO.name());
+        user.setBirthDate(registerRequestDTO.birthDate());
         user.setCpfEncrypted(crypto.encrypt(convertFormatted(registerRequestDTO.documentNumber())));
         user.setRole(role);
 
         return user;
     }
 
+    public UserDto toListItem(User target) {
+        if (target == null) return null;
+        return toSummary(target, true);
+    }
+
     public UserDto toDto(User target, User requester) {
         if (target == null) return null;
         if (canSeeFull(target, requester)) return toFull(target);
-        return toSummary(target);
+        return toSummary(target, false);
     }
 
     private boolean canSeeFull(User target, User requester) {
@@ -52,17 +58,19 @@ public class UserMapper {
                 user.getEmail(),
                 CpfViewConverter.convert(crypto.decrypt(user.getCpfEncrypted())),
                 user.getRole(),
+                user.getBirthDate(),
                 user.isEmailVerified()
         );
     }
 
-    private UserDto toSummary(User user) {
+    private UserDto toSummary(User user, boolean withEmail) {
         return new UserDto(
                 user.getId(),
                 user.getName(),
-                null,
+                withEmail ? user.getEmail() : null,
                 null,
                 user.getRole(),
+                null,
                 user.isEmailVerified()
         );
     }

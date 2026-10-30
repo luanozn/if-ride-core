@@ -1,5 +1,6 @@
 package com.ifride.core.driver.service;
 
+import com.ifride.core.driver.model.dto.CnhSecurityNumberDTO;
 import com.ifride.core.shared.services.DeterministicEncryptorService;
 import com.ifride.core.auth.service.UserService;
 import com.ifride.core.driver.model.dto.DriverApplicationRejectionDTO;
@@ -62,6 +63,7 @@ public class DriverApplicationService {
     @Transactional
     public DriverApplicationSummaryDTO rejectDriverApplication(User author, String userId, DriverApplicationRejectionDTO dto) {
         var deniedApplication = changeDriverApplicationStatus(userId, DENIED, author, dto.rejectionReason());
+
         return mapper.toDto(deniedApplication, author);
     }
 
@@ -70,6 +72,14 @@ public class DriverApplicationService {
         var application = repository.findById(applicationId).orElseThrow(() -> new NotFoundException("Não foi possível encontrar uma solicitação com o id %s", applicationId));
         driverApplicationValidator.checkOwnership(author, application.getRequester());
         repository.delete(application);
+    }
+
+    public CnhSecurityNumberDTO findByDriverApplication(String applicationId) {
+        var application = repository.findById(applicationId).orElseThrow(() -> new NotFoundException("Não foi possível encontrar uma solicitação com o id %s", applicationId));
+        if (application.getCnhSecurityNumberEncrypted() == null) {
+            throw new NotFoundException("O código de segurança não está mais disponível para esta aplicação.");
+        }
+        return mapper.fromDriverApplication(application);
     }
 
     public DriverApplicationSummaryDTO findById(String applicationId, User author) {
@@ -105,6 +115,7 @@ public class DriverApplicationService {
 
         driverApplication.setReviewedBy(author);
         driverApplication.setApplicationStatus(status);
+        driverApplication.setCnhSecurityNumberEncrypted(null);
         return repository.save(driverApplication);
     }
 

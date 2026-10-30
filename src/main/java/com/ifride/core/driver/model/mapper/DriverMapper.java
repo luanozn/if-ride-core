@@ -3,11 +3,13 @@ package com.ifride.core.driver.model.mapper;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.model.mapper.UserMapper;
+import com.ifride.core.driver.model.dto.CnhSecurityNumberDTO;
 import com.ifride.core.shared.services.DeterministicEncryptorService;
 import com.ifride.core.driver.model.dto.DriverApplicationRequestDTO;
 import com.ifride.core.driver.model.dto.DriverApplicationSummaryDTO;
 import com.ifride.core.driver.model.entity.Driver;
 import com.ifride.core.driver.model.entity.DriverApplication;
+import com.ifride.core.shared.services.RandomizedEncryptorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +20,14 @@ import static com.ifride.core.driver.model.enums.DriverApplicationStatus.PENDING
 public class DriverMapper {
 
     private final UserMapper userMapper;
-    private final DeterministicEncryptorService crypto;
+    private final DeterministicEncryptorService deterministicCrypto;
+    private final RandomizedEncryptorService randomizedCrypto;
+
+    public CnhSecurityNumberDTO fromDriverApplication(DriverApplication application) {
+        return new CnhSecurityNumberDTO(
+                randomizedCrypto.decrypt(application.getCnhSecurityNumberEncrypted())
+        );
+    }
 
     public Driver fromApplication(DriverApplication app) {
         Driver driver = new Driver();
@@ -34,7 +43,7 @@ public class DriverMapper {
     public Driver fromApplicationRequestAndUser(DriverApplicationRequestDTO app, User user) {
         Driver driver = new Driver();
         driver.setUser(user);
-        driver.setCnhNumberEncrypted(crypto.encrypt(app.cnhNumber()));
+        driver.setCnhNumberEncrypted(deterministicCrypto.encrypt(app.cnhNumber()));
         driver.setCnhCategory(app.cnhCategory());
         driver.setCnhExpiration(app.expiration());
 
@@ -44,10 +53,11 @@ public class DriverMapper {
     public DriverApplication fromRequest(DriverApplicationRequestDTO request, User author) {
         var driverApplication = new DriverApplication();
         driverApplication.setRequester(author);
-        driverApplication.setCnhNumberEncrypted(crypto.encrypt(request.cnhNumber()));
+        driverApplication.setCnhNumberEncrypted(deterministicCrypto.encrypt(request.cnhNumber()));
         driverApplication.setCnhCategory(request.cnhCategory());
         driverApplication.setCnhExpiration(request.expiration());
         driverApplication.setApplicationStatus(PENDING);
+        driverApplication.setCnhSecurityNumberEncrypted(randomizedCrypto.encrypt(request.cnhSecurityNumber()));
 
         return driverApplication;
     }
@@ -89,8 +99,8 @@ public class DriverMapper {
     }
 
     private String cnhFor(DriverApplication app, User currentUser) {
-        if (currentUser.has(Role.ADMIN)) return crypto.decrypt(app.getCnhNumberEncrypted());
-        if (currentUser.getId().equals(app.getRequester().getId())) return crypto.decrypt(app.getCnhNumberEncrypted());
+        if (currentUser.has(Role.ADMIN)) return deterministicCrypto.decrypt(app.getCnhNumberEncrypted());
+        if (currentUser.getId().equals(app.getRequester().getId())) return deterministicCrypto.decrypt(app.getCnhNumberEncrypted());
         return null;
     }
 }
