@@ -21,6 +21,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
+
 @ExtendWith(MockitoExtension.class)
 class UserValidatorTest {
 
@@ -36,7 +38,7 @@ class UserValidatorTest {
     private static final String VALID_CPF_FORMATTED = "053.440.630-08";
 
     private RegisterRequestDTO requestWith(String email, String cpf) {
-        return new RegisterRequestDTO(email, "senha123", "Nome Teste", cpf);
+        return new RegisterRequestDTO(email, "senha123", "Nome Teste", cpf, LocalDate.of(2002, 12, 2));
     }
 
     @Nested
