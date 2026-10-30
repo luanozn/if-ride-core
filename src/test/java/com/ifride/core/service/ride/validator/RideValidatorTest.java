@@ -11,6 +11,7 @@ import com.ifride.core.ride.service.validators.RideValidator;
 import com.ifride.core.shared.exceptions.api.BadRequestException;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
+import com.ifride.core.shared.utils.DateTimeUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -36,6 +37,9 @@ class RideValidatorTest {
 
     @Mock
     private RideRepository rideRepository;
+
+    @Mock
+    private DateTimeUtils dateTimeUtils;
 
     @InjectMocks
     private RideValidator validator;
@@ -68,6 +72,8 @@ class RideValidatorTest {
         @DisplayName("Deve permitir a criação quando os dados estão corretos e não há conflitos")
         void shouldAllowValidCreation() {
             var dto = new RideRequestDTO("vehicle-1", "A", "B", null, Instant.now().plus(2, ChronoUnit.HOURS), 3, BigDecimal.TEN, false, null, null);
+
+            given(dateTimeUtils.getDepartureTime(any())).willReturn(Instant.now().plus(2, ChronoUnit.HOURS));
             given(rideRepository.existsOverlap(any(), any(), any())).willReturn(false);
 
             assertThatCode(() -> validator.validateRideCreation(driver, vehicle, dto))
@@ -83,6 +89,7 @@ class RideValidatorTest {
 
             var dto = new RideRequestDTO("vehicle-1", "A", "B", null, Instant.now().plus(2, ChronoUnit.HOURS), 3, BigDecimal.TEN, false, null, null);
 
+            // Não precisa mockar o dateTimeUtils aqui, pois a exceção é lançada antes (checkVehicleBelongsToDriver)
             assertThatThrownBy(() -> validator.validateRideCreation(driver, vehicle, dto))
                     .isInstanceOf(ForbiddenException.class)
                     .hasMessageContaining("não pertence ao usuário");
@@ -92,6 +99,8 @@ class RideValidatorTest {
         @DisplayName("Deve barrar quando a data de partida for no passado")
         void shouldBlockPastDepartureTime() {
             var dto = new RideRequestDTO("vehicle-1", "A", "B", null, Instant.now().minus(1, ChronoUnit.HOURS), 3, BigDecimal.TEN, false, null, null);
+
+            given(dateTimeUtils.getDepartureTime(any())).willReturn(Instant.now().minus(1, ChronoUnit.HOURS));
 
             assertThatThrownBy(() -> validator.validateRideCreation(driver, vehicle, dto))
                     .isInstanceOf(ForbiddenException.class)
@@ -103,6 +112,8 @@ class RideValidatorTest {
         void shouldBlockSeatsExceedingCapacity() {
             var dto = new RideRequestDTO("vehicle-1", "A", "B", null, Instant.now().plus(2, ChronoUnit.HOURS), 5, BigDecimal.TEN, false, null, null); // Capacity: 4
 
+            given(dateTimeUtils.getDepartureTime(any())).willReturn(Instant.now().plus(2, ChronoUnit.HOURS));
+
             assertThatThrownBy(() -> validator.validateRideCreation(driver, vehicle, dto))
                     .isInstanceOf(ConflictException.class)
                     .hasMessageContaining("excede a capacidade");
@@ -112,6 +123,8 @@ class RideValidatorTest {
         @DisplayName("Deve barrar quando houver conflito de horário (sobreposição de 1 hora)")
         void shouldBlockTimeConflict() {
             var dto = new RideRequestDTO("vehicle-1", "A", "B", null, Instant.now().plus(2, ChronoUnit.HOURS), 3, BigDecimal.TEN, false, null, null);
+
+            given(dateTimeUtils.getDepartureTime(any())).willReturn(Instant.now().plus(2, ChronoUnit.HOURS));
             given(rideRepository.existsOverlap(any(), any(), any())).willReturn(true);
 
             assertThatThrownBy(() -> validator.validateRideCreation(driver, vehicle, dto))
@@ -123,11 +136,14 @@ class RideValidatorTest {
         @DisplayName("Deve exigir dia e hora se a carona for recorrente")
         void shouldRequireRecurrenceData() {
             var withoutDay = new RideRequestDTO("vehicle-1", "A", "B", null, null, 3, BigDecimal.TEN, true, null, LocalTime.NOON);
+
+            // A exceção é lançada no início do fluxo (checkRecurrency), antes de usar o DateTimeUtils
             assertThatThrownBy(() -> validator.validateRideCreation(driver, vehicle, withoutDay))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("dia da semana é obrigatório");
 
             var withoutTime = new RideRequestDTO("vehicle-1", "A", "B", null, null, 3, BigDecimal.TEN, true, DayOfWeek.MONDAY, null);
+
             assertThatThrownBy(() -> validator.validateRideCreation(driver, vehicle, withoutTime))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("horário de partida é obrigatório");
@@ -178,6 +194,88 @@ class RideValidatorTest {
             assertThatThrownBy(() -> validator.validateRideUpdate(ride, driverUser, RideStatus.IN_PROGRESS))
                     .isInstanceOf(ConflictException.class)
                     .hasMessageContaining("já possui uma carona em andamento");
+        }
+    }
+
+    @Nested
+    @DisplayName("Regras de Finalização de Carona")
+    class RideFinishRules {
+
+        @Test
+        @DisplayName("Deve permitir finalizar uma carona que está IN_PROGRESS")
+        void shouldAllowFinishWhenInProgress() {
+            var ride = new Ride();
+            ride.setDriver(driver);
+            ride.setRideStatus(RideStatus.IN_PROGRESS);
+
+            assertThatCode(() -> validator.validateRideUpdate(ride, driverUser, RideStatus.FINISHED))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        @DisplayName("Deve barrar a finalização de uma carona que não foi iniciada")
+        void shouldBlockFinishWhenNotInProgress() {
+            var ride = new Ride();
+            ride.setDriver(driver);
+            ride.setRideStatus(RideStatus.SCHEDULED); // Ainda não iniciou
+
+            assertThatThrownBy(() -> validator.validateRideUpdate(ride, driverUser, RideStatus.FINISHED))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("Não é possível finalizar uma carona não iniciada");
+        }
+
+        @Test
+        @DisplayName("Deve barrar a alteração de status de uma carona já FINALIZADA")
+        void shouldBlockStatusChangeWhenAlreadyFinished() {
+            var ride = new Ride();
+            ride.setDriver(driver);
+            ride.setRideStatus(RideStatus.FINISHED);
+
+            assertThatThrownBy(() -> validator.validateRideUpdate(ride, driverUser, RideStatus.CANCELLED))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("Não é possível alterar o status de uma carona FINALIZADA");
+        }
+    }
+
+    @Nested
+    @DisplayName("Regras de Desativação de Recorrência")
+    class DisableRecurrenceRules {
+
+        @Test
+        @DisplayName("Deve permitir desativar recorrência de uma carona válida")
+        void shouldAllowDisableWhenValid() {
+            var ride = new Ride();
+            ride.setDriver(driver);
+            ride.setRecurrent(true);
+            ride.setRideStatus(RideStatus.SCHEDULED);
+
+            assertThatCode(() -> validator.validateDisableRecurrence(ride, driverUser))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        @DisplayName("Deve barrar se a carona não for recorrente")
+        void shouldBlockWhenRideIsNotRecurrent() {
+            var ride = new Ride();
+            ride.setDriver(driver);
+            ride.setRecurrent(false);
+
+            assertThatThrownBy(() -> validator.validateDisableRecurrence(ride, driverUser))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("Esta carona não é recorrente");
+        }
+
+        @Test
+        @DisplayName("Deve barrar se a carona já estiver finalizada ou cancelada")
+        void shouldBlockWhenRideIsFinishedOrCancelled() {
+            var ride = new Ride();
+            ride.setDriver(driver);
+            ride.setRecurrent(true);
+            ride.setRideStatus(RideStatus.CANCELLED);
+
+            assertThatThrownBy(() -> validator.validateDisableRecurrence(ride, driverUser))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("já finalizada ou cancelada");
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.ifride.core.service.events;
 
 import com.ifride.core.driver.model.entity.Driver;
+import com.ifride.core.driver.model.entity.Vehicle;
 import com.ifride.core.events.ride.listeners.RideListener;
 import com.ifride.core.events.ride.models.RideFinishedEvent;
 import com.ifride.core.ride.model.Ride;
@@ -40,11 +41,14 @@ class RideListenerTest {
     void setUp() {
         var driver = new Driver();
         driver.setId("driver-1");
+        var vehicle = new Vehicle();
+        vehicle.setId("vehicle-1");
 
         ride = new Ride();
         ride.setId("ride-1");
         ride.setDriver(driver);
-        ride.setDepartureTime(Instant.now().plus(1, ChronoUnit.WEEKS));
+        ride.setDepartureTime(Instant.now().plus(7, ChronoUnit.DAYS));
+        ride.setVehicle(vehicle);
 
         event = new RideFinishedEvent("ride-1");
     }

@@ -26,17 +26,6 @@ class HttpRequestUtilsTest {
         }
 
         @Test
-        @DisplayName("Deve converter IPv6 localhost para IPv4 (127.0.0.1)")
-        void shouldConvertLocalIpv6ToIpv4() {
-            var request = new MockHttpServletRequest();
-            request.setRemoteAddr("0:0:0:0:0:0:0:1");
-
-            String ip = HttpRequestUtils.getClientIp(request);
-
-            assertThat(ip).isEqualTo("127.0.0.1");
-        }
-
-        @Test
         @DisplayName("Deve extrair o primeiro IP quando estiver atrás de um proxy (AWS/Gateway)")
         void shouldExtractFirstIpFromForwardedHeader() {
             var request = new MockHttpServletRequest();

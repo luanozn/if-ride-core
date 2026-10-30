@@ -1,7 +1,5 @@
 package com.ifride.core.ride.service.validators;
 
-import static com.ifride.core.shared.utils.DateTimeUtils.getDepartureTime;
-
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.driver.model.entity.Driver;
 import com.ifride.core.driver.model.entity.Vehicle;
@@ -12,6 +10,7 @@ import com.ifride.core.ride.repository.RideRepository;
 import com.ifride.core.shared.exceptions.api.BadRequestException;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
+import com.ifride.core.shared.utils.DateTimeUtils;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
@@ -24,6 +23,7 @@ import org.springframework.stereotype.Component;
 public class RideValidator {
 
     private final RideRepository rideRepository;
+    private final DateTimeUtils dateTimeUtils;
 
     public void validateRideUpdate(Ride ride, User requester, RideStatus newStatus) {
         checkOwnership(ride, requester);
@@ -39,7 +39,7 @@ public class RideValidator {
         checkVehicleBelongsToDriver(vehicle, driver);
         checkDepartureTime(rideRequest);
         checkCapacity(rideRequest, vehicle);
-        checkOverlap(driver, getDepartureTime(rideRequest));
+        checkOverlap(driver, dateTimeUtils.getDepartureTime(rideRequest));
     }
 
     private void checkVehicleBelongsToDriver(Vehicle vehicle, Driver driver) {
@@ -58,7 +58,7 @@ public class RideValidator {
     }
 
     private void checkDepartureTime(RideRequestDTO rideRequest) {
-        Instant currentDepartureTime = getDepartureTime(rideRequest);
+        Instant currentDepartureTime = dateTimeUtils.getDepartureTime(rideRequest);
         if (currentDepartureTime.isBefore(Instant.now())) {
             throw new ForbiddenException("A data de partida não pode ser no passado.");
         }
