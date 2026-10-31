@@ -16,7 +16,7 @@ import java.time.LocalDate;
 @Table(name = "driver_applications")
 @Getter
 @Setter
-@SQLDelete(sql = "UPDATE driver_applications SET status = 'DELETED' WHERE id = ? AND version = ?")
+@SQLDelete(sql = "UPDATE driver_applications SET status = 'DELETED', cnh_security_number_encrypted = NULL WHERE id = ? AND version = ?")
 @SQLRestriction("status <> 'DELETED'")
 public class DriverApplication extends BaseEntity {
 

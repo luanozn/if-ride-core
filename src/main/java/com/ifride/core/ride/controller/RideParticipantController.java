@@ -33,7 +33,16 @@ public class RideParticipantController {
 
     private final RideParticipantService rideParticipantService;
 
-    @Operation(summary = "Busca as participações do passageiro logado")
+    @Operation(
+            summary = "Busca as participações do passageiro logado",
+            description = "Retorna todas as solicitações de vaga feitas pelo próprio passageiro, ordenadas pela data de requisição mais recente.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista paginada retornada."),
+            @ApiResponse(responseCode = "401", description = "Não autenticado."),
+            @ApiResponse(responseCode = "403", description = "Usuário sem permissão de passageiro.")
+    })
     @GetMapping("/me")
     @PreAuthorize("hasRole('PASSENGER')")
     public Page<RideParticipantResponseDTO> getMyParticipations(
@@ -46,23 +55,25 @@ public class RideParticipantController {
     @Operation(
             summary = "Aceitar passageiro",
             description = """
-            Ação exclusiva do motorista da carona.
-        
-            **Regras de Negócio:**
-            * O solicitante deve ser o motorista dono da carona.
-            * A solicitação deve estar no status PENDING.
-            * A carona deve ter vagas disponíveis.
-        
-            **Efeitos Colaterais:**
-            * Decrementa `availableSeats` da carona.
-            * Altera status da carona para FULL se as vagas esgotarem.
-            * Dispara `RideParticipationAcceptedEvent`.
-        """
+                    Confirma a vaga do passageiro na carona. Ação exclusiva do motorista.
+                    
+                    **Regras de Negócio (RN):**
+                    * A solicitação deve estar no status `PENDING`.
+                    * A carona deve ter vagas disponíveis.
+                    
+                    **Efeitos Colaterais (Visíveis para o usuário):**
+                    * A vaga é reservada. Se a carona lotar, seu status muda para `FULL`.
+                    * Outras solicitações do mesmo passageiro para caronas no mesmo horário são automaticamente canceladas para evitar conflito de agenda.
+                    * Uma sala de chat entre motorista e passageiro é criada.
+                    """,
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Passageiro aceito com sucesso"),
-            @ApiResponse(responseCode = "403", description = "Usuário não é o motorista desta carona"),
-            @ApiResponse(responseCode = "409", description = "Solicitação já processada ou carona sem vagas")
+            @ApiResponse(responseCode = "204", description = "Passageiro aceito com sucesso."),
+            @ApiResponse(responseCode = "401", description = "Não autenticado."),
+            @ApiResponse(responseCode = "403", description = "Usuário não é o motorista desta carona."),
+            @ApiResponse(responseCode = "404", description = "Solicitação de participação não encontrada."),
+            @ApiResponse(responseCode = "409", description = "Solicitação já processada ou carona sem vagas.")
     })
     @PatchMapping("/{id}/accept")
     @PreAuthorize("hasRole('DRIVER')")
@@ -74,20 +85,22 @@ public class RideParticipantController {
     @Operation(
             summary = "Rejeitar passageiro",
             description = """
-            Ação exclusiva do motorista da carona.
-        
-            **Regras de Negócio:**
-            * Só pode ser feito caso a requisição não tenha sido processada (Status seja igual a PENDING).
-            * Só pode ser feito pelo motorista da carona.
-        
-            **Efeitos Colaterais:**
-            * Dispara `RideParticipationRejectedEvent` (Consistência eventual para notificação).
-        """
+                    Nega a vaga do passageiro na carona. Ação exclusiva do motorista.
+                    
+                    **Regras de Negócio (RN):**
+                    * A solicitação deve estar no status `PENDING`.
+                    
+                    **Efeitos Colaterais:**
+                    * O passageiro é notificado da recusa.
+                    """,
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Passageiro rejeitado"),
-            @ApiResponse(responseCode = "403", description = "Usuário não é o motorista"),
-            @ApiResponse(responseCode = "409", description = "Solicitação já processada")
+            @ApiResponse(responseCode = "204", description = "Passageiro rejeitado com sucesso."),
+            @ApiResponse(responseCode = "401", description = "Não autenticado."),
+            @ApiResponse(responseCode = "403", description = "Usuário não é o motorista."),
+            @ApiResponse(responseCode = "404", description = "Solicitação de participação não encontrada."),
+            @ApiResponse(responseCode = "409", description = "Solicitação já processada.")
     })
     @PatchMapping("/{id}/reject")
     @PreAuthorize("hasRole('DRIVER')")
@@ -99,22 +112,24 @@ public class RideParticipantController {
     @Operation(
             summary = "Cancelar participação",
             description = """
-            Ação realizada pelo passageiro.
-        
-            **Regras de Negócio:**
-            * Só pode ser feito antes do horário de partida da carona.
-            * Só pode ser feito pelo próprio passageiro solicitante.
-        
-            **Efeitos Colaterais:**
-            * Se o status era ACCEPTED, incrementa `availableSeats`.
-            * Retorna status da carona para SCHEDULED se estava FULL.
-            * Dispara `RideParticipationCancelledEvent`.
-        """
+                    Cancela a solicitação de vaga. Ação realizada pelo próprio passageiro.
+                    
+                    **Regras de Negócio (RN):**
+                    * Só pode ser feito antes do horário de partida da carona.
+                    * Não é possível cancelar se já estiver `REJECTED` ou `CANCELLED`.
+                    
+                    **Efeitos Colaterais:**
+                    * Se a vaga já havia sido aceita, ela é devolvida para a carona. Se a carona estava `FULL`, volta para `SCHEDULED`.
+                    * O motorista é notificado do cancelamento.
+                    """,
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Participação cancelada"),
-            @ApiResponse(responseCode = "403", description = "Usuário não é o passageiro dono da solicitação"),
-            @ApiResponse(responseCode = "409", description = "Horário de partida já passou")
+            @ApiResponse(responseCode = "204", description = "Participação cancelada com sucesso."),
+            @ApiResponse(responseCode = "401", description = "Não autenticado."),
+            @ApiResponse(responseCode = "403", description = "Usuário não é o passageiro dono da solicitação."),
+            @ApiResponse(responseCode = "404", description = "Solicitação de participação não encontrada."),
+            @ApiResponse(responseCode = "409", description = "Horário de partida já passou ou status não permite cancelamento.")
     })
     @PatchMapping("/{id}/cancel")
     @ResponseStatus(HttpStatus.NO_CONTENT)
