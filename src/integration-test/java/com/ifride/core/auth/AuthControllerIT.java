@@ -10,6 +10,7 @@ import com.ifride.core.auth.service.UserService;
 import com.ifride.core.shared.config.LocalEmailService;
 import com.ifride.core.shared.exceptions.api.ApiException;
 import com.ifride.core.shared.test.IntegrationTest;
+import java.time.LocalDate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -49,7 +50,7 @@ public class AuthControllerIT extends IntegrationTest {
     @Test
     @DisplayName("Deve registrar o usuário e ativar o fluxo de geração de token e envio de e-mail")
     public void shouldRegisterUserAndTriggerTokenGeneration() {
-        var requestBody = new RegisterRequestDTO("john.doe@email.com", "mySuperSecretPassword", "John Doe","123.447.230-99");
+        var requestBody = new RegisterRequestDTO("john.doe@email.com", "mySuperSecretPassword", "John Doe","123.447.230-99", LocalDate.of(1990, 1, 1));
 
         var response = rest.postForEntity("/v1/auth/register", requestBody, RegisterResponseDTO.class);
 
@@ -78,7 +79,7 @@ public class AuthControllerIT extends IntegrationTest {
         @Test
         @DisplayName("Deve lançar BadRequestException se o CPF da requisição for inválido")
         public void shouldThrowExceptionWhenDocumentIsInvalid() {
-            var requestBody = new RegisterRequestDTO("john.dolmayan@email.com", "mySuperSecretPassword", "John Dolmayan","123.456.789-11");
+            var requestBody = new RegisterRequestDTO("john.dolmayan@email.com", "mySuperSecretPassword", "John Dolmayan","123.456.789-11", LocalDate.of(1990, 1, 1));
 
             var response = rest.postForEntity("/v1/auth/register", requestBody, ApiException.class);
 
@@ -90,11 +91,11 @@ public class AuthControllerIT extends IntegrationTest {
         @Test
         @DisplayName("Deve lançar ConflictException se o CPF da requisição já existir no banco")
         public void shouldThrowConflictWhenDocumentAlreadyExists() {
-            var successRequest = new RegisterRequestDTO("serj.tankian@email.com", "mySuperSecretPassword", "Serj Tankian","464.093.640-08");
+            var successRequest = new RegisterRequestDTO("serj.tankian@email.com", "mySuperSecretPassword", "Serj Tankian","464.093.640-08", LocalDate.of(1990, 1, 1));
             var successResponse = rest.postForEntity("/v1/auth/register", successRequest, ApiException.class);
             then(successResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-            var failRequest = new RegisterRequestDTO("serj@email.com" ,"mySuperSecretPassword", "Serj Tankian","464.093.640-08");
+            var failRequest = new RegisterRequestDTO("serj@email.com" ,"mySuperSecretPassword", "Serj Tankian","464.093.640-08", LocalDate.of(1990, 1, 1));
             var failResponse = rest.postForEntity("/v1/auth/register", failRequest, ApiException.class);
             then(failResponse.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
             then(failResponse.getBody()).isNotNull();
@@ -104,11 +105,11 @@ public class AuthControllerIT extends IntegrationTest {
         @Test
         @DisplayName("Deve lançar ConflictException se o email da requisição já existir no banco")
         public void shouldThrowConflictWhenEmailAlreadyExists() {
-            var successRequest = new RegisterRequestDTO("daron.malakian@email.com", "mySuperSecretPassword", "Daron Malakian","464.093.640-08");
+            var successRequest = new RegisterRequestDTO("daron.malakian@email.com", "mySuperSecretPassword", "Daron Malakian","464.093.640-08", LocalDate.of(1990, 1, 1));
             var successResponse = rest.postForEntity("/v1/auth/register", successRequest, ApiException.class);
             then(successResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-            var failRequest = new RegisterRequestDTO("daron.malakian@email.com" ,"mySuperSecretPassword", "Daron Malakian","690.500.690-45");
+            var failRequest = new RegisterRequestDTO("daron.malakian@email.com" ,"mySuperSecretPassword", "Daron Malakian","690.500.690-45", LocalDate.of(1990, 1, 1));
             var failResponse = rest.postForEntity("/v1/auth/register", failRequest, ApiException.class);
             then(failResponse.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
             then(failResponse.getBody()).isNotNull();
