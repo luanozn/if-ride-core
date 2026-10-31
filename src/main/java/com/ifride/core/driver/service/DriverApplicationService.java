@@ -13,7 +13,7 @@ import com.ifride.core.driver.model.mapper.DriverMapper;
 import com.ifride.core.driver.repository.DriverApplicationRepository;
 import com.ifride.core.driver.repository.specs.DriverApplicationSpecs;
 import com.ifride.core.driver.service.validators.DriverApplicationValidator;
-import com.ifride.core.events.driver.DriverApplicationApprovedEvent;
+import com.ifride.core.events.driver.model.DriverApplicationApprovedEvent;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.List;

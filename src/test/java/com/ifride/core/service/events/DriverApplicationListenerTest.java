@@ -5,7 +5,7 @@ import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.service.UserService;
 import com.ifride.core.driver.model.entity.DriverApplication;
 import com.ifride.core.driver.service.DriverService;
-import com.ifride.core.events.driver.DriverApplicationApprovedEvent;
+import com.ifride.core.events.driver.model.DriverApplicationApprovedEvent;
 import com.ifride.core.events.driver.DriverApplicationListener;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -45,7 +45,6 @@ class DriverApplicationListenerTest {
             var event = new DriverApplicationApprovedEvent(application, new User());
 
             listener.handleDriverCreation(event);
-            listener.handleRoleChange(event);
 
             verify(driverService).saveFromDriverRequest(application);
             verify(userService).updateUserRole(requester, Role.DRIVER);
