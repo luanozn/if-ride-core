@@ -6,7 +6,6 @@ import {
     IInstance,
     Instance,
     InstanceType, ISecurityGroup,
-    KeyPair,
     MachineImage,
     SecurityGroup,
     SubnetType,
@@ -133,6 +132,6 @@ export class ServerStack extends Stack {
         new CfnOutput(this, 'ElasticIpPublicIp', {
             value: elasticIp.attrPublicIp,
             exportName: 'IfRideElasticIp',
-        });
+        })
     }
 }

@@ -21,7 +21,7 @@ if [ -d "$SOURCE_DIR" ]; then
 
     echo "Compactando Lambda..."
     zip -r "$DEST_DIR/$ZIP_NAME" . \
-      -x "*.js" "*.map" "node_modules/.bin/*"
+      -x "*.map" "node_modules/.bin/*"
 
     echo "Lambda compactado com sucesso em: $DEST_DIR/$ZIP_NAME"
 else

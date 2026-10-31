@@ -2,11 +2,12 @@ import { Construct } from 'constructs';
 import { ConfigProps } from './utils/config-props';
 import * as path from "node:path";
 import { ParameterUtils } from "./utils/parameter-utils";
-import {Duration, Stack} from "aws-cdk-lib";
+import {CfnOutput, Duration, Stack} from "aws-cdk-lib";
 import {Code, Runtime, Function} from "aws-cdk-lib/aws-lambda";
 import {AuthorizationType, Cors, HttpIntegration, RestApi, TokenAuthorizer} from "aws-cdk-lib/aws-apigateway";
 import {Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
 import {LogGroup, RetentionDays} from "aws-cdk-lib/aws-logs";
+import { StringParameter } from "aws-cdk-lib/aws-ssm";
 
 export class ApiGatewayStack extends Stack {
     constructor(scope: Construct, id: string, props: ConfigProps) {
@@ -43,12 +44,23 @@ export class ApiGatewayStack extends Stack {
         });
 
         const ec2Endpoint = `http://${props.resources?.eip?.attrPublicIp}:8080`
+
+        const originHash = StringParameter.fromSecureStringParameterAttributes(
+            this,
+            'GatewayOrigin',
+            {
+                parameterName: '/config/if-ride-core/app.gateway.origin',
+                version: 1,
+            }
+        );
+
         const authIntegration = new HttpIntegration(`${ec2Endpoint}/v1/auth/{proxy}`, {
             httpMethod: 'ANY',
             options: {
                 cacheKeyParameters: ['method.request.path.proxy'],
                 requestParameters: {
                     'integration.request.path.proxy': 'method.request.path.proxy',
+                    'integration.request.header.X-Origin': originHash.stringValue,
                 },
             },
         });
@@ -59,6 +71,7 @@ export class ApiGatewayStack extends Stack {
                 cacheKeyParameters: ['method.request.path.proxy'],
                 requestParameters: {
                     'integration.request.path.proxy': 'method.request.path.proxy',
+                    'integration.request.header.X-Origin': originHash.stringValue,
                 },
             },
         });
@@ -79,6 +92,7 @@ export class ApiGatewayStack extends Stack {
                 cacheKeyParameters: ['method.request.path.proxy'],
                 requestParameters: {
                     'integration.request.path.proxy': 'method.request.path.proxy',
+                    'integration.request.header.X-Origin': originHash.stringValue,
                 },
             },
         });
@@ -141,5 +155,11 @@ export class ApiGatewayStack extends Stack {
                 },
             },
         }));
+
+        new CfnOutput(this, 'ApiUrl', {
+            value: api.url,
+            exportName: 'IfRideApiUrl',
+            description: 'URL pública do API Gateway'
+        });
     }
 }

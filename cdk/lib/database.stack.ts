@@ -1,8 +1,8 @@
-import {RemovalPolicy, Stack,} from "aws-cdk-lib";
+import {CfnOutput, RemovalPolicy, Stack,} from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { ParameterUtils } from "./utils/parameter-utils";
 import { ConfigProps } from "./utils/config-props";
-import {InstanceClass, InstanceSize, InstanceType, Port, SecurityGroup, SubnetType, Vpc} from "aws-cdk-lib/aws-ec2";
+import {InstanceClass, InstanceSize, InstanceType, Port, SecurityGroup, SubnetType} from "aws-cdk-lib/aws-ec2";
 import {
     Credentials,
     DatabaseInstance,
@@ -56,6 +56,11 @@ export class DatabaseStack extends Stack {
             credentials: Credentials.fromSecret(databaseSecret),
             removalPolicy: RemovalPolicy.DESTROY,
             deletionProtection: false,
+        });
+
+        new CfnOutput(this, 'DbEndpoint', {
+            value: dbInstance.instanceEndpoint.hostname,
+            exportName: 'IfRideDbEndpoint',
         });
     }
 }
