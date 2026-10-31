@@ -77,7 +77,6 @@ public class DriverApplicationController {
                     
                     **Regras de Negócio (RN):**
                     * **Auto-solicitação:** O `requesterId` do body deve ser igual ao ID do usuário autenticado.
-                    * **Role:** Apenas PASSENGERS podem solicitar.
                     * **Unicidade:** Um usuário não pode ter duas solicitações PENDING ou APPROVED simultâneas.
                     * **CNH Única:** A CNH informada não pode estar em uso em outra aplicação PENDING ou APPROVED.
                     * **Recorrência:** Se o usuário já foi DENIED antes, ele pode tentar novamente (não há lock permanente).
@@ -200,7 +199,7 @@ public class DriverApplicationController {
                     * **cnh:** Busca exata por CNH. O termo é **criptografado** com a chave determinística antes de ir para a query, permitindo o `WHERE cnh = ?` no banco.
                     
                     **Visão de Dados (LGPD):**
-                    * Usa `toListItem` do mapper: retorna apenas dados resumidos do solicitante (sem CPF, sem data de nascimento, sem CNH).
+                    * Retorna apenas dados resumidos do solicitante (sem CPF, sem data de nascimento, sem CNH).
                     """,
             security = @SecurityRequirement(name = "bearerAuth")
     )
@@ -226,8 +225,7 @@ public class DriverApplicationController {
                     Retorna os dados completos de uma solicitação para que o ADMIN possa analisar.
                     
                     **Visão de Dados (LGPD):**
-                    * Usa `toDto` do mapper, que retorna o DTO completo **apenas** para ADMIN ou para o próprio dono.
-                    * Inclui CPF, e-mail, data de nascimento e CNH descriptografada.
+                    * Inclui CPF, e-mail, data de nascimento e CNH descriptografada pois o endpoint é específico para ADMINs.
                     * **Não inclui** o código de segurança da CNH (esse tem endpoint dedicado).
                     """,
             security = @SecurityRequirement(name = "bearerAuth")
@@ -256,7 +254,7 @@ public class DriverApplicationController {
                     O código de segurança é o dado mais sensível do sistema. Por isso:
                     * **Não está no `findById`**: não trafega em toda requisição de detalhe.
                     * **Endpoint dedicado**: acionado apenas quando o ADMIN clica no "olho" da UI.
-                    * **Criptografia randomizada (AES-GCM)**: impossível buscar por igualdade, apenas descriptografar sob demanda.
+                    * **Criptografia Randomizada**: Impossível buscar por igualdade, apenas descriptografar sob demanda.
                     
                     **Segurança e Auditoria:**
                     * **Audit Log:** cada acesso é registrado na tabela `audit_logs` com: `action`, `targetId`, `authorId` e **IP do ADMIN** (extraído via `X-Forwarded-For`).

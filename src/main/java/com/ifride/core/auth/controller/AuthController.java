@@ -66,7 +66,7 @@ public class AuthController {
                     * **Validação de CPF:** O CPF é validado matematicamente (algoritmo de dígitos verificadores).
                     * **Unicidade:** O e-mail e o CPF não podem existir no sistema.
                     * **LGPD e Criptografia:** O CPF é criptografado de forma **Determinística** antes de ser salvo no banco (permitindo buscas por igualdade).
-                    * **Senha:** A senha é transformada em hash usando BCrypt.
+                    * **Senha:** A senha é transformada em hash.
                     
                     **Efeitos Colaterais:**
                     * Dispara um evento assíncrono (`UserRegisteredEvent`) que gera um token de verificação e envia um e-mail (AWS SES) para o usuário.

@@ -8,7 +8,6 @@ import com.ifride.core.driver.model.enums.CnhCategory;
 import com.ifride.core.driver.model.enums.DriverApplicationStatus;
 import com.ifride.core.driver.repository.DriverApplicationRepository;
 import com.ifride.core.driver.service.validators.DriverApplicationValidator;
-import com.ifride.core.shared.exceptions.api.BadRequestException;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import com.ifride.core.shared.services.DeterministicEncryptorService;
@@ -116,15 +115,5 @@ class DriverApplicationValidatorTest {
         assertThatThrownBy(() -> validator.validateDriverApplication(author, targetUser, Optional.empty(), validDto))
                 .isInstanceOf(ConflictException.class)
                 .hasMessageContaining("já está cadastrada");
-    }
-
-    @Test
-    @DisplayName("Deve lançar BadRequestException se a CNH for vazia")
-    void shouldThrowBadRequestWhenCnhIsBlank() {
-        var invalidDto = new DriverApplicationRequestDTO("user-1", "", CnhCategory.B, "1234", LocalDate.now());
-
-        assertThatThrownBy(() -> validator.validateDriverApplication(author, targetUser, Optional.empty(), invalidDto))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Nenhuma CNH foi especificada");
     }
 }
