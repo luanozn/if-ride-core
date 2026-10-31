@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
+
 @Log4j2
 @Component
 @RequiredArgsConstructor
@@ -21,7 +23,7 @@ public class DriverApplicationListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
-    @Transactional
+    @Transactional(propagation = REQUIRES_NEW)
     public void handleDriverCreation(DriverApplicationApprovedEvent event) {
         log.info("Creating driver for event: {}", event.toString());
         driverService.saveFromDriverRequest(event.driverApplication());
