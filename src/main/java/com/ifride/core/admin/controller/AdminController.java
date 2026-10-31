@@ -1,7 +1,6 @@
 package com.ifride.core.admin.controller;
 
 import com.ifride.core.auth.model.entity.User;
-import com.ifride.core.admin.DriverDirectlyDTO;
 import com.ifride.core.admin.service.AdminUserService;
 import com.ifride.core.auth.model.dto.RegisterRequestDTO;
 import com.ifride.core.auth.model.dto.RegisterResponseDTO;
@@ -45,20 +44,6 @@ public class AdminController {
     public RegisterResponseDTO createAdmin(@RequestBody RegisterRequestDTO registerDTO) {
         log.info("Criando novo ADMIN: {}", registerDTO.email());
         return RegisterResponseDTO.from(adminService.registerAdmin(registerDTO));
-    }
-
-    @Operation(
-            summary = "Inicia uma criação de motoristas diretamente, sem passar pelo fluxo de aplicação",
-            description = "Cria um novo usuário MOTORISTA no sistema, sem processo de aplicação"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Motorista criado com sucesso"),
-            @ApiResponse(responseCode = "401", description = "Credenciais inválidas ou usuário não encontrado")
-    })
-    @PostMapping("/users/driver-direct")
-    @ResponseStatus(HttpStatus.CREATED)
-    public RegisterResponseDTO createDriverDirectly(@RequestBody DriverDirectlyDTO registerDTO) {
-        return RegisterResponseDTO.from(adminService.registerDriverDirectly(registerDTO));
     }
 
     @GetMapping()
