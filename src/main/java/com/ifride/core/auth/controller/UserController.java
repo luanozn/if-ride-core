@@ -25,12 +25,21 @@ public class UserController {
     private final UserService userService;
 
     @Operation(
-            summary = "Exclui a conta do usuário autenticado",
-            description = "Realiza soft-delete da conta. O usuário não conseguirá mais fazer login."
+            summary = "Exclui a própria conta (Soft Delete)",
+            description = """
+                    Realiza a exclusão lógica (Soft Delete) da conta do usuário autenticado.
+                    
+                    **Regras de Negócio (RN) & Segurança:**
+                    * **Integridade Referencial:** O registro não é apagado fisicamente do banco de dados. O status da entidade muda para `DELETED`.
+                    * **Preservação de Dados:** Isso garante que o histórico de caronas, veículos e pagamentos (que referenciam este usuário) não quebrem (Foreign Key Constraints).
+                    * **Bloqueio de Acesso:** Usuários com status `DELETED` são automaticamente ocultados pelas queries do sistema (via `@SQLRestriction`) e não conseguem mais fazer login.
+                    * **Privacidade (LGPD):** Embora o histórico seja mantido, os dados sensíveis de login e o CPF ficam inacessíveis.
+                    """,
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Conta excluída com sucesso"),
-            @ApiResponse(responseCode = "401", description = "Token inválido ou expirado")
+            @ApiResponse(responseCode = "204", description = "Conta excluída com sucesso. Nenhum conteúdo é retornado."),
+            @ApiResponse(responseCode = "401", description = "Token JWT inválido, expirado ou usuário não autenticado.")
     })
     @DeleteMapping("/me")
     @ResponseStatus(HttpStatus.NO_CONTENT)
