@@ -1,10 +1,8 @@
-package com.ifride.core.auth.listeners;
+package com.ifride.core.events.user.listener;
 
 import com.ifride.core.auth.service.EmailVerificationTokenService;
-import com.ifride.core.events.models.UserRegisteredEvent;
-import com.ifride.core.shared.services.EmailService;
+import com.ifride.core.events.user.model.UserRegisteredEvent;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;

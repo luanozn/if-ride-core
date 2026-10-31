@@ -1,4 +1,4 @@
-package com.ifride.core.events.models;
+package com.ifride.core.events.ride.models;
 
 import java.time.Instant;
 

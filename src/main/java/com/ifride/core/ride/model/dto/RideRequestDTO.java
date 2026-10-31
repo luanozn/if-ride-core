@@ -50,7 +50,7 @@ public record RideRequestDTO(
                         ride.getOrigin(),
                         ride.getDestination(),
                         ride.getPickupPoints(),
-                        ride.getDepartureTime().plus(1, ChronoUnit.WEEKS),
+                        ride.getDepartureTime().plus(7, ChronoUnit.DAYS),
                         ride.getAvailableSeats(),
                         ride.getPrice(),
                         ride.isRecurrent(),

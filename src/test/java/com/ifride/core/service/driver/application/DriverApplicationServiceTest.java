@@ -1,7 +1,8 @@
-package com.ifride.core.service;
+package com.ifride.core.service.driver.application;
 
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.service.UserService;
+import com.ifride.core.driver.model.dto.DriverApplicationRejectionDTO;
 import com.ifride.core.driver.model.dto.DriverApplicationRequestDTO;
 import com.ifride.core.driver.model.entity.DriverApplication;
 import com.ifride.core.driver.model.enums.CnhCategory;
@@ -10,9 +11,10 @@ import com.ifride.core.driver.model.mapper.DriverMapper;
 import com.ifride.core.driver.repository.DriverApplicationRepository;
 import com.ifride.core.driver.service.DriverApplicationService;
 import com.ifride.core.driver.service.validators.DriverApplicationValidator;
-import com.ifride.core.driver.listeners.model.DriverApplicationApprovedEvent;
+import com.ifride.core.events.driver.DriverApplicationApprovedEvent;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
+import com.ifride.core.shared.exceptions.api.NotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +25,7 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -128,5 +131,38 @@ class DriverApplicationServiceTest {
         );
 
         verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    @DisplayName("Reject: Deve rejeitar, salvar motivo e apagar código de segurança")
+    void rejectDriverApplication_Success() {
+        String userId = "user-id-123";
+        User author = new User();
+        DriverApplication pendingApp = new DriverApplication();
+        pendingApp.setApplicationStatus(DriverApplicationStatus.PENDING);
+        pendingApp.setCnhSecurityNumberEncrypted("encrypted-security");
+
+        when(userService.findById(userId)).thenReturn(new User());
+        when(repository.findAllByRequesterOrderByCreatedAtDesc(any())).thenReturn(List.of(pendingApp));
+        when(repository.save(any(DriverApplication.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        service.rejectDriverApplication(author, userId, new DriverApplicationRejectionDTO("Documento ilegível"));
+
+        assertNull(pendingApp.getCnhSecurityNumberEncrypted());
+        verify(repository).save(pendingApp);
+    }
+
+    @Test
+    @DisplayName("Security Code: Deve lançar erro se o código já foi expurgado")
+    void findByDriverApplication_ThrowsNotFound_WhenSecurityCodeIsNull() {
+        String appId = "app-123";
+        DriverApplication app = new DriverApplication();
+        app.setCnhSecurityNumberEncrypted(null);
+
+        when(repository.findById(appId)).thenReturn(Optional.of(app));
+
+        assertThrows(NotFoundException.class, () ->
+                service.findByDriverApplication(appId)
+        );
     }
 }

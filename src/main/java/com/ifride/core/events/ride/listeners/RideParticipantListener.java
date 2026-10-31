@@ -1,9 +1,9 @@
-package com.ifride.core.events.listeners;
+package com.ifride.core.events.ride.listeners;
 
 import com.ifride.core.chat.service.ConversationService;
-import com.ifride.core.events.models.RideParticipationAcceptedEvent;
-import com.ifride.core.events.models.RideParticipationCancelledEvent;
-import com.ifride.core.events.models.RideParticipationRejectedEvent;
+import com.ifride.core.events.ride.models.RideParticipationAcceptedEvent;
+import com.ifride.core.events.ride.models.RideParticipationCancelledEvent;
+import com.ifride.core.events.ride.models.RideParticipationRejectedEvent;
 import com.ifride.core.ride.repository.RideParticipantRepository;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

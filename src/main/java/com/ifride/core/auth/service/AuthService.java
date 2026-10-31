@@ -6,7 +6,7 @@ import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.model.mapper.UserMapper;
 import com.ifride.core.auth.repository.UserRepository;
 import com.ifride.core.auth.utils.UserValidator;
-import com.ifride.core.events.models.UserRegisteredEvent;
+import com.ifride.core.events.user.model.UserRegisteredEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;

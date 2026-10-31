@@ -1,11 +1,9 @@
 package com.ifride.core.ride.service;
 
-import static com.ifride.core.shared.utils.DateTimeUtils.getDepartureTime;
-
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.driver.service.DriverService;
 import com.ifride.core.driver.service.VehicleService;
-import com.ifride.core.events.models.RideFinishedEvent;
+import com.ifride.core.events.ride.models.RideFinishedEvent;
 import com.ifride.core.ride.model.Ride;
 import com.ifride.core.ride.model.dto.RideRequestDTO;
 import com.ifride.core.ride.model.dto.RideResponseDTO;
@@ -15,6 +13,7 @@ import com.ifride.core.ride.repository.specs.RideSpecs;
 import com.ifride.core.ride.service.validators.RideValidator;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
+import com.ifride.core.shared.utils.DateTimeUtils;
 import java.time.Clock;
 import java.time.Instant;
 import org.springframework.context.ApplicationEventPublisher;
@@ -36,6 +35,7 @@ public class RideService {
     private final RideValidator rideValidator;
     private final Clock clock;
     private final ApplicationEventPublisher eventPublisher;
+    private final DateTimeUtils dateTimeUtils;
 
     @Transactional
     public RideResponseDTO createRide(String driverId, RideRequestDTO rideRequestDTO) {
@@ -54,7 +54,7 @@ public class RideService {
         ride.setAvailableSeats(rideRequestDTO.availableSeats());
         ride.setTotalSeats(rideRequestDTO.availableSeats());
         ride.setPickupPoints(rideRequestDTO.pickupPoints());
-        ride.setDepartureTime(getDepartureTime(rideRequestDTO));
+        ride.setDepartureTime(dateTimeUtils.getDepartureTime(rideRequestDTO));
         ride.setRecurrent(rideRequestDTO.isRecurrent());
         ride.setRecurrentDay(rideRequestDTO.recurrentDay());
         ride.setRecurrencyDeparture(rideRequestDTO.recurrencyDeparture());
