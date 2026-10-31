@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -49,7 +50,7 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Corpo da requisição mal formatado (e-mail ou senha ausentes).")
     })
     @PostMapping("/login")
-    public LoginResponseDTO login(@RequestBody LoginRequestDTO authBody) {
+    public LoginResponseDTO login(@Valid @RequestBody LoginRequestDTO authBody) {
         var userPassword = new UsernamePasswordAuthenticationToken(authBody.email(), authBody.password());
         var auth = this.authenticationManager.authenticate(userPassword);
 
@@ -78,7 +79,7 @@ public class AuthController {
             @ApiResponse(responseCode = "409", description = "Conflito de dados: E-mail ou CPF já cadastrado no sistema.")
     })
     @PostMapping("/register")
-    public RegisterResponseDTO register(@RequestBody RegisterRequestDTO registerDTO) {
+    public RegisterResponseDTO register(@Valid @RequestBody RegisterRequestDTO registerDTO) {
         log.info("Novo registro público iniciado para {}", registerDTO.email());
         return RegisterResponseDTO.from(authService.register(registerDTO));
     }

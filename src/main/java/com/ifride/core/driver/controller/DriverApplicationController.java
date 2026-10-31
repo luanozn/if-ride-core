@@ -17,6 +17,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
@@ -93,7 +95,7 @@ public class DriverApplicationController {
     @PreAuthorize("hasRole('PASSENGER')")
     public DriverApplicationSummaryDTO createDriverRequest(
             @AuthenticationPrincipal User author,
-            @RequestBody DriverApplicationRequestDTO driverRequest
+            @Valid @RequestBody DriverApplicationRequestDTO driverRequest
     ) {
         var user = userService.findById(driverRequest.requesterId());
 
@@ -158,7 +160,7 @@ public class DriverApplicationController {
     public DriverApplicationSummaryDTO rejectDriverRequest(
             @AuthenticationPrincipal User author,
             @PathVariable String userId,
-            @RequestBody DriverApplicationRejectionDTO dto
+            @Valid @RequestBody DriverApplicationRejectionDTO dto
     ) {
         return driverApplicationService.rejectDriverApplication(author, userId, dto);
     }

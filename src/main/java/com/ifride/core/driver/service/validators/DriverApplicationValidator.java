@@ -7,7 +7,6 @@ import com.ifride.core.driver.model.dto.DriverApplicationRequestDTO;
 import com.ifride.core.driver.model.entity.DriverApplication;
 import com.ifride.core.driver.model.enums.DriverApplicationStatus;
 import com.ifride.core.driver.repository.DriverApplicationRepository;
-import com.ifride.core.shared.exceptions.api.BadRequestException;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import com.ifride.core.shared.model.enums.Status;
@@ -77,10 +76,6 @@ public class DriverApplicationValidator {
     }
     
     private void checkCnhUniqueness(DriverApplicationRequestDTO requestDTO) {
-        if(requestDTO.cnhNumber() == null || requestDTO.cnhNumber().isBlank()) {
-            throw new BadRequestException("Nenhuma CNH foi especificada para a aplicação");
-        }
-
         var foundApp = repository.findByCnhNumberEncryptedAndApplicationStatusIn(crypto.encrypt(requestDTO.cnhNumber()), List.of(PENDING, APPROVED));
         if(foundApp.isPresent()) {
             throw new ConflictException("A CNH especificada na requisição já está cadastrada para outra aplicação!");

@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
@@ -53,7 +54,7 @@ public class AdminController {
     })
     @PostMapping("/users/admin")
     @ResponseStatus(HttpStatus.CREATED)
-    public RegisterResponseDTO createAdmin(@RequestBody RegisterRequestDTO registerDTO) {
+    public RegisterResponseDTO createAdmin(@Valid @RequestBody RegisterRequestDTO registerDTO) {
         log.info("Criando novo ADMIN: {}", registerDTO.email());
         return RegisterResponseDTO.from(adminService.registerAdmin(registerDTO));
     }

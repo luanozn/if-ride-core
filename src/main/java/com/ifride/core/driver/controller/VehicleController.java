@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -55,7 +56,7 @@ public class VehicleController {
             @AuthenticationPrincipal User author,
             @Parameter(description = "ID do motorista (UUID) - deve ser igual ao ID do usuário autenticado")
             @PathVariable String driverId,
-            @RequestBody VehicleCreationDTO vehicle
+            @Valid @RequestBody VehicleCreationDTO vehicle
     ) {
         return vehicleService.saveBy(vehicle, driverId, author);
     }
