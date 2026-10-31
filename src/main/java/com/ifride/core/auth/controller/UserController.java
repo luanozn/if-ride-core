@@ -28,18 +28,20 @@ public class UserController {
             summary = "Exclui a própria conta (Soft Delete)",
             description = """
                     Realiza a exclusão lógica (Soft Delete) da conta do usuário autenticado.
+                    Este endpoint é de uso genérico e atende a todos os perfis (PASSENGER, DRIVER e ADMIN).
                     
                     **Regras de Negócio (RN) & Segurança:**
-                    * **Integridade Referencial:** O registro não é apagado fisicamente do banco de dados. O status da entidade muda para `DELETED`.
-                    * **Preservação de Dados:** Isso garante que o histórico de caronas, veículos e pagamentos (que referenciam este usuário) não quebrem (Foreign Key Constraints).
-                    * **Bloqueio de Acesso:** Usuários com status `DELETED` são automaticamente ocultados pelas queries do sistema (via `@SQLRestriction`) e não conseguem mais fazer login.
-                    * **Privacidade (LGPD):** Embora o histórico seja mantido, os dados sensíveis de login e o CPF ficam inacessíveis.
+                    * **Integridade Referencial:** O registro não é apagado fisicamente. O status da entidade muda para `DELETED`, preservando o histórico de caronas, veículos e logs de auditoria.
+                    * **Bloqueio de Acesso:** Usuários com status `DELETED` são ocultados pelas queries do sistema (via `@SQLRestriction`) e não conseguem mais fazer login.
+                    * **Privacidade (LGPD):** O histórico é mantido, mas os dados de login e o CPF criptografado tornam-se inacessíveis.
+                    * **Proteção da Invariante (Admins):** Se o usuário autenticado for um ADMINISTRADOR, o sistema aciona a trava de segurança de "último admin". O banco de dados executa um `Pessimistic Lock` (`SELECT FOR UPDATE`) para evitar condições de corrida (Write Skew). Se for o último admin ativo, a operação é abortada com HTTP 403.
                     """,
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Conta excluída com sucesso. Nenhum conteúdo é retornado."),
-            @ApiResponse(responseCode = "401", description = "Token JWT inválido, expirado ou usuário não autenticado.")
+            @ApiResponse(responseCode = "401", description = "Token JWT inválido, expirado ou usuário não autenticado."),
+            @ApiResponse(responseCode = "403", description = "Acesso negado. O usuário é o único Administrador ativo do sistema e não pode ser excluído.")
     })
     @DeleteMapping("/me")
     @ResponseStatus(HttpStatus.NO_CONTENT)
