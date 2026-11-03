@@ -2,8 +2,10 @@ package com.ifride.core.auth.service;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.ifride.core.auth.model.dto.LoginResponseDTO;
 import com.ifride.core.auth.model.entity.User;
+import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -36,11 +38,15 @@ public class JwtService {
     }
 
     public String validateToken(String token) {
-        return JWT.require(ALGORITHM)
-                .withIssuer(ISSUER)
-                .build()
-                .verify(token)
-                .getSubject();
+        try {
+            return JWT.require(ALGORITHM)
+                    .withIssuer(ISSUER)
+                    .build()
+                    .verify(token)
+                    .getSubject();
+        } catch (JWTDecodeException e) {
+            throw new ForbiddenException(e.getMessage());
+        }
     }
 
     public Instant generateExpirationDate() {
