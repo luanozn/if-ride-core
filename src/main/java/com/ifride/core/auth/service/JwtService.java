@@ -2,7 +2,7 @@ package com.ifride.core.auth.service;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTDecodeException;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.ifride.core.auth.model.dto.LoginResponseDTO;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
@@ -14,7 +14,6 @@ import java.time.Instant;
 @Service
 public class JwtService {
 
-    private final Long EXPIRATION = 21600L;
     private final Algorithm ALGORITHM;
     private final String ISSUER = "if-ride-core";
 
@@ -44,12 +43,13 @@ public class JwtService {
                     .build()
                     .verify(token)
                     .getSubject();
-        } catch (JWTDecodeException e) {
+        } catch (JWTVerificationException e) {
             throw new ForbiddenException(e.getMessage());
         }
     }
 
     public Instant generateExpirationDate() {
+        Long EXPIRATION = 21600L;
         return Instant.now().plusSeconds(EXPIRATION);
     }
 }
