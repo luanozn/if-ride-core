@@ -34,15 +34,24 @@ public class ChatService {
         var recipient = userRepository.findById(request.recipientId())
                 .orElseThrow(() -> new NotFoundException("Destinatário não encontrado."));
 
+        String encryptedContent = crypto.encrypt(request.content());
+
         var message = new ChatMessage();
         message.setRideId(request.rideId());
         message.setSenderId(sender.getId());
         message.setSenderName(sender.getName());
         message.setRecipientId(recipient.getId());
-        message.setContent(crypto.encrypt(request.content()));
+        message.setContent(encryptedContent);
         message.setMessageStatus(MessageStatus.SENT);
 
         var saved = chatMessageRepository.save(message);
+
+        conversationService.updateLastMessage(
+                request.rideId(),
+                sender.getId(),
+                recipient.getId(),
+                request.content()
+        );
         var dto = toDTO(saved);
 
         messagingTemplate.convertAndSend(
@@ -94,7 +103,7 @@ public class ChatService {
                 msg.getSenderId(),
                 msg.getSenderName(),
                 msg.getRecipientId(),
-                crypto.decrypt(content),
+                content,
                 msg.getMessageStatus().name(),
                 msg.getCreatedAt()
         );

@@ -3,6 +3,7 @@ package com.ifride.core.chat.service;
 import com.ifride.core.chat.model.dto.ConversationDTO;
 import com.ifride.core.chat.model.entity.Conversation;
 import com.ifride.core.chat.repository.ConversationRepository;
+import com.ifride.core.shared.services.RandomizedEncryptorService;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,33 +16,26 @@ import java.util.List;
 public class ConversationService {
 
     private final ConversationRepository conversationRepository;
+    private final ConversationMapper mapper;
 
-    public Conversation createIfAbsent(
+    public ConversationDTO createIfAbsent(
             String rideId,
             String driverId, String driverName,
             String passengerId, String passengerName) {
 
         return conversationRepository
-                .findByRideIdAndDriverIdAndPassengerId(rideId, driverId, passengerId)
+                .findByRideAndPair(rideId, driverId, passengerId)
+                .map(mapper::from)
                 .orElseGet(() -> {
-                    var conv = new Conversation();
-                    conv.setRideId(rideId);
-                    conv.setDriverId(driverId);
-                    conv.setDriverName(driverName);
-                    conv.setPassengerId(passengerId);
-                    conv.setPassengerName(passengerName);
-                    return conversationRepository.save(conv);
+                    Conversation conv = mapper.from(rideId, driverId, driverName, passengerId, passengerName);
+                    return mapper.from(conversationRepository.save(conv));
                 });
     }
 
-    public void updateLastMessage(String rideId, String driverId, String passengerId, String content) {
+    public void updateLastMessage(String rideId, String sender, String recipient, String content) {
         conversationRepository
-                .findByRideIdAndDriverIdAndPassengerId(rideId, driverId, passengerId)
-                .ifPresent(conv -> {
-                    conv.setLastMessage(content);
-                    conv.setLastMessageAt(Instant.now());
-                    conversationRepository.save(conv);
-                });
+                .findByRideAndPair(rideId, sender, recipient)
+                .ifPresent(conv -> conversationRepository.save(mapper.updatedContent(conv, content)));
     }
 
     public List<ConversationDTO> getConversationsForUser(String userId) {
@@ -50,7 +44,7 @@ public class ConversationService {
                 .sorted(Comparator.comparing(
                         Conversation::getLastMessageAt,
                         Comparator.nullsLast(Comparator.reverseOrder())))
-                .map(ConversationDTO::fromEntity)
+                .map(mapper::from)
                 .toList();
     }
 }

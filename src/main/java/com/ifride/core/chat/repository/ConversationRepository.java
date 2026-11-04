@@ -9,8 +9,16 @@ import java.util.Optional;
 
 public interface ConversationRepository extends MongoRepository<Conversation, String> {
 
-    Optional<Conversation> findByRideIdAndDriverIdAndPassengerId(
-            String rideId, String driverId, String passengerId);
+    @Query("""
+    {
+      'rideId': ?0,
+      '$or': [
+        { 'driverId': ?1, 'passengerId': ?2 },
+        { 'driverId': ?2, 'passengerId': ?1 }
+      ]
+    }
+""")
+    Optional<Conversation> findByRideAndPair(String rideId, String userA, String userB);
 
     @Query("{ '$or': [ { 'driverId': ?0 }, { 'passengerId': ?0 } ] }")
     List<Conversation> findByParticipant(String userId);
