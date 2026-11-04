@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        input, button { padding: 8px; margin: 4px 0; width: 100%; box-sizing: border-box; }
+        #log { background: #111; color: #0f0; padding: 10px; height: 300px; overflow-y: auto; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+<h3>Chat Test</h3>
+<input id="token" placeholder="Cole o JWT aqui" />
+<input id="rideId" placeholder="Cole o rideId aqui" />
+<input id="recipientId" placeholder="Cole o recipientId (peer)" />
+<button onclick="connect()">Conectar</button>
+<input id="message" placeholder="Digite a mensagem" />
+<button onclick="send()">Enviar</button>
+<div id="log"></div>
+
+<script>
+    let client = null;
+
+    function log(msg) {
+        const el = document.getElementById('log');
+        el.textContent += msg + "\n";
+        el.scrollTop = el.scrollHeight;
+    }
+
+    function connect() {
+        const token = document.getElementById('token').value;
+        const rideId = document.getElementById('rideId').value;
+
+        client = new StompJs.Client({
+            brokerURL: `ws://localhost:8080/ws?token=${token}`,
+            reconnectDelay: 0,
+            onConnect: () => {
+                log('✅ CONNECT ok');
+                // Assina o canal privado (após correção) ou o broadcast (atual)
+                client.subscribe('/user/queue/messages', (msg) => {
+                    log('📩 RECEBIDA: ' + msg.body);
+                });
+                // Se ainda não corrigiu, use:
+                // client.subscribe(`/topic/rides/${rideId}/messages`, (msg) => {
+                //   log('📩 RECEBIDA: ' + msg.body);
+                // });
+            },
+            onStompError: (frame) => log('❌ STOMP ERROR: ' + frame.headers['message']),
+            onWebSocketClose: () => log('🔌 WebSocket fechado'),
+            debug: (msg) => console.debug(msg),
+        });
+        client.activate();
+        log('Conectando...');
+    }
+
+    function send() {
+        const rideId = document.getElementById('rideId').value;
+        const recipientId = document.getElementById('recipientId').value;
+        const content = document.getElementById('message').value;
+
+        client.publish({
+            destination: '/app/chat.send',
+            body: JSON.stringify({ rideId, recipientId, content }),
+            headers: { 'content-type': 'application/json' },
+        });
+        log('📤 ENVIADA: ' + content);
+    }
+</script>
+</body>
+</html>
