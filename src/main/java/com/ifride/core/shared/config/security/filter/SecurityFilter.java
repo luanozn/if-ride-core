@@ -1,5 +1,6 @@
 package com.ifride.core.shared.config.security.filter;
 
+import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,6 +12,7 @@ import com.ifride.core.auth.service.JwtService;
 import lombok.AllArgsConstructor;
 
 import lombok.NonNull;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -40,16 +42,28 @@ public class SecurityFilter extends OncePerRequestFilter {
         var jwt = retrieveToken(request);
 
         if (jwt != null) {
-           var subject = jwtService.validateToken(jwt);
-           var user = repository.findByEmail(subject);
+            try {
 
-            if (user.isPresent()) {
-                var authentication = new UsernamePasswordAuthenticationToken(
-                        user.get(),
-                        null,
-                        user.get().getAuthorities()
-                );
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                var subject = jwtService.validateToken(jwt);
+                var user = repository.findByEmail(subject);
+
+                if (user.isPresent()) {
+                    var authentication = new UsernamePasswordAuthenticationToken(
+                            user.get(),
+                            null,
+                            user.get().getAuthorities()
+                    );
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            } catch (ForbiddenException e) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
+                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                response.setCharacterEncoding("UTF-8");
+                response.getWriter().write(String.format(
+                        "{\"message\":\"%s\",\"details\":null,\"statusCode\":401}",
+                        e.getMessage()
+                ));
+                return;
             }
         }
 

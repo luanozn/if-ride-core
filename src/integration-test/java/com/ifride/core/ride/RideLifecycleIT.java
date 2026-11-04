@@ -2,11 +2,8 @@ package com.ifride.core.ride;
 
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.model.enums.Role;
-import com.ifride.core.auth.repository.UserRepository;
 import com.ifride.core.driver.model.entity.Driver;
 import com.ifride.core.driver.model.entity.Vehicle;
-import com.ifride.core.driver.model.enums.CnhCategory;
-import com.ifride.core.driver.repository.DriverRepository;
 import com.ifride.core.driver.repository.VehicleRepository;
 import com.ifride.core.ride.model.Ride;
 import com.ifride.core.ride.model.dto.RideParticipantRequestDTO;
@@ -15,7 +12,6 @@ import com.ifride.core.ride.model.dto.RideRequestDTO;
 import com.ifride.core.ride.model.dto.RideResponseDTO;
 import com.ifride.core.ride.model.enums.ParticipantStatus;
 import com.ifride.core.ride.model.enums.RideStatus;
-import com.ifride.core.ride.repository.RideParticipantRepository;
 import com.ifride.core.ride.repository.RideRepository;
 import com.ifride.core.shared.test.BaseIT;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,29 +22,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.assertj.core.api.BDDAssertions.then;
 
 class RideLifecycleIT extends BaseIT {
 
-    @Autowired private UserRepository userRepository;
-    @Autowired private DriverRepository driverRepository;
     @Autowired private VehicleRepository vehicleRepository;
     @Autowired private RideRepository rideRepository;
-    @Autowired private RideParticipantRepository participantRepository;
-    @Autowired private PasswordEncoder passwordEncoder;
 
-    private User driverUser;
-    private User passengerUser;
-    private User passengerUser2;
     private Vehicle vehicle;
 
     private String driverToken;
@@ -57,14 +45,8 @@ class RideLifecycleIT extends BaseIT {
 
     @BeforeEach
     void setUp() {
-        driverUser = createUser("driver-" + UUID.randomUUID() + "@ifride.com", Role.DRIVER);
-        Driver driver = new Driver();
-        driver.setId(driverUser.getId());
-        driver.setUser(driverUser);
-        driver.setCnhCategory(CnhCategory.B);
-        driver.setCnhNumberEncrypted("encrypted_cnh");
-        driver.setCnhExpiration(LocalDate.now().plusYears(5));
-        driverRepository.save(driver);
+        User driverUser = createUser("driver-" + UUID.randomUUID() + "@ifride.com", Role.DRIVER);
+        Driver driver = createDriverTo(driverUser);
 
         vehicle = new Vehicle();
         vehicle.setOwner(driver);
@@ -73,8 +55,8 @@ class RideLifecycleIT extends BaseIT {
         vehicle.setCapacity(4);
         vehicleRepository.save(vehicle);
 
-        passengerUser = createUser("passenger1-" + UUID.randomUUID() + "@ifride.com", Role.PASSENGER);
-        passengerUser2 = createUser("passenger2-" + UUID.randomUUID() + "@ifride.com", Role.PASSENGER);
+        User passengerUser = createUser("passenger1-" + UUID.randomUUID() + "@ifride.com", Role.PASSENGER);
+        User passengerUser2 = createUser("passenger2-" + UUID.randomUUID() + "@ifride.com", Role.PASSENGER);
 
         driverToken = getToken(driverUser.getEmail());
         passengerToken = getToken(passengerUser.getEmail());
@@ -112,7 +94,7 @@ class RideLifecycleIT extends BaseIT {
             );
 
             then(createRideResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-            then(createRideResponse.getBody().availableSeats()).isEqualTo(1);
+            then(Objects.requireNonNull(createRideResponse.getBody()).availableSeats()).isEqualTo(1);
             String rideId = createRideResponse.getBody().id();
 
             // ==========================================
@@ -127,7 +109,7 @@ class RideLifecycleIT extends BaseIT {
             );
 
             then(requestSeatResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-            then(requestSeatResponse.getBody().status()).isEqualTo(ParticipantStatus.PENDING);
+            then(Objects.requireNonNull(requestSeatResponse.getBody()).status()).isEqualTo(ParticipantStatus.PENDING);
             String participantId = requestSeatResponse.getBody().id();
 
             // ==========================================
@@ -171,7 +153,7 @@ class RideLifecycleIT extends BaseIT {
 
             var createResponse = rest.exchange("/v1/rides", HttpMethod.POST,
                     new HttpEntity<>(rideRequest, createHeaders(driverToken)), RideResponseDTO.class);
-            String rideId = createResponse.getBody().id();
+            String rideId = Objects.requireNonNull(createResponse.getBody()).id();
 
             var startResponse = rest.exchange("/v1/rides/" + rideId + "/start", HttpMethod.PATCH,
                     new HttpEntity<>(createHeaders(driverToken)), Void.class);
@@ -184,6 +166,58 @@ class RideLifecycleIT extends BaseIT {
             then(finishResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
             then(rideRepository.findById(rideId).orElseThrow().getRideStatus()).isEqualTo(RideStatus.FINISHED);
+        }
+
+        @Test
+        @DisplayName("Deve cancelar participação devolvendo vaga e voltando status para SCHEDULED")
+        void shouldCancelParticipationAndReturnSeat() {
+            var rideRequest = new RideRequestDTO(vehicle.getId(), "A", "B", List.of(),
+                    Instant.now().plus(2, ChronoUnit.HOURS), 1, BigDecimal.TEN, false, null, null);
+            var rideId = Objects.requireNonNull(rest.exchange("/v1/rides", HttpMethod.POST,
+                    new HttpEntity<>(rideRequest, createHeaders(driverToken)), RideResponseDTO.class).getBody()).id();
+
+            var seatId = Objects.requireNonNull(rest.exchange("/v1/rides/" + rideId + "/request-seat", HttpMethod.POST,
+                    new HttpEntity<>(new RideParticipantRequestDTO("A"), createHeaders(passengerToken)),
+                    RideParticipantResponseDTO.class).getBody()).id();
+
+            rest.exchange("/v1/ride-participant/" + seatId + "/accept", HttpMethod.PATCH,
+                    new HttpEntity<>(createHeaders(driverToken)), Void.class);
+
+            then(rideRepository.findById(rideId).orElseThrow().getRideStatus()).isEqualTo(RideStatus.FULL);
+
+            var cancelResponse = rest.exchange("/v1/ride-participant/" + seatId + "/cancel",
+                    HttpMethod.PATCH, new HttpEntity<>(createHeaders(passengerToken)), Void.class);
+            then(cancelResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+            var updatedRide = rideRepository.findById(rideId).orElseThrow();
+            then(updatedRide.getAvailableSeats()).isEqualTo(1);
+            then(updatedRide.getRideStatus()).isEqualTo(RideStatus.SCHEDULED);
+        }
+
+    }
+
+    @Nested
+    @DisplayName("Buscas com parâmetros")
+    class SearchWithParams {
+        @Test
+        @DisplayName("Deve buscar caronas por origem e destino usando Specifications")
+        void shouldSearchRidesByOriginAndDestination() {
+            rest.exchange("/v1/rides", HttpMethod.POST, new HttpEntity<>(new RideRequestDTO(
+                    vehicle.getId(), "Campus Central", "Terminal", List.of(),
+                    Instant.now().plus(2, ChronoUnit.HOURS), 3, BigDecimal.TEN, false, null, null),
+                    createHeaders(driverToken)), RideResponseDTO.class);
+
+            rest.exchange("/v1/rides", HttpMethod.POST, new HttpEntity<>(new RideRequestDTO(
+                    vehicle.getId(), "Shopping", "Centro", List.of(),
+                    Instant.now().plus(3, ChronoUnit.HOURS), 3, BigDecimal.TEN, false, null, null),
+                    createHeaders(driverToken)), RideResponseDTO.class);
+
+            var response = rest.exchange("/v1/rides?origin=Campus", HttpMethod.GET,
+                    new HttpEntity<>(createHeaders(passengerToken)), String.class);
+
+            then(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            then(response.getBody()).contains("Campus Central");
+            then(response.getBody()).doesNotContain("Shopping");
         }
     }
 }

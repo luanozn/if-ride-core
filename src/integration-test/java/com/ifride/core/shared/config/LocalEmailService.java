@@ -23,7 +23,11 @@ public class LocalEmailService implements EmailService {
 
     @Override
     public void sendEmailVerificationEmail(String to, String token) {
-        calls.add(new EmailCall(to, "Verificação de Email", token));
+        String htmlBody = String.format(
+                "<h1>Verifique seu e-mail</h1><p>Clique <a href=\"http://localhost/v1/auth/verify-email?token=%s\">aqui</a></p>",
+                token
+        );
+        calls.add(new EmailCall(to, "Verificação de Email", htmlBody));
     }
 
     public List<EmailCall> getCalls() {

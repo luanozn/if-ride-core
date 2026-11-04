@@ -1,8 +1,6 @@
 package com.ifride.core.driver.service;
 
 import com.ifride.core.auth.model.entity.User;
-import com.ifride.core.auth.service.UserService;
-import com.ifride.core.driver.model.dto.DriverApplicationRequestDTO;
 import com.ifride.core.driver.model.entity.Driver;
 import com.ifride.core.driver.model.entity.DriverApplication;
 import com.ifride.core.driver.model.mapper.DriverMapper;
@@ -20,18 +18,13 @@ public class DriverService {
     @PersistenceContext
     private EntityManager entityManager;
     private final DriverRepository driverRepository;
-    private final UserService userService;
     private final DriverMapper mapper;
 
 
     public void saveFromDriverRequest(DriverApplication driverApplication) {
         var driver = mapper.fromApplication(driverApplication);
-        entityManager.persist(driver);
-    }
-
-    public void saveFromDTO(DriverApplicationRequestDTO driverApplicationRequestDTO) {
-        User user = userService.findById(driverApplicationRequestDTO.requesterId());
-        var driver = mapper.fromApplicationRequestAndUser(driverApplicationRequestDTO, user);
+        User managedUser = entityManager.find(User.class, driverApplication.getRequester().getId());
+        driver.setUser(managedUser);
         entityManager.persist(driver);
     }
 

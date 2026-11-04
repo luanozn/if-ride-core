@@ -73,6 +73,7 @@ dependencies {
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:postgresql'
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.apache.httpcomponents.client5:httpclient5'
 
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'

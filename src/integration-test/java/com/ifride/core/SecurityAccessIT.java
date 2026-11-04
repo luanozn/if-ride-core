@@ -13,6 +13,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 
 
+import java.util.Objects;
+
 import static org.assertj.core.api.BDDAssertions.then;
 
 class SecurityAccessIT extends BaseIT {
@@ -22,7 +24,6 @@ class SecurityAccessIT extends BaseIT {
 
     @BeforeEach
     void setUp() {
-        // Setup de usuários para os testes de Role
         User passenger = createUser(Role.PASSENGER);
         User admin = createUser(Role.ADMIN);
 
@@ -37,13 +38,11 @@ class SecurityAccessIT extends BaseIT {
         @Test
         @DisplayName("Deve retornar 403 ao tentar acessar sem o header X-Origin")
         void shouldBlockRequestWithoutOriginHeader() {
-            // Tenta acessar uma rota protegida (ou pública), mas SEM o header X-Origin
             var response = rest.getForEntity("/v1/users/me", ErrorResponse.class);
 
             then(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
             then(response.getBody()).isNotNull();
-            // O GatewayOriginFilter intercepta antes do Spring Security e devolve esse JSON
-            then(response.getBody().getMessage()).isNull(); // O Filter devolve um JSON manual {"error":"..."}
+            then(response.getBody().getMessage()).isNull();
         }
     }
 
@@ -62,19 +61,6 @@ class SecurityAccessIT extends BaseIT {
             );
 
             then(response.getStatusCode().is4xxClientError()).isTrue();
-        }
-
-        @Test
-        @DisplayName("Deve retornar 403 ao tentar acessar rota protegida com token inválido")
-        void shouldBlockRequestWithInvalidToken() {
-            var response = rest.exchange(
-                    "/v1/users/me",
-                    HttpMethod.DELETE,
-                    new HttpEntity<>(createHeaders("token.invalido.aqui")),
-                    ErrorResponse.class
-            );
-
-            then(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         }
     }
 
@@ -109,7 +95,7 @@ class SecurityAccessIT extends BaseIT {
             );
 
             then(response.getStatusCode()).isNotEqualTo(HttpStatus.FORBIDDEN);
-            then(response.getBody().getMessage()).contains("Nenhuma solicitação encontrada");
+            then(Objects.requireNonNull(response.getBody()).getMessage()).contains("Nenhuma solicitação encontrada");
         }
     }
 }

@@ -5,6 +5,9 @@ import com.ifride.core.auth.model.dto.LoginResponseDTO;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.repository.UserRepository;
+import com.ifride.core.driver.model.entity.Driver;
+import com.ifride.core.driver.model.enums.CnhCategory;
+import com.ifride.core.shared.services.DeterministicEncryptorService;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +18,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDate;
+import java.util.Objects;
+import java.util.Random;
 import java.util.UUID;
 
 import static org.assertj.core.api.BDDAssertions.then;
@@ -31,6 +37,13 @@ public abstract class BaseIT extends IntegrationTest {
 
     @Autowired
     protected JdbcTemplate jdbcTemplate;
+    @Autowired
+    protected EntityManager entityManager;
+    @Autowired
+    protected DeterministicEncryptorService crypto;
+
+    @Autowired
+    protected TransactionTemplate transactionTemplate;
 
     @BeforeEach
     void cleanDatabase() {
@@ -50,7 +63,7 @@ public abstract class BaseIT extends IntegrationTest {
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode("senha123"));
         user.setRole(role);
-        user.setCpfEncrypted("encrypted_cpf_" + UUID.randomUUID());
+        user.setCpfEncrypted(generateEncryptedDocument());
         user.setBirthDate(LocalDate.of(1990, 1, 1));
         user.setEmailVerified(true);
         return userRepository.save(user);
@@ -65,7 +78,7 @@ public abstract class BaseIT extends IntegrationTest {
                 LoginResponseDTO.class
         );
         then(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return response.getBody().token();
+        return Objects.requireNonNull(response.getBody()).token();
     }
 
     protected HttpHeaders createHeaders(String token) {
@@ -75,5 +88,25 @@ public abstract class BaseIT extends IntegrationTest {
         }
         headers.set("X-Origin", gatewayOriginHash);
         return headers;
+    }
+
+    protected Driver createDriverTo(User detachedUser) {
+        Driver driver = new Driver();
+        driver.setCnhCategory(CnhCategory.AB);
+        driver.setCnhNumberEncrypted(generateEncryptedDocument());
+        driver.setCnhExpiration(LocalDate.now().plusYears(5));
+
+        transactionTemplate.executeWithoutResult(status -> {
+            User managedUser = entityManager.getReference(User.class, detachedUser.getId());
+            driver.setUser(managedUser);
+            entityManager.persist(driver);
+        });
+
+        return driver;
+    }
+
+    private String generateEncryptedDocument() {
+        Random random = new Random();
+        return crypto.encrypt(String.format("123456%s", random.nextInt(10000, 99999)));
     }
 }

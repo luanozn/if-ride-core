@@ -34,16 +34,14 @@ class CnhSecurityCodeAuditIT extends BaseIT {
     @Autowired private RandomizedEncryptorService randomizedCrypto;
 
     private User admin;
-    private User passenger;
     private DriverApplication application;
     private String adminToken;
 
     @BeforeEach
     void setUp() {
         admin = createUser("admin-" + UUID.randomUUID() + "@ifride.com", Role.ADMIN);
-        passenger = createUser("pass-" + UUID.randomUUID() + "@ifride.com", Role.PASSENGER);
+        User passenger = createUser("pass-" + UUID.randomUUID() + "@ifride.com", Role.PASSENGER);
 
-        // Cria a aplicação PENDING com dados reais criptografados
         application = new DriverApplication();
         application.setRequester(passenger);
         application.setApplicationStatus(DriverApplicationStatus.PENDING);
@@ -74,7 +72,7 @@ class CnhSecurityCodeAuditIT extends BaseIT {
         List<AuditLog> logs = auditLogRepository.findAll();
         then(logs).hasSize(1);
 
-        AuditLog log = logs.get(0);
+        AuditLog log = logs.getFirst();
         then(log.getAction()).isEqualTo("VIEW_CNH_SECURITY_CODE");
         then(log.getTargetId()).isEqualTo(application.getId());
         then(log.getAuthorId()).isEqualTo(admin.getId());
