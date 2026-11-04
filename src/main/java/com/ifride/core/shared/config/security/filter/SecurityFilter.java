@@ -1,5 +1,6 @@
 package com.ifride.core.shared.config.security.filter;
 
+import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,16 +41,38 @@ public class SecurityFilter extends OncePerRequestFilter {
         var jwt = retrieveToken(request);
 
         if (jwt != null) {
-           var subject = jwtService.validateToken(jwt);
-           var user = repository.findByEmail(subject);
+            try {
+                var subject = jwtService.validateToken(jwt);
+                var user = repository.findByEmail(subject);
 
-            if (user.isPresent()) {
-                var authentication = new UsernamePasswordAuthenticationToken(
-                        user.get(),
-                        null,
-                        user.get().getAuthorities()
+                if (user.isPresent()) {
+                    boolean verified = user.get().isEmailVerified();
+                    boolean pathAllowed = isAllowedForUnverified(request.getServletPath());
+
+                    if (verified || pathAllowed) {
+                        var authentication = new UsernamePasswordAuthenticationToken(
+                                user.get(),
+                                null,
+                                user.get().getAuthorities()
+                        );
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    } else {
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        response.setContentType("application/json");
+                        response.setCharacterEncoding("UTF-8");
+                        response.getWriter().write(
+                                "{\"message\":\"Verifique seu e-mail antes de acessar este recurso.\",\"statusCode\":403}"
+                        );
+                        return;
+                    }
+                }
+            } catch (ForbiddenException e) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write(
+                        "{\"message\":\"" + e.getMessage() + "\",\"statusCode\":401}"
                 );
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                return;
             }
         }
 
@@ -62,5 +85,13 @@ public class SecurityFilter extends OncePerRequestFilter {
         return token == null ?
                 null :
                 token.replace("Bearer ", "");
+    }
+
+    private boolean isAllowedForUnverified(String path) {
+        return path.startsWith("/v1/users/me")
+                || path.startsWith("/v1/ride-participant/me")
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs")
+                || path.startsWith("/auth/");
     }
 }
