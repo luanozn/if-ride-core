@@ -24,6 +24,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
+    private final TopicSubscriptionInterceptor topicSubscriptionInterceptor;
+    private final StompConnectInterceptor stompConnectInterceptor;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
@@ -48,21 +50,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
      */
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(new ChannelInterceptor() {
-            @Override
-            public Message<?> preSend(Message<?> message, MessageChannel channel) {
-                var accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-                if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
-                    var sessionAttrs = accessor.getSessionAttributes();
-                    if (sessionAttrs != null) {
-                        var auth = (UsernamePasswordAuthenticationToken) sessionAttrs.get("auth");
-                        if (auth != null) {
-                            accessor.setUser(auth);
-                        }
-                    }
-                }
-                return message;
-            }
-        });
+        registration.interceptors(
+               stompConnectInterceptor, topicSubscriptionInterceptor
+        );
     }
 }
