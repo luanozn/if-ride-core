@@ -5,36 +5,27 @@ import com.ifride.core.auth.model.dto.LoginResponseDTO;
 import com.ifride.core.auth.model.dto.RegisterRequestDTO;
 import com.ifride.core.auth.model.dto.RegisterResponseDTO;
 import com.ifride.core.auth.model.entity.User;
-import com.ifride.core.auth.repository.UserRepository;
 import com.ifride.core.shared.config.LocalEmailService;
 import com.ifride.core.shared.exceptions.api.ApiException;
-import com.ifride.core.shared.services.DeterministicEncryptorService;
 import com.ifride.core.shared.test.BaseIT;
-import com.ifride.core.shared.test.IntegrationTest;
 import com.ifride.core.shared.utils.CpfViewConverter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.awaitility.Awaitility.await;
 
 class AuthFlowIT extends BaseIT {
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private DeterministicEncryptorService crypto;
 
     @Autowired
     private LocalEmailService localEmailService;
@@ -86,7 +77,7 @@ class AuthFlowIT extends BaseIT {
                     new HttpEntity<>(createHeaders(null)),
                     String.class);
             then(verifyResponse.getStatusCode()).isEqualTo(HttpStatus.FOUND);
-            then(verifyResponse.getHeaders().getLocation().toString()).contains("verification-success");
+            then(Objects.requireNonNull(verifyResponse.getHeaders().getLocation()).toString()).contains("verification-success");
 
             User verifiedUser = userRepository.findByEmail(uniqueEmail).orElseThrow();
             then(verifiedUser.isEmailVerified()).isTrue();
@@ -99,13 +90,13 @@ class AuthFlowIT extends BaseIT {
                     LoginResponseDTO.class);
 
             then(loginResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-            String jwtToken = loginResponse.getBody().token();
+            String jwtToken = Objects.requireNonNull(loginResponse.getBody()).token();
             then(jwtToken).isNotBlank();
 
             var protectedResponse = rest.exchange(
                     "/v1/driver-requests/me",
                     HttpMethod.GET,
-                    new HttpEntity<>(createHeaders(token)),
+                    new HttpEntity<>(createHeaders(jwtToken)),
                     ApiException.class
             );
 
@@ -131,7 +122,7 @@ class AuthFlowIT extends BaseIT {
             var response2 = rest.exchange("/v1/auth/register", HttpMethod.POST, new HttpEntity<>(request2, createHeaders(null)), ApiException.class);
 
             then(response2.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-            then(response2.getBody().getMessage()).containsIgnoringCase("O email já está em uso");
+            then(Objects.requireNonNull(response2.getBody()).getMessage()).containsIgnoringCase("O email já está em uso");
         }
     }
 

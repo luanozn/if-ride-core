@@ -31,21 +31,9 @@ public class DriverMapper {
 
     public Driver fromApplication(DriverApplication app) {
         Driver driver = new Driver();
-        driver.setId(app.getRequester().getId());
-        driver.setUser(app.getRequester());
         driver.setCnhNumberEncrypted(app.getCnhNumberEncrypted());
         driver.setCnhCategory(app.getCnhCategory());
         driver.setCnhExpiration(app.getCnhExpiration());
-
-        return driver;
-    }
-
-    public Driver fromApplicationRequestAndUser(DriverApplicationRequestDTO app, User user) {
-        Driver driver = new Driver();
-        driver.setUser(user);
-        driver.setCnhNumberEncrypted(deterministicCrypto.encrypt(app.cnhNumber()));
-        driver.setCnhCategory(app.cnhCategory());
-        driver.setCnhExpiration(app.expiration());
 
         return driver;
     }
