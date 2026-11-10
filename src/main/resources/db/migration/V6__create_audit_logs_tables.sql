@@ -2,10 +2,10 @@ CREATE TABLE audit_logs
 (
     id          VARCHAR(36) PRIMARY KEY,
     action      VARCHAR(100) NOT NULL,
-    target_id   VARCHAR(36)  NOT NULL,
-    target_type VARCHAR(50)  NOT NULL,
-    author_id    VARCHAR(36)  NOT NULL,
-    ip_address  VARCHAR(45),
+    target_id   VARCHAR(36),
+    target_type VARCHAR(50) NOT NULL,
+    author_id    VARCHAR(36) NOT NULL,
+    ip_address_encrypted  VARCHAR(255),
 
     created_at  TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

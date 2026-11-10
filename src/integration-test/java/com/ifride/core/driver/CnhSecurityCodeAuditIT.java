@@ -76,6 +76,6 @@ class CnhSecurityCodeAuditIT extends BaseIT {
         then(log.getAction()).isEqualTo("VIEW_CNH_SECURITY_CODE");
         then(log.getTargetId()).isEqualTo(application.getId());
         then(log.getAuthorId()).isEqualTo(admin.getId());
-        then(log.getIpAddress()).isEqualTo("189.45.12.10"); // Prova o rastreio de IP
+        then(log.getIpAddressEncrypted()).isEqualTo("189.45.12.10"); // Prova o rastreio de IP
     }
 }

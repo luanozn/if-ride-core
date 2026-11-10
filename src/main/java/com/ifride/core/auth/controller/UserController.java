@@ -2,11 +2,16 @@ package com.ifride.core.auth.controller;
 
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.service.UserService;
+import com.ifride.core.shared.audit.enums.AuditAction;
+import com.ifride.core.shared.audit.enums.TargetType;
+import com.ifride.core.shared.audit.service.AuditLogService;
+import com.ifride.core.shared.utils.HttpRequestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+    private final AuditLogService auditLogService;
 
     @Operation(
             summary = "Exclui a própria conta (Soft Delete)",
@@ -45,7 +51,15 @@ public class UserController {
     })
     @DeleteMapping("/me")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteMyAccount(@AuthenticationPrincipal User author) {
+    public void deleteMyAccount(@AuthenticationPrincipal User author, HttpServletRequest request) {
+        String ip = HttpRequestUtils.getClientIp(request);
         userService.deleteAccount(author);
+        auditLogService.logAction(
+                AuditAction.DELETE,
+                author.getId(),
+                TargetType.USER,
+                author.getId(),
+                ip
+        );
     }
 }
