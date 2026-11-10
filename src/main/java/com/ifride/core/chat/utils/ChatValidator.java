@@ -23,4 +23,12 @@ public class ChatValidator {
             throw new ForbiddenException("Você não tem permissão para acessar o chat desta carona.");
         }
     }
+
+    public void validatePair(String rideId, String senderId, String recipientId) {
+        boolean senderIsDriver = rideService.isDriverOfRide(senderId, rideId);
+        boolean recipientIsDriver = rideService.isDriverOfRide(recipientId, rideId);
+        if (senderIsDriver == recipientIsDriver) {
+            throw new ForbiddenException("O chat privado é permitido apenas entre o motorista e um passageiro.");
+        }
+    }
 }

@@ -4,7 +4,6 @@ import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.repository.UserRepository;
 import com.ifride.core.chat.model.dto.ChatMessageDTO;
 import com.ifride.core.chat.model.dto.SendMessageRequest;
-import com.ifride.core.chat.model.entity.ChatMessage;
 import com.ifride.core.chat.model.enums.MessageStatus;
 import com.ifride.core.chat.repository.ChatMessageRepository;
 import com.ifride.core.chat.utils.ChatValidator;
@@ -21,34 +20,55 @@ import java.util.List;
 public class ChatService {
 
     private final ChatMessageRepository chatMessageRepository;
-    private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
-    private final RandomizedEncryptorService crypto;
     private final ChatValidator validator;
     private final ConversationService conversationService;
+    private final UserRepository userRepository;
+    private final ChatAndConversationMapper mapper;
 
     public ChatMessageDTO sendMessage(User sender, SendMessageRequest request) {
         validator.validateUserInRide(request.rideId(), sender.getId());
-        validator.validateUserInRide(request.rideId(), request.recipientId());
 
-        var recipient = userRepository.findById(request.recipientId())
-                .orElseThrow(() -> new NotFoundException("Destinatário não encontrado."));
+        // ---------------------------------------------------------
+        // CASO 1: MENSAGEM DE GRUPO (recipientId nulo)
+        // ---------------------------------------------------------
+        if (request.recipientId() == null) {
+            var message = mapper.fromRequest(sender, request);
+            var saved = chatMessageRepository.save(message);
+            var dto = mapper.toDTO(saved);
 
-        var message = new ChatMessage();
-        message.setRideId(request.rideId());
-        message.setSenderId(sender.getId());
-        message.setSenderName(sender.getName());
-        message.setRecipientId(recipient.getId());
-        message.setContent(crypto.encrypt(request.content()));
-        message.setMessageStatus(MessageStatus.SENT);
+            messagingTemplate.convertAndSend("/topic/rides/" + request.rideId() + "/messages", dto);
 
-        var saved = chatMessageRepository.save(message);
-        var dto = toDTO(saved);
+            return dto;
+        }
 
-        messagingTemplate.convertAndSend(
-                "/topic/rides/" + request.rideId() + "/messages", dto);
+        // ---------------------------------------------------------
+        // CASO 2: MENSAGEM PRIVADA (1-a-1)
+        // ---------------------------------------------------------
+        else {
+            validator.validateUserInRide(request.rideId(), request.recipientId());
+            validator.validatePair(request.rideId(), sender.getId(), request.recipientId());
 
-        return dto;
+            var recipient = userRepository.findById(request.recipientId())
+                    .orElseThrow(() -> new NotFoundException("Destinatário não encontrado."));
+
+            var message = mapper.fromRequest(sender, request);
+            var saved = chatMessageRepository.save(message);
+
+            conversationService.updateLastMessage(
+                    request.rideId(),
+                    sender.getId(),
+                    recipient.getId(),
+                    request.content()
+            );
+
+            var dto = mapper.toDTO(saved);
+
+            messagingTemplate.convertAndSendToUser(recipient.getEmail(), "/queue/messages", dto);
+            messagingTemplate.convertAndSendToUser(sender.getEmail(), "/queue/messages", dto);
+
+            return dto;
+        }
     }
 
     public List<ChatMessageDTO> getMessagesByRide(User currentUser, String rideId) {
@@ -57,7 +77,7 @@ public class ChatService {
         return chatMessageRepository
                 .findByRideIdOrderByCreatedAtAsc(rideId)
                 .stream()
-                .map(this::toDTO)
+                .map(mapper::toDTO)
                 .toList();
     }
 
@@ -77,26 +97,7 @@ public class ChatService {
         }
 
         message.setMessageStatus(MessageStatus.READ);
-        return toDTO(chatMessageRepository.save(message));
+        return mapper.toDTO(chatMessageRepository.save(message));
     }
 
-    private ChatMessageDTO toDTO(ChatMessage msg) {
-        String content;
-        try {
-            content = crypto.decrypt(msg.getContent());
-        } catch (Exception e) {
-            content = "[Mensagem corrompida ou indisponível]";
-        }
-
-        return new ChatMessageDTO(
-                msg.getId(),
-                msg.getRideId(),
-                msg.getSenderId(),
-                msg.getSenderName(),
-                msg.getRecipientId(),
-                crypto.decrypt(content),
-                msg.getMessageStatus().name(),
-                msg.getCreatedAt()
-        );
-    }
 }
