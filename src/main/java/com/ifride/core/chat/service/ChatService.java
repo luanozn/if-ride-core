@@ -79,7 +79,7 @@ public class ChatService {
         validator.validateUserInRide(rideId, currentUser.getId());
 
         return chatMessageRepository
-                .findByRideIdOrderByCreatedAtAsc(rideId)
+                .findVisibleMessagesByRideId(rideId, currentUser.getId())
                 .stream()
                 .map(mapper::toDTO)
                 .toList();
@@ -96,7 +96,7 @@ public class ChatService {
         var message = chatMessageRepository.findById(messageId)
                 .orElseThrow(() -> new NotFoundException("Mensagem não encontrada."));
 
-        if (!message.getRecipientId().equals(currentUser.getId())) {
+        if (message.getRecipientId() == null || !message.getRecipientId().equals(currentUser.getId())) {
             throw new NotFoundException("Mensagem não encontrada.");
         }
 
