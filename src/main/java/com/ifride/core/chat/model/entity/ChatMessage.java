@@ -2,19 +2,19 @@ package com.ifride.core.chat.model.entity;
 
 import com.ifride.core.chat.model.enums.MessageStatus;
 import java.time.Instant;
+
+import jakarta.persistence.*;
 import lombok.Data;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
-@Document(collection = "chat_messages")
+@Entity
+@Table(name = "chat_messages")
 public class ChatMessage {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Indexed
     private String rideId;
 
     private String senderId;

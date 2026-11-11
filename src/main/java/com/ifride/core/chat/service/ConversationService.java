@@ -3,7 +3,9 @@ package com.ifride.core.chat.service;
 import com.ifride.core.chat.model.dto.ConversationDTO;
 import com.ifride.core.chat.model.entity.Conversation;
 import com.ifride.core.chat.repository.ConversationRepository;
+import com.ifride.core.shared.exceptions.api.NotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.annotations.NotFound;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -44,5 +46,17 @@ public class ConversationService {
                         Comparator.nullsLast(Comparator.reverseOrder())))
                 .map(mapper::from)
                 .toList();
+    }
+
+    public List<Conversation> getConversationsByRide(String rideId) {
+        return conversationRepository.findByRideId(rideId);
+    }
+
+    public Conversation save(Conversation conversation) {
+        return conversationRepository.save(conversation);
+    }
+
+    public Conversation getConversation(String rideId, String sender, String recipient) {
+        return conversationRepository.findByRideAndPair(rideId, sender, recipient).orElseThrow(() -> new NotFoundException("A conversa não foi encontrada!"));
     }
 }

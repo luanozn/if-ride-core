@@ -1,5 +1,6 @@
 package com.ifride.core.chat.utils;
 
+import com.ifride.core.chat.model.entity.Conversation;
 import com.ifride.core.ride.model.enums.ParticipantStatus;
 import com.ifride.core.ride.service.RideParticipantService;
 import com.ifride.core.ride.service.RideService;
@@ -29,6 +30,12 @@ public class ChatValidator {
         boolean recipientIsDriver = rideService.isDriverOfRide(recipientId, rideId);
         if (senderIsDriver == recipientIsDriver) {
             throw new ForbiddenException("O chat privado é permitido apenas entre o motorista e um passageiro.");
+        }
+    }
+
+    public void validateConversation(Conversation conversation) {
+        if(conversation.isBlocked()) {
+            throw new ForbiddenException("Esta conversa já foi encerrada!");
         }
     }
 }

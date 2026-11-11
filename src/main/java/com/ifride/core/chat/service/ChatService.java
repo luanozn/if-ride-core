@@ -9,6 +9,7 @@ import com.ifride.core.chat.repository.ChatMessageRepository;
 import com.ifride.core.chat.utils.ChatValidator;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import com.ifride.core.shared.services.RandomizedEncryptorService;
+import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -29,10 +30,11 @@ public class ChatService {
     public ChatMessageDTO sendMessage(User sender, SendMessageRequest request) {
         validator.validateUserInRide(request.rideId(), sender.getId());
 
+
         // ---------------------------------------------------------
         // CASO 1: MENSAGEM DE GRUPO (recipientId nulo)
         // ---------------------------------------------------------
-        if (request.recipientId() == null) {
+        if (StringUtils.isEmpty(request.recipientId())) {
             var message = mapper.fromRequest(sender, request);
             var saved = chatMessageRepository.save(message);
             var dto = mapper.toDTO(saved);
@@ -46,6 +48,8 @@ public class ChatService {
         // CASO 2: MENSAGEM PRIVADA (1-a-1)
         // ---------------------------------------------------------
         else {
+            var conversation = conversationService.getConversation(request.rideId(), sender.getId(), request.recipientId());
+            validator.validateConversation(conversation);
             validator.validateUserInRide(request.rideId(), request.recipientId());
             validator.validatePair(request.rideId(), sender.getId(), request.recipientId());
 

@@ -82,7 +82,8 @@ public class ChatAndConversationMapper {
                 c.getPassengerName(),
                 lastMessage,
                 c.getLastMessageAt(),
-                c.getCreatedAt()
+                c.getCreatedAt(),
+                c.isBlocked()
         );
     }
 }

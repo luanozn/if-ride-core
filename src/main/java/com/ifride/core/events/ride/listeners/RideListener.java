@@ -1,5 +1,7 @@
 package com.ifride.core.events.ride.listeners;
 
+import com.ifride.core.chat.model.entity.Conversation;
+import com.ifride.core.chat.service.ConversationService;
 import com.ifride.core.events.ride.models.RideFinishedEvent;
 import com.ifride.core.ride.model.dto.RideRequestDTO;
 import com.ifride.core.ride.service.RideService;
@@ -16,6 +18,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class RideListener {
 
     private final RideService rideService;
+    private final ConversationService conversationService;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -27,6 +30,12 @@ public class RideListener {
             log.info("Creating new recurrency for ride: {}", event.rideId());
             var request = RideRequestDTO.fromRideForRecurrency(ride);
             rideService.createRide(ride.getDriver().getId(), request);
+        }
+
+        var conversations = conversationService.getConversationsByRide(event.rideId());
+        for(Conversation conversation: conversations) {
+            conversation.setBlocked(true);
+            conversationService.save(conversation);
         }
     }
 }
