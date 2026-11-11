@@ -7,6 +7,9 @@ import com.ifride.core.driver.model.entity.DriverApplication;
 import com.ifride.core.driver.service.DriverService;
 import com.ifride.core.events.driver.model.DriverApplicationApprovedEvent;
 import com.ifride.core.events.driver.DriverApplicationListener;
+import com.ifride.core.shared.audit.enums.AuditAction;
+import com.ifride.core.shared.audit.enums.TargetType;
+import com.ifride.core.shared.audit.service.AuditLogService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,6 +18,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,6 +30,9 @@ class DriverApplicationListenerTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private AuditLogService auditLogService;
 
     @InjectMocks
     private DriverApplicationListener listener;
@@ -48,6 +56,7 @@ class DriverApplicationListenerTest {
 
             verify(driverService).saveFromDriverRequest(application);
             verify(userService).updateUserRole(requester, Role.DRIVER);
+            verify(auditLogService).logAction(eq(AuditAction.CREATE), any(), eq(TargetType.DRIVER), any(), any());
         }
     }
 }

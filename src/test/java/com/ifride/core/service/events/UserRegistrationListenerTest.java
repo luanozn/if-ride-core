@@ -4,6 +4,9 @@ import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.service.EmailVerificationTokenService;
 import com.ifride.core.events.user.listener.UserRegistrationListener;
 import com.ifride.core.events.user.model.UserRegisteredEvent;
+import com.ifride.core.shared.audit.enums.AuditAction;
+import com.ifride.core.shared.audit.enums.TargetType;
+import com.ifride.core.shared.audit.service.AuditLogService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -12,6 +15,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -19,6 +24,8 @@ class UserRegistrationListenerTest {
 
     @Mock
     private EmailVerificationTokenService tokenService;
+    @Mock
+    private AuditLogService auditLogService;
 
     @InjectMocks
     private UserRegistrationListener listener;
@@ -38,6 +45,7 @@ class UserRegistrationListenerTest {
 
             listener.handleUserRegisteredEvent(event);
             verify(tokenService).generateTokenAndSendEmail(user);
+            verify(auditLogService).logAction(eq(AuditAction.SEND), any(), eq(TargetType.EMAIL_VERIFICATION), eq("SYSTEM"), any());
         }
     }
 }
