@@ -14,7 +14,7 @@ import java.time.Instant;
 public class ActionToken {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(length = 64, nullable = false)
     private String token;
     private Instant expires;
 
@@ -25,7 +25,8 @@ public class ActionToken {
     @JoinColumn(nullable = false, name = "user_id")
     private User user;
 
-    public ActionToken(Instant expires, TokenType type, User user) {
+    public ActionToken(String token, Instant expires, TokenType type, User user) {
+        this.token = token;
         this.expires = expires;
         this.type = type;
         this.user = user;
