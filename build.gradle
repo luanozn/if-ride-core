@@ -63,6 +63,7 @@ dependencies {
 	implementation 'com.auth0:java-jwt:4.6.2'
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-database-postgresql'
+	implementation 'org.cryptomator:siv-mode:1.6.1'
 
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
 

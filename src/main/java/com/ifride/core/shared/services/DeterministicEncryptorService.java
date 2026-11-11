@@ -1,11 +1,10 @@
 package com.ifride.core.shared.services;
 
+import org.cryptomator.siv.SivMode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -14,29 +13,29 @@ import java.util.Base64;
 @Service
 public class DeterministicEncryptorService {
 
-    private static final String AES = "AES/CBC/PKCS5Padding";
-    private static final IvParameterSpec FIXED_IV = new IvParameterSpec(new byte[16]);
-
-    private final SecretKey key;
+    private final SivMode sivMode;
+    private final SecretKey secretKey;
 
     public DeterministicEncryptorService(@Value("${app.deterministic.aes-key}") String rawKey) throws Exception {
         if (rawKey == null || rawKey.isBlank()) {
             throw new IllegalStateException(
-                    "app.cpf.aes-key não configurada. " +
+                    "app.deterministic.aes-key não configurada. " +
                             "Em dev, defina em application-dev.properties; " +
                             "em prod, configure no Parameter Store.");
         }
+
         byte[] keyBytes = MessageDigest.getInstance("SHA-256")
                 .digest(rawKey.getBytes(StandardCharsets.UTF_8));
-        this.key = new SecretKeySpec(keyBytes, "AES");
+
+        this.secretKey = new SecretKeySpec(keyBytes, "AES");
+        this.sivMode = new SivMode();
     }
 
     public String encrypt(String value) {
         try {
-            Cipher c = Cipher.getInstance(AES);
-            c.init(Cipher.ENCRYPT_MODE, key, FIXED_IV);
-            byte[] encrypted = c.doFinal(value.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(encrypted);
+            byte[] plaintext = value.getBytes(StandardCharsets.UTF_8);
+            byte[] ciphertext = sivMode.encrypt(secretKey, plaintext);
+            return Base64.getEncoder().encodeToString(ciphertext);
         } catch (Exception e) {
             throw new IllegalStateException("Erro ao criptografar o valor", e);
         }
@@ -44,15 +43,11 @@ public class DeterministicEncryptorService {
 
     public String decrypt(String ciphertext) {
         try {
-            byte[] encrypted = Base64.getDecoder().decode(ciphertext);
-            Cipher c = Cipher.getInstance(AES);
-            c.init(Cipher.DECRYPT_MODE, key, FIXED_IV);
-            byte[] decrypted = c.doFinal(encrypted);
-            return new String(decrypted, StandardCharsets.UTF_8);
-        } catch (IllegalStateException e) {
-            throw e;
+            byte[] cipherBytes = Base64.getDecoder().decode(ciphertext);
+            byte[] plaintext = sivMode.decrypt(secretKey, cipherBytes);
+            return new String(plaintext, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            throw new IllegalStateException("Erro ao descriptografar CPF", e);
+            throw new IllegalStateException("Erro ao descriptografar o valor (ou dado corrompido)", e);
         }
     }
 }
