@@ -3,6 +3,11 @@ package com.ifride.core.auth.controller;
 import com.ifride.core.auth.model.EmailVerificationMaxAttemptsExceededException;
 import com.ifride.core.auth.service.EmailVerificationTokenService;
 import com.ifride.core.auth.service.UserService;
+import com.ifride.core.shared.audit.enums.AuditAction;
+import com.ifride.core.shared.audit.enums.TargetType;
+import com.ifride.core.shared.audit.service.AuditLogService;
+import com.ifride.core.shared.utils.HttpRequestUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import lombok.AllArgsConstructor;
@@ -32,6 +37,7 @@ public class WebVerificationController {
 
     private final EmailVerificationTokenService emailVerificationTokenService;
     private final UserService userService;
+    private final AuditLogService auditLogService;
 
     @Operation(
             summary = "Reenvia o e-mail de verificação (via formulário HTML)",
@@ -54,7 +60,7 @@ public class WebVerificationController {
             value = "/resend-verification-form",
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
-    public ResponseEntity<String> resendVerificationForm(@RequestParam String email) throws IOException {
+    public ResponseEntity<String> resendVerificationForm(@RequestParam String email, HttpServletRequest request) throws IOException {
         try {
             var user = userService.findByEmail(email);
             emailVerificationTokenService.generateTokenAndSendEmail(user);
@@ -63,6 +69,14 @@ public class WebVerificationController {
         } catch (Exception e) {
             log.debug("Falha em reenvio via form para {}: {}", email, e.getMessage());
         }
+
+        auditLogService.logAction(
+                AuditAction.RESEND,
+                null,
+                TargetType.EMAIL_VERIFICATION,
+                email,
+                HttpRequestUtils.getClientIp(request)
+        );
 
         var html = new ClassPathResource("auth/verification-resend.html")
                 .getContentAsString(StandardCharsets.UTF_8);

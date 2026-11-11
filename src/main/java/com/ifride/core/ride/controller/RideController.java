@@ -8,11 +8,16 @@ import com.ifride.core.ride.model.dto.RideResponseDTO;
 import com.ifride.core.ride.model.enums.ParticipantStatus;
 import com.ifride.core.ride.service.RideParticipantService;
 import com.ifride.core.ride.service.RideService;
+import com.ifride.core.shared.audit.enums.AuditAction;
+import com.ifride.core.shared.audit.enums.TargetType;
+import com.ifride.core.shared.audit.service.AuditLogService;
+import com.ifride.core.shared.utils.HttpRequestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.List;
 
@@ -27,6 +32,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.support.HttpRequestHandlerServlet;
 
 @RestController
 @RequestMapping("/v1/rides")
@@ -37,6 +43,7 @@ public class RideController {
 
     private final RideService rideService;
     private final RideParticipantService rideParticipantService;
+    private final AuditLogService auditLogService;
 
     @Operation(
             summary = "Ofertar nova carona",
@@ -62,8 +69,16 @@ public class RideController {
     @PostMapping
     @PreAuthorize("hasRole('DRIVER')")
     @ResponseStatus(HttpStatus.CREATED)
-    public RideResponseDTO createRide(@AuthenticationPrincipal User author, @Valid @RequestBody RideRequestDTO rideRequestDTO) {
-        return rideService.createRide(author.getId(), rideRequestDTO);
+    public RideResponseDTO createRide(@AuthenticationPrincipal User author, @Valid @RequestBody RideRequestDTO rideRequestDTO, HttpServletRequest request) {
+        var ride = rideService.createRide(author.getId(), rideRequestDTO);
+        auditLogService.logAction(
+                AuditAction.CREATE,
+                ride.id(),
+                TargetType.RIDE,
+                author.getId(),
+                HttpRequestUtils.getClientIp(request)
+        );
+        return ride;
     }
 
     @Operation(
@@ -89,8 +104,15 @@ public class RideController {
     @PatchMapping("/{rideId}/start")
     @PreAuthorize("hasRole('DRIVER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void startRide(@AuthenticationPrincipal User author, @PathVariable String rideId) {
+    public void startRide(@AuthenticationPrincipal User author, @PathVariable String rideId, HttpServletRequest request) {
         rideService.startRide(rideId, author);
+        auditLogService.logAction(
+                AuditAction.START,
+                rideId,
+                TargetType.RIDE,
+                author.getId(),
+                HttpRequestUtils.getClientIp(request)
+        );
     }
 
     @Operation(
@@ -117,8 +139,15 @@ public class RideController {
     @PatchMapping("/{rideId}/finish")
     @PreAuthorize("hasRole('DRIVER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void finishRide(@AuthenticationPrincipal User author, @PathVariable String rideId) {
+    public void finishRide(@AuthenticationPrincipal User author, @PathVariable String rideId, HttpServletRequest request) {
         rideService.finishRide(rideId, author);
+        auditLogService.logAction(
+                AuditAction.FINISH,
+                rideId,
+                TargetType.RIDE,
+                author.getId(),
+                HttpRequestUtils.getClientIp(request)
+        );
     }
 
     @Operation(
@@ -149,9 +178,20 @@ public class RideController {
     public RideParticipantResponseDTO createRideParticipant(
             @AuthenticationPrincipal User author,
             @PathVariable String rideId,
-            @Valid @RequestBody RideParticipantRequestDTO dto
+            @Valid @RequestBody RideParticipantRequestDTO dto,
+            HttpServletRequest request
     ) {
-        return rideParticipantService.requestSeat(author, rideId, dto);
+        var rideParticipant = rideParticipantService.requestSeat(author, rideId, dto);
+
+        auditLogService.logAction(
+                AuditAction.REQUEST_SEAT,
+                rideId,
+                TargetType.RIDE,
+                author.getId(),
+                HttpRequestUtils.getClientIp(request)
+        );
+
+        return rideParticipant;
     }
 
     @Operation(
@@ -203,8 +243,15 @@ public class RideController {
     @PatchMapping("/{rideId}/disable-recurrence")
     @PreAuthorize("hasRole('DRIVER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void disableRecurrence(@AuthenticationPrincipal User author, @PathVariable String rideId) {
+    public void disableRecurrence(@AuthenticationPrincipal User author, @PathVariable String rideId, HttpServletRequest request) {
         rideService.disableRecurrence(rideId, author);
+        auditLogService.logAction(
+                AuditAction.DISABLE_RECURRENCE,
+                rideId,
+                TargetType.RIDE,
+                author.getId(),
+                HttpRequestUtils.getClientIp(request)
+        );
     }
 
     @Operation(

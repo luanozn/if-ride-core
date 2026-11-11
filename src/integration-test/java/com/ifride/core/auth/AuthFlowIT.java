@@ -66,7 +66,7 @@ class AuthFlowIT extends BaseIT {
 
             await().atMost(Duration.of(5, ChronoUnit.SECONDS))
                     .pollInterval(Duration.ofMillis(100))
-                    .untilAsserted(() -> then(localEmailService.getCalls()).hasSize(1));
+                    .untilAsserted(() -> then(localEmailService.lastCallTo(uniqueEmail)).isPresent());
 
             var email = localEmailService.lastCallTo(uniqueEmail).orElseThrow();
             String token = email.body().split("token=")[1].split("\"")[0];
@@ -118,6 +118,9 @@ class AuthFlowIT extends BaseIT {
 
             then(response1.getStatusCode()).isEqualTo(HttpStatus.OK);
 
+            await().atMost(Duration.of(5, ChronoUnit.SECONDS))
+                    .untilAsserted(() -> then(localEmailService.lastCallTo(uniqueEmail)).isPresent());
+
             var request2 = new RegisterRequestDTO(uniqueEmail, "outraSenha123", "User 2", "111.444.777-35", LocalDate.of(1990, 1, 1));
             var response2 = rest.exchange("/v1/auth/register", HttpMethod.POST, new HttpEntity<>(request2, createHeaders(null)), ApiException.class);
 
@@ -125,5 +128,4 @@ class AuthFlowIT extends BaseIT {
             then(Objects.requireNonNull(response2.getBody()).getMessage()).containsIgnoringCase("O email já está em uso");
         }
     }
-
 }

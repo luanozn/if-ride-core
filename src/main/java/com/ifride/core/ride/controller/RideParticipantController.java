@@ -3,6 +3,11 @@ package com.ifride.core.ride.controller;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.ride.model.dto.RideParticipantResponseDTO;
 import com.ifride.core.ride.service.RideParticipantService;
+import com.ifride.core.shared.audit.enums.AuditAction;
+import com.ifride.core.shared.audit.enums.TargetType;
+import com.ifride.core.shared.audit.service.AuditLogService;
+import com.ifride.core.shared.utils.HttpRequestUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -32,6 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class RideParticipantController {
 
     private final RideParticipantService rideParticipantService;
+    private final AuditLogService auditLogService;
 
     @Operation(
             summary = "Busca as participações do passageiro logado",
@@ -78,8 +84,15 @@ public class RideParticipantController {
     @PatchMapping("/{id}/accept")
     @PreAuthorize("hasRole('DRIVER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void accept(@AuthenticationPrincipal User author, @PathVariable String id) {
+    public void accept(@AuthenticationPrincipal User author, @PathVariable String id, HttpServletRequest request) {
         rideParticipantService.acceptParticipation(id, author.getId());
+        auditLogService.logAction(
+                AuditAction.ACCEPT,
+                id,
+                TargetType.PARTICIPANT,
+                author.getId(),
+                HttpRequestUtils.getClientIp(request)
+        );
     }
 
     @Operation(
@@ -105,8 +118,15 @@ public class RideParticipantController {
     @PatchMapping("/{id}/reject")
     @PreAuthorize("hasRole('DRIVER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void reject(@AuthenticationPrincipal User author, @PathVariable String id) {
+    public void reject(@AuthenticationPrincipal User author, @PathVariable String id, HttpServletRequest request) {
         rideParticipantService.rejectParticipation(id, author.getId());
+        auditLogService.logAction(
+                AuditAction.REJECT,
+                id,
+                TargetType.PARTICIPANT,
+                author.getId(),
+                HttpRequestUtils.getClientIp(request)
+        );
     }
 
     @Operation(
@@ -133,7 +153,14 @@ public class RideParticipantController {
     })
     @PatchMapping("/{id}/cancel")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void cancel(@AuthenticationPrincipal User author, @PathVariable String id) {
+    public void cancel(@AuthenticationPrincipal User author, @PathVariable String id, HttpServletRequest request) {
         rideParticipantService.cancelParticipation(id, author.getId());
+        auditLogService.logAction(
+                AuditAction.CANCEL,
+                id,
+                TargetType.PARTICIPANT,
+                author.getId(),
+                HttpRequestUtils.getClientIp(request)
+        );
     }
 }

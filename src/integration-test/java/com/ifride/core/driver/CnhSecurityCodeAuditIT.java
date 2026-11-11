@@ -7,6 +7,8 @@ import com.ifride.core.driver.model.enums.CnhCategory;
 import com.ifride.core.driver.model.enums.DriverApplicationStatus;
 import com.ifride.core.driver.repository.DriverApplicationRepository;
 import com.ifride.core.shared.audit.AuditLog;
+import com.ifride.core.shared.audit.enums.AuditAction;
+import com.ifride.core.shared.audit.enums.TargetType;
 import com.ifride.core.shared.audit.repository.AuditLogRepository;
 import com.ifride.core.shared.services.DeterministicEncryptorService;
 import com.ifride.core.shared.services.RandomizedEncryptorService;
@@ -73,9 +75,11 @@ class CnhSecurityCodeAuditIT extends BaseIT {
         then(logs).hasSize(1);
 
         AuditLog log = logs.getFirst();
-        then(log.getAction()).isEqualTo("VIEW_CNH_SECURITY_CODE");
+        then(log.getAction()).isEqualTo(AuditAction.VIEW);
+        then(log.getTargetType()).isEqualTo(TargetType.CNH_SECURITY_CODE);
         then(log.getTargetId()).isEqualTo(application.getId());
         then(log.getAuthorId()).isEqualTo(admin.getId());
-        then(log.getIpAddress()).isEqualTo("189.45.12.10"); // Prova o rastreio de IP
+        then(log.getIpAddressEncrypted()).isNotEqualTo("189.45.12.10");
+        then(crypto.decrypt(log.getIpAddressEncrypted())).isEqualTo("189.45.12.10");
     }
 }

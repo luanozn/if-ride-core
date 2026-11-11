@@ -1,5 +1,7 @@
 package com.ifride.core.shared.audit;
 
+import com.ifride.core.shared.audit.enums.AuditAction;
+import com.ifride.core.shared.audit.enums.TargetType;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.Instant;
@@ -19,19 +21,21 @@ public class AuditLog {
     private String id;
 
     @Column(nullable = false, length = 100)
-    private String action;
+    @Enumerated(EnumType.STRING)
+    private AuditAction action;
 
-    @Column(name = "target_id", nullable = false, length = 36)
+    @Column(name = "target_id")
     private String targetId;
 
     @Column(name = "target_type", nullable = false, length = 50)
-    private String targetType;
+    @Enumerated(EnumType.STRING)
+    private TargetType targetType;
 
-    @Column(name = "author_id", nullable = false, length = 36)
+    @Column(name = "author_id", nullable = false)
     private String authorId;
 
-    @Column(name = "ip_address", length = 45)
-    private String ipAddress;
+    @Column(name = "ip_address_encrypted")
+    private String ipAddressEncrypted;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

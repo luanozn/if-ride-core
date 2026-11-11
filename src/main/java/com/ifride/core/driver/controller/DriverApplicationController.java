@@ -8,6 +8,8 @@ import com.ifride.core.driver.model.dto.DriverApplicationRequestDTO;
 import com.ifride.core.driver.model.dto.DriverApplicationSummaryDTO;
 import com.ifride.core.driver.model.enums.DriverApplicationStatus;
 import com.ifride.core.driver.service.DriverApplicationService;
+import com.ifride.core.shared.audit.enums.AuditAction;
+import com.ifride.core.shared.audit.enums.TargetType;
 import com.ifride.core.shared.audit.service.AuditLogService;
 import com.ifride.core.shared.utils.HttpRequestUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -94,12 +96,25 @@ public class DriverApplicationController {
     @PreAuthorize("hasRole('PASSENGER')")
     public DriverApplicationSummaryDTO createDriverRequest(
             @AuthenticationPrincipal User author,
-            @Valid @RequestBody DriverApplicationRequestDTO driverRequest
+            @Valid @RequestBody DriverApplicationRequestDTO driverRequest,
+            HttpServletRequest request
     ) {
         var user = userService.findById(driverRequest.requesterId());
+        String ip = HttpRequestUtils.getClientIp(request);
 
         log.info("O usuário {} iniciou a requisição de motorista para o usuário {}", author.getId(), user.getId());
-        return driverApplicationService.createDriverApplication(author, user, driverRequest);
+
+        DriverApplicationSummaryDTO app = driverApplicationService.createDriverApplication(author, user, driverRequest);
+        auditLogService.logAction(
+                AuditAction.CREATE,
+                app.id(),
+                TargetType.APPLICATION,
+                author.getId(),
+                ip
+        );
+
+        return app;
+
     }
 
     @Operation(
@@ -128,9 +143,21 @@ public class DriverApplicationController {
     @PreAuthorize("hasRole('ADMIN')")
     public DriverApplicationSummaryDTO approveDriverRequest(
             @AuthenticationPrincipal User author,
-            @PathVariable String userId
+            @PathVariable String userId,
+            HttpServletRequest request
     ) {
-        return driverApplicationService.approveDriverApplication(author, userId);
+        String ip = HttpRequestUtils.getClientIp(request);
+
+        DriverApplicationSummaryDTO app =  driverApplicationService.approveDriverApplication(author, userId);
+        auditLogService.logAction(
+                AuditAction.APPROVE,
+                app.id(),
+                TargetType.APPLICATION,
+                author.getId(),
+                ip
+        );
+
+        return app;
     }
 
     @Operation(
@@ -159,9 +186,21 @@ public class DriverApplicationController {
     public DriverApplicationSummaryDTO rejectDriverRequest(
             @AuthenticationPrincipal User author,
             @PathVariable String userId,
-            @Valid @RequestBody DriverApplicationRejectionDTO dto
+            @Valid @RequestBody DriverApplicationRejectionDTO dto,
+            HttpServletRequest request
     ) {
-        return driverApplicationService.rejectDriverApplication(author, userId, dto);
+        String ip = HttpRequestUtils.getClientIp(request);
+
+        DriverApplicationSummaryDTO app = driverApplicationService.rejectDriverApplication(author, userId, dto);
+        auditLogService.logAction(
+                AuditAction.DENY,
+                app.id(),
+                TargetType.APPLICATION,
+                author.getId(),
+                ip
+        );
+
+        return app;
     }
 
     @Operation(
@@ -184,8 +223,16 @@ public class DriverApplicationController {
     })
     @DeleteMapping("/{requestId}")
     @PreAuthorize("hasRole('PASSENGER')")
-    public void deleteDriverRequest(@AuthenticationPrincipal User author, @PathVariable String requestId) {
+    public void deleteDriverRequest(@AuthenticationPrincipal User author, @PathVariable String requestId, HttpServletRequest request) {
+        String ip = HttpRequestUtils.getClientIp(request);
         driverApplicationService.delete(requestId, author);
+        auditLogService.logAction(
+                AuditAction.DELETE,
+                requestId,
+                TargetType.APPLICATION,
+                author.getId(),
+                ip
+        );
     }
 
     @Operation(
@@ -278,9 +325,9 @@ public class DriverApplicationController {
         String ip = HttpRequestUtils.getClientIp(request);
 
         auditLogService.logAction(
-                "VIEW_CNH_SECURITY_CODE",
+                AuditAction.VIEW,
                 applicationId,
-                "APPLICATION",
+                TargetType.CNH_SECURITY_CODE,
                 adminUser.getId(),
                 ip
         );
