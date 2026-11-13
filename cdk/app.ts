@@ -4,7 +4,7 @@ import {ConfigProps} from "./lib/utils/config-props";
 import {ServerStack} from "./lib/server.stack";
 import {DatabaseStack} from "./lib/database.stack";
 import {GithubPipelineStack} from "./lib/github-pipeline.stack";
-import {ApiGatewayStack} from "./lib/api-gateway.stack";
+import {FrontendStack} from "./lib/front-end.stack";
 
 const app = new App();
 
@@ -44,15 +44,15 @@ const database = new DatabaseStack(app, "IfRidePersistence", {
     }
 });
 
-const gateway = new ApiGatewayStack(app, "IfRideGateway", {
+const frontend = new FrontendStack(app, 'FrontendStack', {
     ...configProps,
     resources: {
+        vpc: vpcStack.vpc,
         instance: server.instance,
-        eip: server.eIP
+        securityGroup: server.securityGroup
     }
 });
 
 
 database.addDependency(server)
-
-gateway.addDependency(server)
+frontend.addDependency(server)

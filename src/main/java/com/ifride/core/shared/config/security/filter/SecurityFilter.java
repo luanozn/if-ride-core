@@ -29,7 +29,7 @@ public class SecurityFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        return path.startsWith("/v1/auth") || path.startsWith("/ws");
+        return path.startsWith("/v1/auth") || path.startsWith("/ws") || path.startsWith("/health");
     }
 
     @Override

@@ -2,7 +2,6 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import {CfnOutput, RemovalPolicy, Stack} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {
-    CfnEIP,
     IInstance,
     Instance,
     InstanceType, ISecurityGroup,
@@ -19,7 +18,6 @@ import {Repository} from "aws-cdk-lib/aws-ecr";
 export class ServerStack extends Stack {
     instance: IInstance;
     securityGroup: ISecurityGroup;
-    eIP: CfnEIP;
 
     constructor(scope: Construct, id: string, props: ConfigProps) {
         super(scope, id, props);
@@ -28,11 +26,9 @@ export class ServerStack extends Stack {
 
         const securityGroup = new SecurityGroup(this, 'InstanceSG', {
             vpc,
-            description: 'Permitir acesso HTTP',
+            description: 'Permitir acesso HTTP vindo apenas do ALB',
             allowAllOutbound: true,
         });
-
-        securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(8080), 'API Spring Boot');
 
         const ec2Role = new Role(this, 'IFRideEc2Role', {
             assumedBy: new ServicePrincipal('ec2.amazonaws.com'),
@@ -107,8 +103,6 @@ export class ServerStack extends Stack {
             vpcSubnets: {subnetType: SubnetType.PUBLIC},
         });
 
-        const elasticIp = new CfnEIP(this, 'ElasticIp', { instanceId: instance.instanceId, domain: "vpc" })
-
         ecrRepo!.grantPull(instance)
 
         instance.addUserData(
@@ -121,17 +115,10 @@ export class ServerStack extends Stack {
 
         this.instance = instance;
         this.securityGroup = securityGroup;
-        this.eIP = elasticIp;
 
         new CfnOutput(this, 'InstanceId', {
             value: instance.instanceId,
             exportName: 'IfRideInstanceId',
-            description: 'Instance ID para uso do pipeline via SSM',
         });
-
-        new CfnOutput(this, 'ElasticIpPublicIp', {
-            value: elasticIp.attrPublicIp,
-            exportName: 'IfRideElasticIp',
-        })
     }
 }
