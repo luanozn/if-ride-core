@@ -42,17 +42,17 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      - name: Resolve Instance ID
+      - name: Resolve Instance ID from CDK Output
         id: instance
         run: |
-          INSTANCE_ID=$(aws ec2 describe-instances \
-            --filters \
-              "Name=tag:Name,Values=IfRideServer/IfRideServer" \
-              "Name=instance-state-name,Values=running" \
-            --query "Reservations[0].Instances[0].InstanceId" \
+          # Pega o ID da instância direto da Stack do CDK (muito mais seguro)
+          INSTANCE_ID=$(aws cloudformation describe-stacks \
+            --stack-name IfRideServer \
+            --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue" \
             --output text)
+          
           if [ -z "$INSTANCE_ID" ] || [ "$INSTANCE_ID" == "None" ]; then
-            echo "::error::Instância não encontrada em estado running"
+            echo "::error::Instância não encontrada via CloudFormation."
             exit 1
           fi
           echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
@@ -74,7 +74,7 @@ jobs:
            "docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG",
            "docker stop if-ride-app || true",
            "docker rm if-ride-app || true",
-           "docker run -d --name if-ride-app --restart unless-stopped -p 8080:8080 $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG",
+           "docker run -d --name if-ride-app --restart unless-stopped -p 8080:8080 -e SPRING_PROFILES_ACTIVE=prod -e AWS_REGION=$AWS_REGION $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG",
            "sleep 5",
            "docker ps --filter name=if-ride-app --format '{{.Status}}'"]
           EOF
@@ -101,40 +101,30 @@ jobs:
             --output text)
 
           echo "Status: $STATUS"
-          echo "--- Stdout ---"
-          aws ssm get-command-invocation \
-            --command-id "$COMMAND_ID" \
-            --instance-id "$INSTANCE_ID" \
-            --query "StandardOutputContent" \
-            --output text
-          echo "--- Stderr ---"
-          aws ssm get-command-invocation \
-            --command-id "$COMMAND_ID" \
-            --instance-id "$INSTANCE_ID" \
-            --query "StandardErrorContent" \
-            --output text
-
+          
           if [ "$STATUS" != "Success" ]; then
+            echo "--- Stderr ---"
+            aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" --query "StandardErrorContent" --output text
             echo "::error::Deploy falhou com status $STATUS"
             exit 1
           fi
 
-      - name: Smoke Test
+      - name: Smoke Test (CloudFront)
         run: |
           API_ENDPOINT=$(aws cloudformation describe-stacks \
-            --stack-name IfRideGateway \
-            --query "Stacks[0].Outputs[?OutputKey=='IfRideApiEndpoint0A263F8C'].OutputValue" \
+            --stack-name FrontendStack \
+            --query "Stacks[0].Outputs[?OutputKey=='IfRideAppUrl'].OutputValue" \
             --output text)
 
-          echo "Endpoint: $API_ENDPOINT"
+          echo "Testando Endpoint: $API_ENDPOINT"
 
           for i in {1..10}; do
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${API_ENDPOINT}swagger-ui/index.html" || true)
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${API_ENDPOINT}/health" || true)
             if [ "$HTTP_CODE" = "200" ]; then
               echo "Smoke test OK (HTTP $HTTP_CODE)"
               exit 0
             fi
-            echo "Tentativa $i: HTTP $HTTP_CODE, aguardando..."
+            echo "Tentativa $i: HTTP $HTTP_CODE, aguardando o app subir ou o banco conectar..."
             sleep 6
           done
 

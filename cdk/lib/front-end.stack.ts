@@ -38,7 +38,7 @@ export class FrontendStack extends Stack {
             protocol: elbv2.ApplicationProtocol.HTTP,
             targets: [new targets.InstanceIdTarget(instance.instanceId, 8080)],
             healthCheck: {
-                path: '/swagger-ui/index.html',
+                path: '/health',
                 interval: Duration.seconds(30),
                 healthyThresholdCount: 2,
                 unhealthyThresholdCount: 3,
