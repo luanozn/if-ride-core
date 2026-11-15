@@ -15,6 +15,11 @@ public class ChatValidator {
     private final RideParticipantService participantService;
     private final RideService rideService;
 
+    public void validate(String rideId, String senderId, String recipientId) {
+        validateUserInRide(rideId, senderId);
+        validatePair(rideId, senderId, recipientId);
+    }
+
     public void validateUserInRide(String rideId, String senderId) {
         boolean isParticipant = participantService
                 .existsByRideIdAndPassengerIdAndParticipantStatus(rideId, senderId, ParticipantStatus.ACCEPTED);
@@ -25,7 +30,7 @@ public class ChatValidator {
         }
     }
 
-    public void validatePair(String rideId, String senderId, String recipientId) {
+    private void validatePair(String rideId, String senderId, String recipientId) {
         boolean senderIsDriver = rideService.isDriverOfRide(senderId, rideId);
         boolean recipientIsDriver = rideService.isDriverOfRide(recipientId, rideId);
         if (senderIsDriver == recipientIsDriver) {

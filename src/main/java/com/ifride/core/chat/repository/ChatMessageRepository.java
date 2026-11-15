@@ -11,9 +11,9 @@ import java.util.List;
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, String> {
 
     @Query("""
-    SELECT m FROM ChatMessage m 
-    WHERE m.rideId = :rideId 
-    AND (m.recipientId IS NULL OR m.senderId = :userId OR m.recipientId = :userId) 
+    SELECT m FROM ChatMessage m
+    WHERE m.rideId = :rideId
+    AND (m.senderId = :userId OR m.recipientId = :userId)
     ORDER BY m.createdAt ASC
    """)
     List<ChatMessage> findVisibleMessagesByRideId(@Param("rideId") String rideId, @Param("userId") String userId);

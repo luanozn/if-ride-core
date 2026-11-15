@@ -38,3 +38,6 @@ out/
 
 ### MacOs ###
 .DS_Store
+
+
+src/main/java/com/ifride/core/chat/chat.html

@@ -5,31 +5,38 @@ import com.ifride.core.chat.model.entity.Conversation;
 import com.ifride.core.chat.repository.ConversationRepository;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.annotations.NotFound;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
 
 @Service
+@Log4j2
 @RequiredArgsConstructor
 public class ConversationService {
 
     private final ConversationRepository conversationRepository;
     private final ChatAndConversationMapper mapper;
 
-    public ConversationDTO createIfAbsent(
+    public void createIfAbsent(
             String rideId,
             String driverId, String driverName,
             String passengerId, String passengerName) {
 
-        return conversationRepository
-                .findByRideAndPair(rideId, driverId, passengerId)
-                .map(mapper::from)
-                .orElseGet(() -> {
-                    Conversation conv = mapper.from(rideId, driverId, driverName, passengerId, passengerName);
-                    return mapper.from(conversationRepository.save(conv));
-                });
+        var existing = conversationRepository.findByRideAndPair(rideId, driverId, passengerId);
+
+        if (existing.isPresent()) {
+            return;
+        }
+
+        try {
+            Conversation conv = mapper.from(rideId, driverId, driverName, passengerId, passengerName);
+            conversationRepository.saveAndFlush(conv);
+        } catch (DataIntegrityViolationException e) {
+            log.info("Ocorreu um erro de concorrência ao tentar criar a conversa.");
+        }
     }
 
     public void updateLastMessage(String rideId, String sender, String recipient, String content) {

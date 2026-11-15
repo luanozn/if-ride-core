@@ -16,7 +16,7 @@ CREATE TABLE chat_messages (
                                ride_id VARCHAR(36) NOT NULL,
                                sender_id VARCHAR(36) NOT NULL,
                                sender_name VARCHAR(255) NOT NULL,
-                               recipient_id VARCHAR(36),
+                               recipient_id VARCHAR(36) NOT NULL,
                                content TEXT NOT NULL,
                                message_status VARCHAR(20) NOT NULL DEFAULT 'SENT',
                                created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP

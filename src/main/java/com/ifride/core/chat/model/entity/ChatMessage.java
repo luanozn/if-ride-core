@@ -20,10 +20,12 @@ public class ChatMessage {
     private String senderId;
     private String senderName;
 
+    @Column(nullable = false)
     private String recipientId;
 
     private String content;
 
+    @Enumerated(EnumType.STRING)
     private MessageStatus messageStatus = MessageStatus.SENT;
 
     private Instant createdAt = Instant.now();
