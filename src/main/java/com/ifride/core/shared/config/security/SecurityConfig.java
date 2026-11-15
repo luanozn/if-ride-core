@@ -50,6 +50,7 @@ public class SecurityConfig {
                         .requestMatchers("/v1/auth/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/health").permitAll()
                         .requestMatchers("/verify-email").permitAll()
                         .requestMatchers("/verification-error.html").permitAll()
                         .requestMatchers("/verification-success.html").permitAll()
