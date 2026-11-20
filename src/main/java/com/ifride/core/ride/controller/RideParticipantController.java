@@ -66,6 +66,8 @@ public class RideParticipantController {
                     **Regras de Negócio (RN):**
                     * A solicitação deve estar no status `PENDING`.
                     * A carona deve ter vagas disponíveis.
+                    * A carona deve estar obrigatoriamente no status `SCHEDULED` (não pode ter sido iniciada, finalizada ou cancelada).
+                    * Não é possível aceitar passageiros após o horário de partida planejado.
                     
                     **Efeitos Colaterais (Visíveis para o usuário):**
                     * A vaga é reservada. Se a carona lotar, seu status muda para `FULL`.
@@ -79,7 +81,7 @@ public class RideParticipantController {
             @ApiResponse(responseCode = "401", description = "Não autenticado."),
             @ApiResponse(responseCode = "403", description = "Usuário não é o motorista desta carona."),
             @ApiResponse(responseCode = "404", description = "Solicitação de participação não encontrada."),
-            @ApiResponse(responseCode = "409", description = "Solicitação já processada ou carona sem vagas.")
+            @ApiResponse(responseCode = "409", description = "Solicitação já processada, carona sem vagas, carona já iniciada/finalizada ou horário de partida expirado.")
     })
     @PatchMapping("/{id}/accept")
     @PreAuthorize("hasRole('DRIVER')")
@@ -136,7 +138,8 @@ public class RideParticipantController {
                     
                     **Regras de Negócio (RN):**
                     * Só pode ser feito antes do horário de partida da carona.
-                    * Não é possível cancelar se já estiver `REJECTED` ou `CANCELLED`.
+                    * A carona não pode estar em andamento (`IN_PROGRESS`), finalizada (`FINISHED`) ou cancelada (`CANCELLED`).
+                    * Não é possível cancelar uma participação que já esteja com status `REJECTED` ou `CANCELLED`.
                     
                     **Efeitos Colaterais:**
                     * Se a vaga já havia sido aceita, ela é devolvida para a carona. Se a carona estava `FULL`, volta para `SCHEDULED`.
@@ -149,7 +152,7 @@ public class RideParticipantController {
             @ApiResponse(responseCode = "401", description = "Não autenticado."),
             @ApiResponse(responseCode = "403", description = "Usuário não é o passageiro dono da solicitação."),
             @ApiResponse(responseCode = "404", description = "Solicitação de participação não encontrada."),
-            @ApiResponse(responseCode = "409", description = "Horário de partida já passou ou status não permite cancelamento.")
+            @ApiResponse(responseCode = "409", description = "Horário de partida já passou, carona já iniciada/finalizada ou status da participação não permite cancelamento.")
     })
     @PatchMapping("/{id}/cancel")
     @ResponseStatus(HttpStatus.NO_CONTENT)
