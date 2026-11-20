@@ -3,6 +3,7 @@ package com.ifride.core.chat.repository;
 import com.ifride.core.chat.model.entity.ChatMessage;
 import com.ifride.core.chat.model.enums.MessageStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -17,6 +18,10 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, String
     ORDER BY m.createdAt ASC
    """)
     List<ChatMessage> findVisibleMessagesByRideId(@Param("rideId") String rideId, @Param("userId") String userId);
+
+    @Modifying
+    @Query("UPDATE ChatMessage m SET m.senderName = 'Usuário Deletado' WHERE m.senderId = :userId")
+    void anonymizeSenderName(@Param("userId") String userId);
 
     long countByRideIdAndRecipientIdAndMessageStatusNot(
             String rideId, String recipientId, MessageStatus messageStatus);
