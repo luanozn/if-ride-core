@@ -8,12 +8,12 @@ import com.ifride.core.chat.model.enums.MessageStatus;
 import com.ifride.core.chat.repository.ChatMessageRepository;
 import com.ifride.core.chat.utils.ChatValidator;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
-import com.ifride.core.shared.services.RandomizedEncryptorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -26,56 +26,37 @@ public class ChatService {
     private final UserRepository userRepository;
     private final ChatAndConversationMapper mapper;
 
-    public ChatMessageDTO sendMessage(User sender, SendMessageRequest request) {
-        validator.validateUserInRide(request.rideId(), sender.getId());
+    @Transactional
+    public void sendMessage(User sender, SendMessageRequest request) {
+        validator.validate(request.rideId(), sender.getId(), request.recipientId());
 
-        // ---------------------------------------------------------
-        // CASO 1: MENSAGEM DE GRUPO (recipientId nulo)
-        // ---------------------------------------------------------
-        if (request.recipientId() == null) {
-            var message = mapper.fromRequest(sender, request);
-            var saved = chatMessageRepository.save(message);
-            var dto = mapper.toDTO(saved);
+        var conversation = conversationService.getConversation(request.rideId(), sender.getId(), request.recipientId());
+        validator.validateConversation(conversation);
 
-            messagingTemplate.convertAndSend("/topic/rides/" + request.rideId() + "/messages", dto);
+        var recipient = userRepository.findById(request.recipientId())
+                .orElseThrow(() -> new NotFoundException("Destinatário não encontrado."));
 
-            return dto;
-        }
+        var message = mapper.fromRequest(sender, request);
+        var saved = chatMessageRepository.save(message);
 
-        // ---------------------------------------------------------
-        // CASO 2: MENSAGEM PRIVADA (1-a-1)
-        // ---------------------------------------------------------
-        else {
-            validator.validateUserInRide(request.rideId(), request.recipientId());
-            validator.validatePair(request.rideId(), sender.getId(), request.recipientId());
+        conversationService.updateLastMessage(
+                request.rideId(),
+                sender.getId(),
+                recipient.getId(),
+                request.content()
+        );
 
-            var recipient = userRepository.findById(request.recipientId())
-                    .orElseThrow(() -> new NotFoundException("Destinatário não encontrado."));
+        var dto = mapper.toDTO(saved);
 
-            var message = mapper.fromRequest(sender, request);
-            var saved = chatMessageRepository.save(message);
-
-            conversationService.updateLastMessage(
-                    request.rideId(),
-                    sender.getId(),
-                    recipient.getId(),
-                    request.content()
-            );
-
-            var dto = mapper.toDTO(saved);
-
-            messagingTemplate.convertAndSendToUser(recipient.getEmail(), "/queue/messages", dto);
-            messagingTemplate.convertAndSendToUser(sender.getEmail(), "/queue/messages", dto);
-
-            return dto;
-        }
+        messagingTemplate.convertAndSendToUser(recipient.getEmail(), "/queue/messages", dto);
+        messagingTemplate.convertAndSendToUser(sender.getEmail(), "/queue/messages", dto);
     }
 
     public List<ChatMessageDTO> getMessagesByRide(User currentUser, String rideId) {
         validator.validateUserInRide(rideId, currentUser.getId());
 
         return chatMessageRepository
-                .findByRideIdOrderByCreatedAtAsc(rideId)
+                .findVisibleMessagesByRideId(rideId, currentUser.getId())
                 .stream()
                 .map(mapper::toDTO)
                 .toList();
@@ -92,7 +73,7 @@ public class ChatService {
         var message = chatMessageRepository.findById(messageId)
                 .orElseThrow(() -> new NotFoundException("Mensagem não encontrada."));
 
-        if (!message.getRecipientId().equals(currentUser.getId())) {
+        if (message.getRecipientId() == null || !message.getRecipientId().equals(currentUser.getId())) {
             throw new NotFoundException("Mensagem não encontrada.");
         }
 

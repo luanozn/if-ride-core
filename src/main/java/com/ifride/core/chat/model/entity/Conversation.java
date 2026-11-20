@@ -1,20 +1,20 @@
 package com.ifride.core.chat.model.entity;
 
 import java.time.Instant;
+
+import jakarta.persistence.*;
 import lombok.Data;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 
 @Data
-@Document(collection = "conversations")
+@Entity
+@Table(name = "conversations")
 public class Conversation {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Indexed
     private String rideId;
 
     private String driverId;
@@ -27,4 +27,5 @@ public class Conversation {
     private Instant lastMessageAt;
 
     private Instant createdAt = Instant.now();
+    private boolean isBlocked = false;
 }

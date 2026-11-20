@@ -11,5 +11,6 @@ public record ConversationDTO(
         String passengerName,
         String lastMessage,
         Instant lastMessageAt,
-        Instant createdAt
+        Instant createdAt,
+        boolean isBlocked
 ) { }

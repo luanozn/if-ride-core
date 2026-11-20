@@ -2,6 +2,7 @@ package com.ifride.core.chat.config;
 
 import com.ifride.core.auth.repository.UserRepository;
 import com.ifride.core.auth.service.JwtService;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
@@ -22,10 +23,10 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
 
     @Override
     public boolean beforeHandshake(
-            ServerHttpRequest request,
-            ServerHttpResponse response,
-            WebSocketHandler wsHandler,
-            Map<String, Object> attributes) {
+            @NonNull ServerHttpRequest request,
+            @NonNull ServerHttpResponse response,
+            @NonNull WebSocketHandler wsHandler,
+            @NonNull Map<String, Object> attributes) {
 
         if (!(request instanceof ServletServerHttpRequest servletRequest)) {
             log.warn("WebSocket handshake rejected: not a servlet request");
@@ -45,7 +46,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                 log.warn("WebSocket handshake rejected: user not found for email {}", email);
                 return false;
             }
-            var auth = new UsernamePasswordAuthenticationToken(user, null, user.get().getAuthorities());
+            var auth = new UsernamePasswordAuthenticationToken(user.get(), null, user.get().getAuthorities());
             attributes.put("auth", auth);
             return true;
         } catch (Exception e) {
@@ -55,16 +56,17 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     }
 
     @Override
-    public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response,
-                               WebSocketHandler wsHandler, Exception exception) {
+    public void afterHandshake(
+            @NonNull ServerHttpRequest request,
+            @NonNull ServerHttpResponse response,
+            @NonNull WebSocketHandler wsHandler,
+            Exception exception) {
     }
 
     private String extractToken(ServletServerHttpRequest request) {
-        // Query param: ws://host/ws?token=... (stomp_dart_client sends aqui)
         String token = request.getServletRequest().getParameter("token");
         if (token != null && !token.isBlank()) return token;
 
-        // Fallback: Authorization header
         String authHeader = request.getServletRequest().getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);
