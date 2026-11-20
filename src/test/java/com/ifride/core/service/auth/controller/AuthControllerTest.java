@@ -3,11 +3,10 @@ package com.ifride.core.service.auth.controller;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import com.ifride.core.auth.controller.AuthController;
+import com.ifride.core.auth.model.TooManyRequestsException;
 import com.ifride.core.auth.model.dto.LoginRequestDTO;
 import com.ifride.core.auth.model.dto.LoginResponseDTO;
 import com.ifride.core.auth.model.entity.User;
@@ -84,10 +83,9 @@ class AuthControllerTest {
     @Test
     @DisplayName("Não tenta autenticar quando o rate limit já bloqueou a requisição")
     void blockedLoginDoesNotAuthenticate() {
-        when(rateLimitService.checkBlocked("user@example.com", "192.0.2.10"))
-                .thenThrow(new com.ifride.core.auth.model.TooManyRequestsException("Bloqueado"));
+        doThrow(TooManyRequestsException.class).when(rateLimitService).checkBlocked("user@example.com", "192.0.2.10");
 
-        assertThrows(com.ifride.core.auth.model.TooManyRequestsException.class,
+        assertThrows(TooManyRequestsException.class,
                 () -> controller.login(credentials, request));
 
         verify(authenticationManager, never()).authenticate(any());
