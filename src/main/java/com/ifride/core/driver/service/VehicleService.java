@@ -77,7 +77,7 @@ public class VehicleService {
             vehicle.setPlate("deleted_" + vehicle.getId());
         });
 
-        repository.saveAll(vehicles);
+        repository.saveAllAndFlush(vehicles);
         repository.deleteAll(vehicles);
     }
 

@@ -142,6 +142,11 @@ public class RideService {
         rideRepository.save(ride);
     }
 
+    @Transactional
+    public boolean driverHasValidUpcomingRides(String driverId) {
+        return rideRepository.driverHasValidUpcomingRides(driverId, Instant.now(clock));
+    }
+
     public boolean isDriverOfRide(String userId, String rideId) {
         return rideRepository.isDriverOfRide(userId, rideId);
     }

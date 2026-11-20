@@ -93,7 +93,7 @@ public class DriverApplicationService {
             return application;
         }).toList();
 
-        repository.saveAll(anonymizedApps);
+        repository.saveAllAndFlush(anonymizedApps);
         repository.deleteAll(applications);
     }
 

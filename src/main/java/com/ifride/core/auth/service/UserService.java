@@ -4,12 +4,12 @@ import com.ifride.core.auth.model.dto.UserDto;
 import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.model.mapper.UserMapper;
 import com.ifride.core.auth.repository.specs.UserSpecs;
+import com.ifride.core.auth.utils.UserValidator;
 import com.ifride.core.events.user.model.UserDeletedEvent;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.repository.UserRepository;
-import com.ifride.core.shared.model.enums.Status;
 import com.ifride.core.shared.services.DeterministicEncryptorService;
 import lombok.AllArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -29,6 +29,7 @@ public class UserService {
     private final UserRepository repository;
     private final DeterministicEncryptorService cryptoService;
     private final ApplicationEventPublisher eventPublisher;
+    private final UserValidator validator;
     private final UserMapper mapper;
 
     public User findById(String id) {
@@ -51,20 +52,15 @@ public class UserService {
 
     @Transactional
     public void deleteAccount(User user) {
-        if (user.has(Role.ADMIN)) {
-            var activeAdmins = repository.findAllByRoleAndStatusForUpdate(Role.ADMIN, Status.ACTIVE);
+        validator.validateDeletion(user);
 
-            if (activeAdmins.size() <= 1) {
-                throw new ForbiddenException("Não é possível deletar o último administrador ativo do sistema. Cadastre outro administrador antes de prosseguir.");
-            }
-        }
         user.setEmail("deleted_" + user.getId() + "@ifride.com");
         user.setName("Usuário Deletado");
         user.setBirthDate(LocalDate.of(1900, 1, 1));
         user.setPassword("INVALIDATED_BY_DELETE");
         user.setCpfEncrypted(cryptoService.encrypt(UUID.randomUUID().toString()));
 
-        repository.save(user);
+        repository.saveAndFlush(user);
         eventPublisher.publishEvent(new UserDeletedEvent(user.getId()));
 
         repository.delete(user);

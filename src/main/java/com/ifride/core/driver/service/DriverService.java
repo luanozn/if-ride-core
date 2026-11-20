@@ -41,7 +41,7 @@ public class DriverService {
             present.setCnhNumberEncrypted(cryptoService.encrypt(UUID.randomUUID().toString()));
             present.setCnhCategory(CnhCategory.DELETED);
             present.setCnhExpiration(LocalDate.of(1900, 1, 1));
-            driverRepository.save(present);
+            driverRepository.saveAndFlush(present);
 
             driverRepository.delete(present);
         });

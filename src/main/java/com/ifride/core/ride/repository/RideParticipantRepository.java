@@ -24,7 +24,7 @@ public interface RideParticipantRepository extends JpaRepository<RideParticipant
     SELECT COUNT(rp) > 0
     FROM RideParticipant rp
     WHERE rp.passenger = :passenger
-    AND rp.participantStatus = 'ACCEPTED'
+    AND rp.participantStatus = com.ifride.core.ride.model.enums.ParticipantStatus.ACCEPTED
     AND rp.ride.rideStatus NOT IN (
         com.ifride.core.ride.model.enums.RideStatus.FINISHED,
         com.ifride.core.ride.model.enums.RideStatus.CANCELLED
@@ -34,6 +34,29 @@ public interface RideParticipantRepository extends JpaRepository<RideParticipant
     boolean hasConflict(@Param("passenger") User passenger,
                         @Param("startTime") Instant startTime,
                         @Param("endTime") Instant endTime);
+
+    @Query("""
+        SELECT COUNT(rp) > 0
+        FROM RideParticipant rp
+        WHERE rp.passenger = :passenger
+        AND rp.status = 'ACTIVE'
+        AND rp.ride.status = 'ACTIVE'
+        AND rp.participantStatus IN (
+            com.ifride.core.ride.model.enums.ParticipantStatus.ACCEPTED,
+            com.ifride.core.ride.model.enums.ParticipantStatus.PENDING
+        )
+        AND (
+            rp.ride.rideStatus = com.ifride.core.ride.model.enums.RideStatus.IN_PROGRESS
+            OR (
+                rp.ride.rideStatus IN (
+                    com.ifride.core.ride.model.enums.RideStatus.SCHEDULED,
+                    com.ifride.core.ride.model.enums.RideStatus.FULL
+                )
+                AND rp.ride.departureTime > :now
+            )
+        )
+    """)
+    boolean hasValidUpcomingRides(@Param("passenger") User passenger, @Param("now") Instant now);
 
     @Modifying
     @Transactional
