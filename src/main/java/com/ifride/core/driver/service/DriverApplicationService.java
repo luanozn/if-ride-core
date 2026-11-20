@@ -1,6 +1,7 @@
 package com.ifride.core.driver.service;
 
 import com.ifride.core.driver.model.dto.CnhSecurityNumberDTO;
+import com.ifride.core.driver.model.enums.CnhCategory;
 import com.ifride.core.shared.services.DeterministicEncryptorService;
 import com.ifride.core.auth.service.UserService;
 import com.ifride.core.driver.model.dto.DriverApplicationRejectionDTO;
@@ -16,6 +17,8 @@ import com.ifride.core.driver.service.validators.DriverApplicationValidator;
 import com.ifride.core.events.driver.model.DriverApplicationApprovedEvent;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import jakarta.transaction.Transactional;
+
+import java.time.LocalDate;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -25,6 +28,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.ifride.core.driver.model.enums.DriverApplicationStatus.*;
 
@@ -72,6 +76,25 @@ public class DriverApplicationService {
         var application = repository.findById(applicationId).orElseThrow(() -> new NotFoundException("Não foi possível encontrar uma solicitação com o id %s", applicationId));
         driverApplicationValidator.checkOwnership(author, application.getRequester());
         repository.delete(application);
+    }
+
+    @Transactional
+    public void deleteIfPresentByUser(String userId) {
+        List<DriverApplication> applications = repository.findByUserId(userId);
+        if(applications.isEmpty()) {
+            return;
+        }
+
+        List<DriverApplication> anonymizedApps = applications.stream().map(application -> {
+            application.setCnhNumberEncrypted(crypto.encrypt(UUID.randomUUID().toString()));
+            application.setCnhSecurityNumberEncrypted(null);
+            application.setCnhCategory(CnhCategory.DELETED);
+            application.setCnhExpiration(LocalDate.of(1900, 1, 1));
+            return application;
+        }).toList();
+
+        repository.saveAllAndFlush(anonymizedApps);
+        repository.deleteAll(applications);
     }
 
     public CnhSecurityNumberDTO findByDriverApplication(String applicationId) {

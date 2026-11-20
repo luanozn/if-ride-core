@@ -2,7 +2,8 @@ package com.ifride.core.service.events;
 
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.service.EmailVerificationTokenService;
-import com.ifride.core.events.user.listener.UserRegistrationListener;
+import com.ifride.core.auth.service.UserService;
+import com.ifride.core.events.user.listener.UserListener;
 import com.ifride.core.events.user.model.UserRegisteredEvent;
 import com.ifride.core.shared.audit.enums.AuditAction;
 import com.ifride.core.shared.audit.enums.TargetType;
@@ -18,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserRegistrationListenerTest {
@@ -25,10 +27,12 @@ class UserRegistrationListenerTest {
     @Mock
     private EmailVerificationTokenService tokenService;
     @Mock
+    private UserService userService;
+    @Mock
     private AuditLogService auditLogService;
 
     @InjectMocks
-    private UserRegistrationListener listener;
+    private UserListener listener;
 
     @Nested
     @DisplayName("Processamento de Registro de Usuário")
@@ -40,8 +44,8 @@ class UserRegistrationListenerTest {
             var user = new User();
             user.setId("user-1");
             user.setEmail("newuser@ifride.com");
-
-            var event = new UserRegisteredEvent(user);
+            var event = new UserRegisteredEvent("user-1");
+            when(userService.findById("user-1")).thenReturn(user);
 
             listener.handleUserRegisteredEvent(event);
             verify(tokenService).generateTokenAndSendEmail(user);

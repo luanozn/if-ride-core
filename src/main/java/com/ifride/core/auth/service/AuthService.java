@@ -26,7 +26,7 @@ public class AuthService {
         userValidator.validateUser(registerRequest);
 
         var saved = repository.save(userMapper.userFromRegisterRequest(registerRequest, Role.PASSENGER));
-        eventPublisher.publishEvent(new UserRegisteredEvent(saved));
+        eventPublisher.publishEvent(new UserRegisteredEvent(saved.getId()));
 
         return saved;
     }

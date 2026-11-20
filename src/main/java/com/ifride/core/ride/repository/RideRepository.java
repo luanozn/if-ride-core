@@ -56,6 +56,25 @@ public interface RideRepository extends JpaRepository<Ride, String>, JpaSpecific
     @Query("SELECT COUNT(r) > 0 FROM Ride r WHERE r.id = :rideId AND r.driver.user.id = :userId")
     boolean isDriverOfRide(@Param("userId") String userId, @Param("rideId") String rideId);
 
+    @Query("""
+    SELECT COUNT(r) > 0
+    FROM Ride r
+    WHERE r.driver.id = :driverId
+    AND r.status = 'ACTIVE'
+    AND (
+        r.isRecurrent = true
+        OR r.rideStatus = com.ifride.core.ride.model.enums.RideStatus.IN_PROGRESS
+        OR (
+            r.rideStatus IN (
+                com.ifride.core.ride.model.enums.RideStatus.SCHEDULED,
+                com.ifride.core.ride.model.enums.RideStatus.FULL
+            )
+            AND r.departureTime > :now
+        )
+    )
+""")
+    boolean driverHasValidUpcomingRides(@Param("driverId") String driverId, @Param("now") Instant now);
+
     boolean existsByDriverIdAndRideStatus(String driverId, RideStatus status);
 
     Page<Ride> findByDriverIdOrderByDepartureTimeDesc(String driverId, Pageable pageable);

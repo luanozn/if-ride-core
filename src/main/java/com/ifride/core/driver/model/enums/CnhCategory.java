@@ -10,7 +10,10 @@ public enum CnhCategory {
     AB,
     AC,
     AD,
-    AE;
+    AE,
+    DELETED;
+
+
 
     public boolean canDriveCar() {
         return this != CnhCategory.A;

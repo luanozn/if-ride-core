@@ -9,8 +9,12 @@ import com.ifride.core.ride.repository.RideParticipantRepository;
 import com.ifride.core.shared.exceptions.api.BadRequestException;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
+
+import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+
+import com.ifride.core.shared.exceptions.api.PreconditionFailedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +25,7 @@ import java.util.List;
 public class RideParticipantValidator {
 
     private final RideParticipantRepository rideParticipantRepository;
+    private final Clock clock;
 
     public void validateRequest(User author, Ride ride, String pickupPoint) {
         checkActiveParticipant(ride, author);
@@ -44,6 +49,10 @@ public class RideParticipantValidator {
         checkPassengerCancelling(participant, passengerId);
         checkDepartureTime(participant);
         checkParticipantStatus(participant);
+    }
+
+    public void validateUserDeletion(User user) {
+        checkUpcomingRides(user);
     }
 
     private void checkActiveParticipant(Ride ride, User author) {
@@ -113,6 +122,12 @@ public class RideParticipantValidator {
     private void checkParticipantStatus(RideParticipant participant) {
         if (participant.getParticipantStatus() == ParticipantStatus.REJECTED || participant.getParticipantStatus() == ParticipantStatus.CANCELLED) {
             throw new ConflictException("Não é possível cancelar uma participação com status %s", participant.getParticipantStatus());
+        }
+    }
+
+    private void checkUpcomingRides(User passenger) {
+        if(rideParticipantRepository.hasValidUpcomingRides(passenger, Instant.now(clock))) {
+            throw new PreconditionFailedException("Não é possível realizar a operação, o usuário ainda possui participações aceitas e/ou pendentes em caronas futuras.");
         }
     }
 }

@@ -47,7 +47,7 @@ CREATE TABLE vehicles
 
     driver_id  VARCHAR(36)  NOT NULL,
     model      VARCHAR(100) NOT NULL,
-    plate      VARCHAR(20)  NOT NULL,
+    plate      VARCHAR(64)  NOT NULL,
     capacity   INTEGER      NOT NULL,
     color      VARCHAR(50),
 
