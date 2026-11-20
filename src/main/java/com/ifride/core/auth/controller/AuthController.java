@@ -7,16 +7,20 @@ import com.ifride.core.auth.model.dto.RegisterResponseDTO;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.service.AuthService;
 import com.ifride.core.auth.service.JwtService;
+import com.ifride.core.auth.service.LoginRateLimitService;
+import com.ifride.core.shared.utils.HttpRequestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -29,6 +33,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final AuthService authService;
+    private final LoginRateLimitService loginRateLimitService;
 
     @Operation(
             summary = "Realiza o login do usuário",
@@ -40,21 +45,34 @@ public class AuthController {
                     * **Status da Conta:** Usuários com status `DELETED` (Soft Delete) não conseguem logar.
                     * **Validade do Token:** O token gerado tem um tempo de expiração (TTL) padrão de 6 horas.
                     
-                    **Nota:** A autenticação básica (Basic Auth) do Spring Security é utilizada internamente para validar as credenciais antes de gerar o JWT.
+                    **Segurança (Rate Limiting):**
+                    * **Proteção contra Força Bruta:** Para mitigar ataques de *Credential Stuffing* e *Brute Force*, o sistema aplica um bloqueio temporário após múltiplas tentativas falhas.
+                    * **Limite por E-mail:** 5 tentativas a cada 15 minutos.
+                    * **Limite por IP:** 50 tentativas a cada 15 minutos (evita ataques distribuídos na mesma rede).
                     """,
             security = @SecurityRequirement(name = "")
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Login realizado com sucesso. Retorna o Token JWT e os dados do usuário."),
+            @ApiResponse(responseCode = "400", description = "Corpo da requisição mal formatado (e-mail ou senha ausentes)."),
             @ApiResponse(responseCode = "401", description = "Credenciais inválidas, e-mail não encontrado ou conta deletada."),
-            @ApiResponse(responseCode = "400", description = "Corpo da requisição mal formatado (e-mail ou senha ausentes).")
+            @ApiResponse(responseCode = "429", description = "Muitas requisições (Too Many Requests). Conta ou IP temporariamente bloqueados por excesso de tentativas falhas.")
     })
     @PostMapping("/login")
-    public LoginResponseDTO login(@Valid @RequestBody LoginRequestDTO authBody) {
-        var userPassword = new UsernamePasswordAuthenticationToken(authBody.email(), authBody.password());
-        var auth = this.authenticationManager.authenticate(userPassword);
+    public LoginResponseDTO login(@Valid @RequestBody LoginRequestDTO authBody, HttpServletRequest request) {
+        String ip = HttpRequestUtils.getClientIp(request);
+        loginRateLimitService.checkBlocked(authBody.email(), ip);
 
-        return jwtService.generateLoginResponse((User) auth.getPrincipal());
+        try {
+            var userPassword = new UsernamePasswordAuthenticationToken(authBody.email(), authBody.password());
+            var auth = this.authenticationManager.authenticate(userPassword);
+            loginRateLimitService.loginSucceeded(authBody.email());
+
+            return jwtService.generateLoginResponse((User) auth.getPrincipal());
+        } catch (AuthenticationException e) {
+            loginRateLimitService.loginFailed(authBody.email(), ip);
+            throw e;
+        }
     }
 
     @Operation(

@@ -1,6 +1,6 @@
 package com.ifride.core.auth.service;
 
-import com.ifride.core.auth.model.EmailVerificationMaxAttemptsExceededException;
+import com.ifride.core.auth.model.TooManyRequestsException;
 import com.ifride.core.auth.model.entity.ActionToken;
 import com.ifride.core.auth.model.entity.Attempt;
 import com.ifride.core.auth.model.entity.User;
@@ -67,7 +67,7 @@ public class EmailVerificationTokenService implements TokenManager {
                 return new Attempt(1, now);
             }
             if (current.quantity() >= MAX_ATTEMPTS) {
-                throw new EmailVerificationMaxAttemptsExceededException(
+                throw new TooManyRequestsException(
                         "Limite de emails enviados atingido para: %s, tente novamente após 15 minutos", user.getEmail()
                 );
             }
