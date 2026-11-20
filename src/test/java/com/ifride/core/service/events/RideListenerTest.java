@@ -1,5 +1,6 @@
 package com.ifride.core.service.events;
 
+import com.ifride.core.chat.service.ConversationService;
 import com.ifride.core.driver.model.entity.Driver;
 import com.ifride.core.driver.model.entity.Vehicle;
 import com.ifride.core.events.ride.listeners.RideListener;
@@ -30,6 +31,8 @@ class RideListenerTest {
 
     @Mock
     private RideService rideService;
+    @Mock
+    private ConversationService conversationService;
 
     @InjectMocks
     private RideListener listener;

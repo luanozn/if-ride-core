@@ -65,7 +65,7 @@ class SecurityFilterTest {
 
         assertEquals(401, response.getStatus());
         assertEquals("UTF-8", response.getCharacterEncoding());
-        assertEquals("application/json", response.getContentType());
+        assertEquals("application/json;charset=UTF-8", response.getContentType());
         org.junit.jupiter.api.Assertions.assertTrue(response.getContentAsString().contains("Usuário não encontrado ou conta excluída."));
     }
 
