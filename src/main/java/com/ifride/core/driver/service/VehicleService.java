@@ -11,6 +11,7 @@ import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -54,10 +55,30 @@ public class VehicleService {
             throw new ForbiddenException("Somente admins e o próprio motorista podem fazer essa solicitação!");
         }
 
-        var driver = driverService.findById(id);
-        return repository.findByOwner(driver)
+        return repository.findByOwnerId(id)
                 .stream()
                 .map(VehicleResponseDTO::fromEntity)
                 .toList();
     }
+
+    @Transactional
+    public void deleteByOwner(String id) {
+        List<Vehicle> vehicles = repository.findByOwnerId(id);
+
+        if (vehicles.isEmpty()) {
+            return;
+        }
+
+        vehicles.forEach(vehicle -> {
+            vehicle.setColor("DELETED");
+            vehicle.setCapacity(0);
+            vehicle.setModel("DELETED");
+
+            vehicle.setPlate("deleted_" + vehicle.getId());
+        });
+
+        repository.saveAll(vehicles);
+        repository.deleteAll(vehicles);
+    }
+
 }

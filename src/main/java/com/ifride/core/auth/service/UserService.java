@@ -4,16 +4,22 @@ import com.ifride.core.auth.model.dto.UserDto;
 import com.ifride.core.auth.model.enums.Role;
 import com.ifride.core.auth.model.mapper.UserMapper;
 import com.ifride.core.auth.repository.specs.UserSpecs;
+import com.ifride.core.events.user.model.UserDeletedEvent;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
 import com.ifride.core.shared.exceptions.api.NotFoundException;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.repository.UserRepository;
 import com.ifride.core.shared.model.enums.Status;
+import com.ifride.core.shared.services.DeterministicEncryptorService;
 import lombok.AllArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.UUID;
 
 
 @Service
@@ -21,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository repository;
+    private final DeterministicEncryptorService cryptoService;
+    private final ApplicationEventPublisher eventPublisher;
     private final UserMapper mapper;
 
     public User findById(String id) {
@@ -50,6 +58,15 @@ public class UserService {
                 throw new ForbiddenException("Não é possível deletar o último administrador ativo do sistema. Cadastre outro administrador antes de prosseguir.");
             }
         }
+        user.setEmail("deleted_" + user.getId() + "@ifride.com");
+        user.setName("Usuário Deletado");
+        user.setBirthDate(LocalDate.of(1900, 1, 1));
+        user.setPassword("INVALIDATED_BY_DELETE");
+        user.setCpfEncrypted(cryptoService.encrypt(UUID.randomUUID().toString()));
+
+        repository.save(user);
+        eventPublisher.publishEvent(new UserDeletedEvent(user.getId()));
+
         repository.delete(user);
     }
 
