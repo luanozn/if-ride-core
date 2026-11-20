@@ -3,6 +3,8 @@ package com.ifride.core.events.user.listener;
 import com.ifride.core.auth.repository.ActionTokenRepository;
 import com.ifride.core.auth.service.EmailVerificationTokenService;
 import com.ifride.core.auth.service.UserService;
+import com.ifride.core.chat.repository.ChatMessageRepository;
+import com.ifride.core.chat.repository.ConversationRepository;
 import com.ifride.core.driver.service.DriverApplicationService;
 import com.ifride.core.driver.service.DriverService;
 import com.ifride.core.driver.service.VehicleService;
@@ -32,6 +34,8 @@ public class UserListener {
     private final VehicleService vehicleService;
     private final ActionTokenRepository actionTokenRepository;
     private final DriverApplicationService driverApplicationService;
+    private final ChatMessageRepository chatMessageRepository;
+    private final ConversationRepository conversationRepository;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -60,5 +64,13 @@ public class UserListener {
         actionTokenRepository.deleteAllByUserId(event.userId());
         log.info("Deletando aplicações de motorista vinculados ao usuário {}", event.userId());
         driverApplicationService.deleteIfPresentByUser(event.userId());
+
+        log.info("Anonimizando nomes nas mensagens enviadas pelo usuário {}", event.userId());
+        chatMessageRepository.anonymizeSenderName(event.userId());
+
+        log.info("Anonimizando conversas em que o usuário {} participa", event.userId());
+        conversationRepository.anonymizeNames(event.userId());
+
+
     }
 }

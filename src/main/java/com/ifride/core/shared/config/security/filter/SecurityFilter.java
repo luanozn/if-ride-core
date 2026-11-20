@@ -65,10 +65,17 @@ public class SecurityFilter extends OncePerRequestFilter {
                         );
                         return;
                     }
+                } else {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.setCharacterEncoding("UTF-8");
+                    response.getWriter().write("{\"message\":\"Usuário não encontrado ou conta excluída.\",\"statusCode\":401}");
+                    return;
                 }
             } catch (ForbiddenException e) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
                 response.getWriter().write(
                         "{\"message\":\"" + e.getMessage() + "\",\"statusCode\":401}"
                 );
@@ -81,10 +88,8 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     private String retrieveToken(HttpServletRequest request) {
         var token = request.getHeader("Authorization");
-
-        return token == null ?
-                null :
-                token.replace("Bearer ", "");
+        if (token == null || !token.startsWith("Bearer ")) return null;
+        return token.substring(7);
     }
 
     private boolean isAllowedForUnverified(String path) {
