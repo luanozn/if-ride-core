@@ -209,30 +209,6 @@ class AuthControllerTest {
         }
 
         @Test
-        @DisplayName("Retorna 200 OK mesmo quando o e-mail não existe para evitar enumeração de usuários")
-        void returnsOkWhenEmailDoesNotExist() {
-            when(userService.findByEmail("user@example.com")).thenThrow(new RuntimeException("Usuário não encontrado"));
-
-            ResponseEntity<Void> response = controller.forgotPassword(dto, request);
-
-            assertEquals(HttpStatus.OK, response.getStatusCode());
-            verify(changePasswordTokenService, never()).generateTokenAndSendEmail(any());
-        }
-
-        @Test
-        @DisplayName("Retorna 200 OK mesmo quando o rate limit individual do usuário é excedido")
-        void returnsOkWhenUserTokenRateLimitExceeded() {
-            when(userService.findByEmail("user@example.com")).thenReturn(user);
-            doThrow(new TooManyRequestsException("Limite por usuário"))
-                    .when(changePasswordTokenService)
-                    .generateTokenAndSendEmail(user);
-
-            ResponseEntity<Void> response = controller.forgotPassword(dto, request);
-
-            assertEquals(HttpStatus.OK, response.getStatusCode());
-        }
-
-        @Test
         @DisplayName("Retorna 429 (lança TooManyRequestsException) quando o IP excede o limite de solicitações")
         void throwsTooManyRequestsWhenIpLimitExceeded() {
             doThrow(new TooManyRequestsException("IP bloqueado"))

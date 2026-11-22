@@ -5,6 +5,10 @@ plugins {
 	id 'jacoco'
 }
 
+ext {
+	set('testcontainers.version', '1.21.4')
+}
+
 group = 'com.ifride'
 version = '0.0.1-SNAPSHOT'
 
@@ -86,7 +90,6 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 }
 
-
 tasks.named('test') {
 	useJUnitPlatform()
 	reports {
@@ -111,7 +114,17 @@ tasks.register('integrationTest', Test) {
 	testClassesDirs = sourceSets.integrationTest.output.classesDirs
 	classpath = sourceSets.integrationTest.runtimeClasspath
 
+	testLogging {
+		events "passed", "skipped", "failed"
+		exceptionFormat = "full"
+		showExceptions = true
+		showCauses = true
+		showStackTraces = true
+		showStandardStreams = true
+	}
+
 	finalizedBy jacocoIntegrationTestReport
+	systemProperty 'spring.profiles.active', 'it'
 }
 
 tasks.register('jacocoIntegrationTestReport', JacocoReport) {

@@ -16,7 +16,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -31,16 +31,32 @@ jobs:
           distribution: 'corretto'
           cache: 'gradle'
 
+      - name: Configure Docker for Testcontainers
+        run: |
+          if ! docker info >/dev/null 2>&1; then
+            sudo systemctl start docker
+          fi
+          docker version
+          echo "api.version=1.44" > ~/.docker-java.properties
+
       - name: Grant Execute Permission to Gradlew
         run: chmod +x gradlew
 
       - name: Run Unit Tests
         run: ./gradlew test
 
+      - name: Run Integration Tests (Testcontainers)
+        env:
+          DOCKER_HOST: unix:///var/run/docker.sock
+          DOCKER_API_VERSION: '1.44'
+        run: ./gradlew integrationTest
+
       - name: Upload Test Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-report
-          path: build/reports/tests/test
+          name: test-reports
+          path: |
+            build/reports/tests/test
+            build/reports/tests/integrationTest
           retention-days: 7
