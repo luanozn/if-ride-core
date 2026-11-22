@@ -35,10 +35,12 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run Unit Tests
-        run: ./gradlew test
+        run: ./gradlew test --stacktrace
 
       - name: Run Integration Tests (Testcontainers)
-        run: ./gradlew integrationTest
+        env:
+          DOCKER_API_VERSION: '1.44'
+        run: ./gradlew integrationTest --stacktrace
 
       - name: Upload Test Report
         if: always()
