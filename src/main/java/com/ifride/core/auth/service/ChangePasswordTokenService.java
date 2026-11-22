@@ -27,7 +27,7 @@ public class ChangePasswordTokenService extends TokenManager {
     private static final Integer ATTEMPT_WINDOW = 15;
     private static final Duration TOKEN_TTL = Duration.ofMinutes(15);
 
-    ChangePasswordTokenService(ActionTokenRepository tokenRepository, UserService userService, HashingService hashingService, Clock clock, PasswordEncoder passwordEncoder, RateLimitService rateLimitService, ApplicationEventPublisher eventPublisher) {
+    public ChangePasswordTokenService(ActionTokenRepository tokenRepository, UserService userService, HashingService hashingService, Clock clock, PasswordEncoder passwordEncoder, RateLimitService rateLimitService, ApplicationEventPublisher eventPublisher) {
         super(MAX_ATTEMPTS, ATTEMPT_WINDOW, TOKEN_TTL, clock, tokenRepository, hashingService, rateLimitService);
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;

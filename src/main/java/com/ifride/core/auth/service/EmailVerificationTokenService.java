@@ -30,7 +30,7 @@ public class EmailVerificationTokenService extends TokenManager {
     private static final Integer ATTEMPT_WINDOW = 15;
     private static final Duration TOKEN_TTL = Duration.ofHours(24);
 
-    EmailVerificationTokenService(ActionTokenRepository tokenRepository, UserService userService, HashingService hashingService, Clock clock, RateLimitService rateLimitService, ApplicationEventPublisher eventPublisher) {
+    public EmailVerificationTokenService(ActionTokenRepository tokenRepository, UserService userService, HashingService hashingService, Clock clock, RateLimitService rateLimitService, ApplicationEventPublisher eventPublisher) {
         super(MAX_ATTEMPTS, ATTEMPT_WINDOW, TOKEN_TTL, clock, tokenRepository, hashingService, rateLimitService);
         this.userService = userService;
         this.eventPublisher = eventPublisher;

@@ -57,7 +57,6 @@ dependencies {
 	implementation "io.awspring.cloud:spring-cloud-aws-starter-parameter-store:3.1.1"
 
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
-	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 	implementation("br.com.caelum.stella:caelum-stella-core:2.2.2")
 
 	implementation 'com.auth0:java-jwt:4.6.2'
