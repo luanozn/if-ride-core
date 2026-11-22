@@ -4,7 +4,7 @@ CREATE TABLE audit_logs
     action      VARCHAR(100) NOT NULL,
     target_id   VARCHAR(36),
     target_type VARCHAR(50) NOT NULL,
-    author_id    VARCHAR(36) NOT NULL,
+    author    VARCHAR(36) NOT NULL,
     ip_address_encrypted  VARCHAR(255),
 
     created_at  TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP

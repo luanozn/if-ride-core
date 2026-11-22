@@ -11,6 +11,7 @@ import com.ifride.core.auth.service.AuthService;
 import com.ifride.core.auth.service.ChangePasswordTokenService;
 import com.ifride.core.auth.service.JwtService;
 import com.ifride.core.auth.service.UserService;
+import com.ifride.core.shared.exceptions.api.NotFoundException;
 import com.ifride.core.shared.rate_limit.RateLimitOperation;
 import com.ifride.core.shared.rate_limit.RateLimitService;
 import com.ifride.core.shared.utils.HttpRequestUtils;
@@ -143,7 +144,7 @@ public class AuthController {
         try {
             User user = userService.findByEmail(dto.email());
             changePasswordTokenService.generateTokenAndSendEmail(user);
-        } catch (Exception e) {
+        } catch (NotFoundException e) {
             log.warn("Erro ao solicitar troca de senha para {}: {}", dto.email(), e.getMessage());
         }
         return ResponseEntity.ok().build();
