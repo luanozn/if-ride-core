@@ -1,8 +1,12 @@
 package com.ifride.core.service.ride.validator;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.driver.model.entity.Driver;
@@ -15,39 +19,39 @@ import com.ifride.core.ride.service.validators.RideParticipantValidator;
 import com.ifride.core.shared.exceptions.api.BadRequestException;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
+import com.ifride.core.shared.exceptions.api.PreconditionFailedException;
+import java.time.Clock;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.time.ZoneOffset;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class RideParticipantValidatorTest {
 
-    @Mock
-    private RideParticipantRepository repository;
+    private static final Instant NOW = Instant.parse("2026-11-20T12:00:00Z");
 
-    @InjectMocks
+    @Mock private RideParticipantRepository repository;
+
     private RideParticipantValidator validator;
-
-    private User author;
+    private User passenger;
     private Ride ride;
     private RideParticipant participant;
 
     @BeforeEach
     void setUp() {
-        author = new User();
-        author.setId("user-1");
+        validator = new RideParticipantValidator(repository, Clock.fixed(NOW, ZoneOffset.UTC));
 
+        passenger = new User();
+        passenger.setId("passenger-1");
         User driverUser = new User();
         driverUser.setId("driver-1");
-
         Driver driver = new Driver();
         driver.setUser(driverUser);
         driver.setId("driver-1");
@@ -57,110 +61,153 @@ class RideParticipantValidatorTest {
         ride.setDriver(driver);
         ride.setRideStatus(RideStatus.SCHEDULED);
         ride.setAvailableSeats(2);
-        ride.setDepartureTime(Instant.now().plus(2, ChronoUnit.HOURS));
-        ride.setPickupPoints(List.of("Trevo", "Hotel"));
+        ride.setDepartureTime(NOW.plusSeconds(7200));
+        ride.setPickupPoints(List.of("Ponto A", "Ponto B"));
 
         participant = new RideParticipant();
         participant.setRide(ride);
-        participant.setPassenger(author);
+        participant.setPassenger(passenger);
         participant.setParticipantStatus(ParticipantStatus.PENDING);
     }
 
     @Nested
-    @DisplayName("Validação de Solicitação (validateRequest)")
-    class ValidateRequestTests {
-
+    @DisplayName("Solicitação de vaga")
+    class RequestTests {
         @Test
-        @DisplayName("Deve passar se todos os critérios forem válidos")
-        void shouldPassWhenRequestIsValid() {
-            when(repository.existsByRideIdAndPassengerIdAndParticipantStatusIn(any(), any(), any())).thenReturn(false);
+        @DisplayName("Aceita uma solicitação válida")
+        void acceptsValidRequest() {
+            when(repository.existsByRideIdAndPassengerIdAndParticipantStatusIn(any(), any(), anyList())).thenReturn(false);
             when(repository.hasConflict(any(), any(), any())).thenReturn(false);
 
-            assertDoesNotThrow(() -> validator.validateRequest(author, ride, "Trevo"));
+            assertDoesNotThrow(() -> validator.validateRequest(passenger, ride, "Ponto A"));
+            verify(repository).existsByRideIdAndPassengerIdAndParticipantStatusIn(
+                    "ride-1", "passenger-1", List.of(ParticipantStatus.PENDING, ParticipantStatus.ACCEPTED));
         }
 
         @Test
-        @DisplayName("Deve falhar se já houver solicitação ativa")
-        void shouldThrowConflictWhenAlreadyRequested() {
-            when(repository.existsByRideIdAndPassengerIdAndParticipantStatusIn(any(), any(), any())).thenReturn(true);
-            assertThrows(ConflictException.class, () -> validator.validateRequest(author, ride, "Trevo"));
-        }
+        @DisplayName("Rejeita solicitação ativa duplicada, carona indisponível ou sem vagas")
+        void rejectsDuplicateUnavailableOrFullRide() {
+            when(repository.existsByRideIdAndPassengerIdAndParticipantStatusIn(any(), any(), anyList())).thenReturn(true);
+            assertThrows(ConflictException.class, () -> validator.validateRequest(passenger, ride, "Ponto A"));
 
-        @Test
-        @DisplayName("Deve falhar se a carona não estiver SCHEDULED")
-        void shouldThrowConflictWhenRideNotScheduled() {
+            when(repository.existsByRideIdAndPassengerIdAndParticipantStatusIn(any(), any(), anyList())).thenReturn(false);
             ride.setRideStatus(RideStatus.FULL);
-            assertThrows(ConflictException.class, () -> validator.validateRequest(author, ride, "Trevo"));
-        }
+            assertThrows(ConflictException.class, () -> validator.validateRequest(passenger, ride, "Ponto A"));
 
-        @Test
-        @DisplayName("Deve falhar se não houver vagas")
-        void shouldThrowConflictWhenNoSeats() {
+            ride.setRideStatus(RideStatus.SCHEDULED);
             ride.setAvailableSeats(0);
-            assertThrows(ConflictException.class, () -> validator.validateRequest(author, ride, "Trevo"));
+            assertThrows(ConflictException.class, () -> validator.validateRequest(passenger, ride, "Ponto A"));
+            verify(repository, never()).hasConflict(any(), any(), any());
         }
 
         @Test
-        @DisplayName("Deve falhar em caso de conflito de horário")
-        void shouldThrowConflictOnTimeOverlap() {
+        @DisplayName("Rejeita conflito de agenda, embarque inválido, próprio motorista e horário expirado")
+        void rejectsOtherInvalidRequests() {
+            when(repository.existsByRideIdAndPassengerIdAndParticipantStatusIn(any(), any(), anyList())).thenReturn(false);
             when(repository.hasConflict(any(), any(), any())).thenReturn(true);
-            assertThrows(ConflictException.class, () -> validator.validateRequest(author, ride, "Trevo"));
+            assertThrows(ConflictException.class, () -> validator.validateRequest(passenger, ride, "Ponto A"));
+
+            when(repository.hasConflict(any(), any(), any())).thenReturn(false);
+            assertThrows(BadRequestException.class, () -> validator.validateRequest(passenger, ride, "Outro"));
+
+            User driver = new User();
+            driver.setId("driver-1");
+            assertThrows(ForbiddenException.class, () -> validator.validateRequest(driver, ride, "Ponto A"));
+
+            ride.setDepartureTime(NOW.minusSeconds(1));
+            assertThrows(ConflictException.class, () -> validator.validateRequest(passenger, ride, "Ponto A"));
         }
 
         @Test
-        @DisplayName("Deve falhar se o motorista tentar ser passageiro")
-        void shouldThrowForbiddenWhenOwnerRequests() {
-            author.setId("driver-1");
-            assertThrows(ForbiddenException.class, () -> validator.validateRequest(author, ride, "Hotel"));
-        }
+        @DisplayName("Permite qualquer ponto quando a carona não define pontos de embarque")
+        void allowsRequestWithoutConfiguredPickupPoints() {
+            ride.setPickupPoints(List.of());
+            when(repository.existsByRideIdAndPassengerIdAndParticipantStatusIn(any(), any(), anyList())).thenReturn(false);
+            when(repository.hasConflict(any(), any(), any())).thenReturn(false);
 
-        @Test
-        @DisplayName("Deve falhar se o ponto de embarque for inválido")
-        void shouldThrowBadRequestWhenPickupPointNotFound() {
-            assertThrows(BadRequestException.class, () -> validator.validateRequest(author, ride, "Rodoviária"));
+            assertDoesNotThrow(() -> validator.validateRequest(passenger, ride, "Ponto livre"));
         }
     }
 
     @Nested
-    @DisplayName("Validação de Aceite/Rejeição (validateAcceptance/Rejection)")
-    class ProcessTests {
-
+    @DisplayName("Aceite e rejeição")
+    class ProcessingTests {
         @Test
-        @DisplayName("Deve falhar se quem valida não for o motorista")
-        void shouldThrowForbiddenWhenNotDriver() {
-            assertThrows(ForbiddenException.class, () -> validator.validateAcceptance(participant, "outro-id"));
-            assertThrows(ForbiddenException.class, () -> validator.validateRejection(participant, "outro-id"));
+        @DisplayName("Aceita validar solicitação pendente pelo motorista da carona")
+        void acceptsDriverProcessingPendingRequest() {
+            assertDoesNotThrow(() -> validator.validateAcceptance(participant, "driver-1"));
+            assertDoesNotThrow(() -> validator.validateRejection(participant, "driver-1"));
         }
 
         @Test
-        @DisplayName("Deve falhar se a solicitação já foi processada")
-        void shouldThrowConflictWhenAlreadyProcessed() {
+        @DisplayName("Impede ação de outro motorista, solicitação processada e aceite após partida")
+        void rejectsUnauthorizedProcessedOrExpiredAcceptance() {
+            assertThrows(ForbiddenException.class, () -> validator.validateAcceptance(participant, "other-driver"));
+            assertThrows(ForbiddenException.class, () -> validator.validateRejection(participant, "other-driver"));
+
             participant.setParticipantStatus(ParticipantStatus.ACCEPTED);
+            assertThrows(ConflictException.class, () -> validator.validateAcceptance(participant, "driver-1"));
+            assertThrows(ConflictException.class, () -> validator.validateRejection(participant, "driver-1"));
+
+            participant.setParticipantStatus(ParticipantStatus.PENDING);
+            ride.setDepartureTime(NOW.minusSeconds(1));
+            assertThrows(ConflictException.class, () -> validator.validateAcceptance(participant, "driver-1"));
+        }
+
+        @Test
+        @DisplayName("Só permite aceitar em carona agendada")
+        void rejectsAcceptanceForNonScheduledRide() {
+            ride.setRideStatus(RideStatus.FULL);
             assertThrows(ConflictException.class, () -> validator.validateAcceptance(participant, "driver-1"));
         }
     }
 
     @Nested
-    @DisplayName("Validação de Cancelamento (validateCancelling)")
-    class CancelTests {
-
+    @DisplayName("Cancelamento e exclusão de usuário")
+    class CancellationAndDeletionTests {
         @Test
-        @DisplayName("Deve passar se o passageiro cancelar antes da partida")
-        void shouldPassWhenValidCancellation() {
-            assertDoesNotThrow(() -> validator.validateCancelling(participant, "user-1"));
+        @DisplayName("Permite cancelamento do passageiro antes da partida")
+        void permitsPassengerCancellation() {
+            assertDoesNotThrow(() -> validator.validateCancelling(participant, "passenger-1"));
         }
 
         @Test
-        @DisplayName("Deve falhar se o passageiro não for o dono da solicitação")
-        void shouldThrowForbiddenWhenNotOwner() {
-            assertThrows(ForbiddenException.class, () -> validator.validateCancelling(participant, "outro-user"));
+        @DisplayName("Impede cancelar participação alheia, processada ou depois da partida")
+        void rejectsInvalidCancellation() {
+            assertThrows(ForbiddenException.class, () -> validator.validateCancelling(participant, "other-passenger"));
+
+            participant.setParticipantStatus(ParticipantStatus.REJECTED);
+            assertThrows(ConflictException.class, () -> validator.validateCancelling(participant, "passenger-1"));
+            participant.setParticipantStatus(ParticipantStatus.CANCELLED);
+            assertThrows(ConflictException.class, () -> validator.validateCancelling(participant, "passenger-1"));
+
+            participant.setParticipantStatus(ParticipantStatus.ACCEPTED);
+            ride.setDepartureTime(NOW.minusSeconds(1));
+            assertThrows(ConflictException.class, () -> validator.validateCancelling(participant, "passenger-1"));
         }
 
         @Test
-        @DisplayName("Deve falhar se tentar cancelar após o horário de partida")
-        void shouldThrowConflictAfterDeparture() {
-            ride.setDepartureTime(Instant.now().minus(1, ChronoUnit.MINUTES));
-            assertThrows(ConflictException.class, () -> validator.validateCancelling(participant, "user-1"));
+        @DisplayName("Impede cancelamento quando a carona está em andamento, finalizada ou cancelada")
+        void rejectsCancellationForClosedRideStatuses() {
+            for (RideStatus status : List.of(RideStatus.IN_PROGRESS, RideStatus.FINISHED, RideStatus.CANCELLED)) {
+                ride.setRideStatus(status);
+                assertThrows(ConflictException.class, () -> validator.validateCancelling(participant, "passenger-1"), status.name());
+            }
+        }
+
+        @Test
+        @DisplayName("Impede exclusão da conta enquanto há caronas futuras válidas")
+        void rejectsDeletionWithUpcomingRides() {
+            when(repository.hasValidUpcomingRides(passenger, NOW)).thenReturn(true);
+            assertThrows(PreconditionFailedException.class, () -> validator.validateUserDeletion(passenger));
+            verify(repository).hasValidUpcomingRides(passenger, NOW);
+        }
+
+        @Test
+        @DisplayName("Permite exclusão da conta sem caronas futuras válidas")
+        void allowsDeletionWithoutUpcomingRides() {
+            when(repository.hasValidUpcomingRides(passenger, NOW)).thenReturn(false);
+            assertDoesNotThrow(() -> validator.validateUserDeletion(passenger));
         }
     }
 }

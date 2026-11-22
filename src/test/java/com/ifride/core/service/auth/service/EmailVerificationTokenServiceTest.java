@@ -1,6 +1,6 @@
 package com.ifride.core.service.auth.service;
 
-import com.ifride.core.auth.model.EmailVerificationMaxAttemptsExceededException;
+import com.ifride.core.auth.model.TooManyRequestsException;
 import com.ifride.core.auth.model.entity.ActionToken;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.model.enums.TokenType;
@@ -143,7 +143,7 @@ public class EmailVerificationTokenServiceTest {
             underTest.generateTokenAndSendEmail(user);
 
             assertThatThrownBy(() -> underTest.generateTokenAndSendEmail(user))
-                    .isInstanceOf(EmailVerificationMaxAttemptsExceededException.class);
+                    .isInstanceOf(TooManyRequestsException.class);
         }
 
         @Test

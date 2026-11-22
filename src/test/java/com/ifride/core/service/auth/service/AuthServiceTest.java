@@ -56,6 +56,6 @@ class AuthServiceTest {
 
         var eventCaptor = ArgumentCaptor.forClass(UserRegisteredEvent.class);
         verify(eventPublisher).publishEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().user()).isEqualTo(mappedUser);
+        assertThat(eventCaptor.getValue().userId()).isEqualTo(mappedUser.getId());
     }
 }

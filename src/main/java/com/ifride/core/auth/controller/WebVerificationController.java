@@ -1,6 +1,6 @@
 package com.ifride.core.auth.controller;
 
-import com.ifride.core.auth.model.EmailVerificationMaxAttemptsExceededException;
+import com.ifride.core.auth.model.TooManyRequestsException;
 import com.ifride.core.auth.service.EmailVerificationTokenService;
 import com.ifride.core.auth.service.UserService;
 import com.ifride.core.shared.audit.enums.AuditAction;
@@ -64,7 +64,7 @@ public class WebVerificationController {
         try {
             var user = userService.findByEmail(email);
             emailVerificationTokenService.generateTokenAndSendEmail(user);
-        } catch (EmailVerificationMaxAttemptsExceededException e) {
+        } catch (TooManyRequestsException e) {
             log.warn(e.getMessage());
         } catch (Exception e) {
             log.debug("Falha em reenvio via form para {}: {}", email, e.getMessage());

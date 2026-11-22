@@ -9,15 +9,13 @@ import com.ifride.core.ride.repository.RideParticipantRepository;
 import com.ifride.core.shared.exceptions.api.BadRequestException;
 import com.ifride.core.shared.exceptions.api.ConflictException;
 import com.ifride.core.shared.exceptions.api.ForbiddenException;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-
 import com.ifride.core.shared.exceptions.api.PreconditionFailedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Component
@@ -33,11 +31,14 @@ public class RideParticipantValidator {
         checkTimeConflict(author, ride.getDepartureTime());
         checkOwnership(author, ride);
         checkPickupPointInRide(ride, pickupPoint);
+        checkDepartureTime(ride.getDepartureTime());
     }
 
     public void validateAcceptance(RideParticipant participant, String driverId) {
         checkRiderValidating(participant, driverId);
         checkRequestNotProcessed(participant);
+        checkDepartureTime(participant.getRide().getDepartureTime());
+        checkRideStatusForAcceptance(participant.getRide()); // NOVO
     }
 
     public void validateRejection(RideParticipant participant, String driverId) {
@@ -47,8 +48,9 @@ public class RideParticipantValidator {
 
     public void validateCancelling(RideParticipant participant, String passengerId) {
         checkPassengerCancelling(participant, passengerId);
-        checkDepartureTime(participant);
+        checkDepartureTime(participant.getRide().getDepartureTime());
         checkParticipantStatus(participant);
+        checkRideStatusForCancellation(participant.getRide()); // NOVO
     }
 
     public void validateUserDeletion(User user) {
@@ -68,8 +70,26 @@ public class RideParticipantValidator {
     }
 
     private void checkRideAvailability(Ride ride) {
-        if (ride.getRideStatus() != RideStatus.SCHEDULED || ride.getAvailableSeats() <= 0) {
+        if (ride.getRideStatus() != RideStatus.SCHEDULED) {
             throw new ConflictException("Esta carona não está mais aceitando novas solicitações.");
+        }
+        if (ride.getAvailableSeats() <= 0) {
+            throw new ConflictException("Esta carona já está lotada.");
+        }
+    }
+
+    private void checkRideStatusForAcceptance(Ride ride) {
+        if (ride.getRideStatus() != RideStatus.SCHEDULED) {
+            throw new ConflictException("Não é possível aceitar passageiros em uma carona que não está agendada (Status atual: " + ride.getRideStatus() + ").");
+        }
+    }
+
+    private void checkRideStatusForCancellation(Ride ride) {
+        if (ride.getRideStatus() == RideStatus.FINISHED || ride.getRideStatus() == RideStatus.CANCELLED) {
+            throw new ConflictException("Não é possível cancelar participação em uma carona já finalizada ou cancelada.");
+        }
+        if (ride.getRideStatus() == RideStatus.IN_PROGRESS) {
+            throw new ConflictException("Não é possível cancelar participação em uma carona já em andamento.");
         }
     }
 
@@ -77,7 +97,7 @@ public class RideParticipantValidator {
         var start = departure.minus(1, ChronoUnit.HOURS);
         var end = departure.plus(1, ChronoUnit.HOURS);
         if (rideParticipantRepository.hasConflict(user, start, end)) {
-            throw new ConflictException("Conflito de horário detectado.");
+            throw new ConflictException("Conflito de horário detectado. Você já possui outra carona próxima a este horário.");
         }
     }
 
@@ -113,15 +133,15 @@ public class RideParticipantValidator {
         }
     }
 
-    private void checkDepartureTime(RideParticipant participant) {
-        if (participant.getRide().getDepartureTime().isBefore(Instant.now())) {
-            throw new ConflictException("Não é possível cancelar uma participação após o horário de partida.");
+    private void checkDepartureTime(Instant departureTime) {
+        if (departureTime.isBefore(Instant.now(clock))) {
+            throw new ConflictException("Não é possível realizar esta operação após o horário de partida da carona.");
         }
     }
 
     private void checkParticipantStatus(RideParticipant participant) {
         if (participant.getParticipantStatus() == ParticipantStatus.REJECTED || participant.getParticipantStatus() == ParticipantStatus.CANCELLED) {
-            throw new ConflictException("Não é possível cancelar uma participação com status %s", participant.getParticipantStatus());
+            throw new ConflictException("Não é possível cancelar uma participação com status " + participant.getParticipantStatus());
         }
     }
 

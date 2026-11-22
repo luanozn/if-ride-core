@@ -2,6 +2,7 @@ package com.ifride.core.chat.repository;
 
 import com.ifride.core.chat.model.entity.Conversation;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,6 +20,15 @@ public interface ConversationRepository extends JpaRepository<Conversation, Stri
           OR (c.driverId = :userB AND c.passengerId = :userA))
     """)
     Optional<Conversation> findByRideAndPair(@Param("rideId") String rideId, @Param("userA") String userA, @Param("userB") String userB);
+
+    @Modifying
+    @Query("""
+        UPDATE Conversation c 
+        SET c.driverName = CASE WHEN c.driverId = :userId THEN 'Usuário Deletado' ELSE c.driverName END,
+            c.passengerName = CASE WHEN c.passengerId = :userId THEN 'Usuário Deletado' ELSE c.passengerName END
+        WHERE c.driverId = :userId OR c.passengerId = :userId
+    """)
+    void anonymizeNames(@Param("userId") String userId);
 
     List<Conversation> findByRideId(String rideId);
 }

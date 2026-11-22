@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.UUID;
 
 
 @Service
@@ -58,12 +57,12 @@ public class UserService {
         user.setName("Usuário Deletado");
         user.setBirthDate(LocalDate.of(1900, 1, 1));
         user.setPassword("INVALIDATED_BY_DELETE");
-        user.setCpfEncrypted(cryptoService.encrypt(UUID.randomUUID().toString()));
+        user.setCpfEncrypted(cryptoService.encrypt(user.getId()));
 
         repository.saveAndFlush(user);
-        eventPublisher.publishEvent(new UserDeletedEvent(user.getId()));
-
         repository.delete(user);
+
+        eventPublisher.publishEvent(new UserDeletedEvent(user.getId()));
     }
 
     public Page<UserDto> findAll(Role role, String search, Pageable pageable, User author) {

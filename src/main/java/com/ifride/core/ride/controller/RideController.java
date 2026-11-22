@@ -32,7 +32,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.support.HttpRequestHandlerServlet;
 
 @RestController
 @RequestMapping("/v1/rides")
@@ -90,7 +89,7 @@ public class RideController {
                     * **Propriedade:** Apenas o motorista criador da oferta pode iniciá-la.
                     * **Status:** A carona deve estar `SCHEDULED` ou `FULL`. Não pode já estar `IN_PROGRESS` ou `FINISHED`.
                     * **Agenda:** O motorista não pode ter outra carona em andamento simultaneamente.
-                    * **Antecedência:** O início só é permitido a partir de 30 minutos antes do horário de partida planejado.
+                    * **Antecedência:** O início é permitido apenas a partir de 30 minutos antes do horário de partida planejado.
                     """,
             security = @SecurityRequirement(name = "bearerAuth")
     )
@@ -123,9 +122,10 @@ public class RideController {
                     **Regras de Negócio (RN):**
                     * **Propriedade:** Apenas o motorista criador da carona pode finalizá-la.
                     * **Status:** A carona deve estar obrigatoriamente em andamento (`IN_PROGRESS`).
+                    * **Horário:** A finalização não é permitida antes do horário de partida planejado.
                     
                     **Efeitos Colaterais:**
-                    * Se a carona for recorrente, uma nova oferta idêntica será criada automaticamente para a mesma data e hora na semana seguinte.
+                    * Se a carona for recorrente, uma nova oferta idêntica será criada automaticamente com o número total de vagas originais para a semana seguinte.
                     """,
             security = @SecurityRequirement(name = "bearerAuth")
     )
@@ -134,7 +134,7 @@ public class RideController {
             @ApiResponse(responseCode = "400", description = "Usuário não é o dono da carona ou a carona não está em andamento."),
             @ApiResponse(responseCode = "401", description = "Não autenticado."),
             @ApiResponse(responseCode = "403", description = "Usuário sem permissão de motorista."),
-            @ApiResponse(responseCode = "409", description = "Conflito nas validações de estado da carona.")
+            @ApiResponse(responseCode = "409", description = "Conflito nas validações de estado da carona ou tentativa de finalização antes do horário de partida.")
     })
     @PatchMapping("/{rideId}/finish")
     @PreAuthorize("hasRole('DRIVER')")
@@ -157,6 +157,7 @@ public class RideController {
                     
                     **Regras de Negócio (RN):**
                     * **Disponibilidade:** A carona deve estar `SCHEDULED` e possuir vagas livres.
+                    * **Data/Hora:** Não é possível solicitar vaga se o horário de partida já passou.
                     * **Proibição:** O motorista não pode solicitar vaga na própria carona.
                     * **Unicidade:** O passageiro não pode ter outra solicitação `PENDING` ou `ACCEPTED` para a mesma carona.
                     * **Conflito de Agenda:** O passageiro não pode ter outra carona `ACCEPTED` que conflite com o horário (intervalo de 1 hora).
@@ -170,7 +171,7 @@ public class RideController {
             @ApiResponse(responseCode = "401", description = "Não autenticado."),
             @ApiResponse(responseCode = "403", description = "Motorista tentando pedir vaga na própria carona."),
             @ApiResponse(responseCode = "404", description = "Carona não encontrada."),
-            @ApiResponse(responseCode = "409", description = "Carona lotada, solicitação já ativa ou conflito de horário do passageiro.")
+            @ApiResponse(responseCode = "409", description = "Carona lotada, horário de partida já passou, solicitação já ativa ou conflito de horário do passageiro.")
     })
     @PostMapping("/{rideId}/request-seat")
     @PreAuthorize("hasRole('PASSENGER')")
