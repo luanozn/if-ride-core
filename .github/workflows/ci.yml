@@ -16,7 +16,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25 # Aumentado para 25 min por causa do Testcontainers
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -37,10 +37,15 @@ jobs:
       - name: Run Unit Tests
         run: ./gradlew test
 
+      - name: Run Integration Tests (Testcontainers)
+        run: ./gradlew integrationTest
+
       - name: Upload Test Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-report
-          path: build/reports/tests/test
+          name: test-reports
+          path: |
+            build/reports/tests/test
+            build/reports/tests/integrationTest
           retention-days: 7
