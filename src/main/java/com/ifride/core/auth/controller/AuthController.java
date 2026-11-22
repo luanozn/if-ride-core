@@ -1,13 +1,17 @@
 package com.ifride.core.auth.controller;
 
+import com.ifride.core.auth.model.dto.ForgotPasswordDTO;
 import com.ifride.core.auth.model.dto.LoginRequestDTO;
 import com.ifride.core.auth.model.dto.LoginResponseDTO;
 import com.ifride.core.auth.model.dto.RegisterRequestDTO;
 import com.ifride.core.auth.model.dto.RegisterResponseDTO;
+import com.ifride.core.auth.model.dto.RequestPasswordChangeDTO;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.service.AuthService;
+import com.ifride.core.auth.service.ChangePasswordTokenService;
 import com.ifride.core.auth.service.JwtService;
 import com.ifride.core.auth.service.LoginRateLimitService;
+import com.ifride.core.auth.service.UserService;
 import com.ifride.core.shared.utils.HttpRequestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -18,6 +22,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -34,6 +39,8 @@ public class AuthController {
     private final JwtService jwtService;
     private final AuthService authService;
     private final LoginRateLimitService loginRateLimitService;
+    private final ChangePasswordTokenService changePasswordTokenService;
+    private final UserService userService;
 
     @Operation(
             summary = "Realiza o login do usuário",
@@ -100,5 +107,27 @@ public class AuthController {
     public RegisterResponseDTO register(@Valid @RequestBody RegisterRequestDTO registerDTO) {
         log.info("Novo registro público iniciado para {}", registerDTO.email());
         return RegisterResponseDTO.from(authService.register(registerDTO));
+    }
+
+    @Operation(
+            summary = "Solicita link de redefinição de senha",
+            description = "Recebe um e-mail, valida se existe e envia um token de reset via AWS SES."
+    )
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@RequestBody @Valid ForgotPasswordDTO dto) {
+        try {
+            User user = userService.findByEmail(dto.email());
+            changePasswordTokenService.generateTokenAndSendEmail(user);
+        } catch (Exception e) {
+            log.warn("Erro ao solicitar troca de senha para {}: {}", dto.email(), e.getMessage());
+        }
+        return ResponseEntity.ok().build();
+    }
+
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@RequestBody @Valid RequestPasswordChangeDTO dto) {
+        changePasswordTokenService.resetPassword(dto.token(), dto.newPassword());
+        return ResponseEntity.ok().build();
     }
 }

@@ -116,4 +116,14 @@ public class WebVerificationController {
             return "redirect:/auth/verification-error.html";
         }
     }
+
+    @GetMapping("/reset-password")
+    public ResponseEntity<String> showResetPasswordPage() throws IOException {
+        var html = new ClassPathResource("auth/reset-password.html")
+                .getContentAsString(StandardCharsets.UTF_8);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_HTML)
+                .body(html);
+    }
 }

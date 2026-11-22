@@ -30,6 +30,15 @@ public class LocalEmailService implements EmailService {
         calls.add(new EmailCall(to, "Verificação de Email", htmlBody));
     }
 
+    @Override
+    public void sendPasswordChangeEmail(String to, String token) {
+        String htmlBody = String.format(
+                "<h1>Redefinição de Senha</h1><p>Clique <a href=\"http://localhost/v1/auth/reset-password?token=%s\">aqui</a></p>",
+                token
+        );
+        calls.add(new EmailCall(to, "Redefinição de Senha", htmlBody));
+    }
+
     public List<EmailCall> getCalls() {
         return List.copyOf(calls);
     }

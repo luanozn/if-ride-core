@@ -11,7 +11,6 @@ import org.springframework.data.repository.query.Param;
 
 public interface ActionTokenRepository extends JpaRepository<ActionToken, String> {
     Optional<ActionToken> findByUserAndType(User user, TokenType type);
-    void deleteByUserAndType(User user, TokenType type);
 
     @Modifying
     @Query("DELETE FROM tokens t WHERE t.user.id = :userId")

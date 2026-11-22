@@ -1,83 +1,51 @@
 package com.ifride.core.auth.service;
 
-import com.ifride.core.auth.model.TooManyRequestsException;
+import com.ifride.core.auth.model.dto.ActionTokenWrapper;
 import com.ifride.core.auth.model.entity.ActionToken;
-import com.ifride.core.auth.model.entity.Attempt;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.model.enums.TokenType;
 import com.ifride.core.auth.repository.ActionTokenRepository;
-import com.ifride.core.auth.service.interfaces.TokenManager;
-import com.ifride.core.shared.exceptions.InvalidTokenTypeException;
-import com.ifride.core.shared.exceptions.TokenExpiredException;
-import com.ifride.core.shared.exceptions.TokenNotFoundException;
+import com.ifride.core.auth.service.abstracts.TokenManager;
 import com.ifride.core.shared.services.EmailService;
 import com.ifride.core.shared.services.HashingService; // <-- IMPORT AQUI
 import jakarta.transaction.Transactional;
 
 import java.time.Clock;
 import java.time.Duration;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 
 @Log4j2
 @Service
 @Transactional
-@RequiredArgsConstructor
-public class EmailVerificationTokenService implements TokenManager {
+public class EmailVerificationTokenService extends TokenManager {
 
-    private final ActionTokenRepository tokenRepository;
     private final UserService userService;
     private final EmailService emailService;
-    private final HashingService hashingService;
-    private final Clock clock;
-    private final ConcurrentHashMap<String, Attempt> emailVerificationAttempts = new ConcurrentHashMap<>();
-    private static final int MAX_ATTEMPTS = 3;
-    private static final Duration ATTEMPT_WINDOW = Duration.ofMinutes(15);
+    private static final Integer MAX_ATTEMPTS = 3;
+    private static final Integer ATTEMPT_WINDOW = 15;
     private static final Duration TOKEN_TTL = Duration.ofHours(24);
 
-    @Override
+    EmailVerificationTokenService(ActionTokenRepository tokenRepository, UserService userService, EmailService emailService, HashingService hashingService, Clock clock) {
+        super(MAX_ATTEMPTS, ATTEMPT_WINDOW, TOKEN_TTL, clock, tokenRepository, hashingService);
+        this.userService = userService;
+        this.emailService = emailService;
+    }
+
     public void generateTokenAndSendEmail(User user) {
-        enforceRateLimit(user);
+        enforceRateLimit(user.getId(), TokenType.EMAIL_VERIFICATION);
         tokenRepository.findByUserAndType(user, TokenType.EMAIL_VERIFICATION)
                 .ifPresent(tokenRepository::delete);
 
-        String plainToken = UUID.randomUUID().toString();
-        String hashedToken = hashingService.hash(plainToken);
+        ActionTokenWrapper wrapper = generateActionToken(user, TokenType.EMAIL_VERIFICATION);
 
-        ActionToken token = new ActionToken(
-                hashedToken,
-                Instant.now(clock).plus(TOKEN_TTL),
-                TokenType.EMAIL_VERIFICATION,
-                user
-        );
-
-        tokenRepository.save(token);
-        emailService.sendEmailVerificationEmail(user.getEmail(), plainToken);
+        tokenRepository.save(wrapper.getToken());
+        emailService.sendEmailVerificationEmail(user.getEmail(), wrapper.getPlainToken());
     }
 
-    private void enforceRateLimit(User user) {
-        var now = Instant.now(clock);
-        emailVerificationAttempts.compute(user.getId(), (id, current) -> {
-            if (current == null || current.lastAttempt().isBefore(now.minus(ATTEMPT_WINDOW))) {
-                return new Attempt(1, now);
-            }
-            if (current.quantity() >= MAX_ATTEMPTS) {
-                throw new TooManyRequestsException(
-                        "Limite de emails enviados atingido para: %s, tente novamente após 15 minutos", user.getEmail()
-                );
-            }
-            return new Attempt(current.quantity() + 1, now);
-        });
-    }
-
-    @Override
     public void confirmEmailVerification(String token) {
-        var validToken = validateToken(token);
+        var validToken = validateToken(TokenType.EMAIL_VERIFICATION, token);
         verifyUserEmail(validToken);
     }
 
@@ -87,21 +55,5 @@ public class EmailVerificationTokenService implements TokenManager {
         tokenRepository.delete(token);
 
         userService.save(user);
-    }
-
-    private ActionToken validateToken(String plainToken) {
-        String hashedToken = hashingService.hash(plainToken);
-        var foundToken = tokenRepository.findById(hashedToken)
-                .orElseThrow(() -> new TokenNotFoundException("O token inserido não foi encontrado!"));
-
-        if (foundToken.getType() != TokenType.EMAIL_VERIFICATION) {
-            throw new InvalidTokenTypeException("O token encontrado não é de verificação de email!");
-        }
-
-        if (foundToken.getExpires().isBefore(Instant.now(clock))) {
-            throw new TokenExpiredException("O token está expirado!");
-        }
-
-        return foundToken;
     }
 }
