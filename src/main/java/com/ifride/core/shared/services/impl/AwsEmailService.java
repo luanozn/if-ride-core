@@ -19,7 +19,7 @@ public class AwsEmailService implements EmailService {
 
     @Value("${aws.ses.email}")
     private String from;
-    @Value("${cloudfront.url}")
+    @Value("${frontend.url}")
     private String cloudfrontUrl;
 
     @Override

@@ -112,6 +112,7 @@ tasks.register('integrationTest', Test) {
 	classpath = sourceSets.integrationTest.runtimeClasspath
 
 	finalizedBy jacocoIntegrationTestReport
+	systemProperty 'spring.profiles.active', 'it'
 }
 
 tasks.register('jacocoIntegrationTestReport', JacocoReport) {

@@ -25,7 +25,7 @@ public class AuditLogService {
                 .action(action)
                 .targetId(targetId)
                 .targetType(targetType)
-                .authorId(authorId)
+                .author(authorId)
                 .ipAddressEncrypted(encryptedIp)
                 .build();
 
