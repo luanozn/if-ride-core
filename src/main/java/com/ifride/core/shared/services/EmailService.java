@@ -3,4 +3,6 @@ package com.ifride.core.shared.services;
 public interface EmailService {
     void sendHtmlEmail(String to, String subject, String htmlContent);
     void sendEmailVerificationEmail(String to, String token);
+    void sendPasswordChangeEmail(String to, String token);
+
 }

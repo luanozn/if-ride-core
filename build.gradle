@@ -57,13 +57,14 @@ dependencies {
 	implementation "io.awspring.cloud:spring-cloud-aws-starter-parameter-store:3.1.1"
 
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
-	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 	implementation("br.com.caelum.stella:caelum-stella-core:2.2.2")
 
 	implementation 'com.auth0:java-jwt:4.6.2'
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-database-postgresql'
 	implementation 'org.cryptomator:siv-mode:1.6.1'
+	implementation 'com.bucket4j:bucket4j-core:8.7.0'
+	implementation 'com.github.ben-manes.caffeine:caffeine'
 
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
 

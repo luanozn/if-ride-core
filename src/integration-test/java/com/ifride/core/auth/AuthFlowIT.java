@@ -1,9 +1,11 @@
 package com.ifride.core.auth;
 
+import com.ifride.core.auth.model.dto.ForgotPasswordDTO;
 import com.ifride.core.auth.model.dto.LoginRequestDTO;
 import com.ifride.core.auth.model.dto.LoginResponseDTO;
 import com.ifride.core.auth.model.dto.RegisterRequestDTO;
 import com.ifride.core.auth.model.dto.RegisterResponseDTO;
+import com.ifride.core.auth.model.dto.RequestPasswordChangeDTO;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.shared.config.LocalEmailService;
 import com.ifride.core.shared.exceptions.api.ApiException;
@@ -37,6 +39,18 @@ class AuthFlowIT extends BaseIT {
         if (localEmailService != null) {
             localEmailService.clear();
         }
+    }
+
+    private String registerUser(String email, String password, String cpf) {
+        var registerRequest = new RegisterRequestDTO(email, password, "Usuário Teste", cpf, LocalDate.of(1995, 5, 20));
+        var response = rest.exchange(
+                "/v1/auth/register",
+                HttpMethod.POST,
+                new HttpEntity<>(registerRequest, createHeaders(null)),
+                RegisterResponseDTO.class
+        );
+        then(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return email;
     }
 
     @Nested
@@ -101,6 +115,149 @@ class AuthFlowIT extends BaseIT {
             );
 
             then(protectedResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @Nested
+    @DisplayName("Fluxo de Redefinição de Senha")
+    class PasswordResetFlow {
+
+        @Test
+        @DisplayName("Deve solicitar reset, receber e-mail, trocar senha, invalidar token e autenticar com a nova senha")
+        void shouldCompletePasswordResetFlowAndInvalidateToken() {
+            String uniqueEmail = "reset-" + UUID.randomUUID() + "@ifride.com";
+            registerUser(uniqueEmail, "senhaAntiga123", "52998224725");
+
+            await().atMost(Duration.ofSeconds(5))
+                    .untilAsserted(() -> then(localEmailService.lastCallTo(uniqueEmail)).isPresent());
+            localEmailService.clear();
+
+            var forgotResponse = rest.exchange(
+                    "/v1/auth/forgot-password",
+                    HttpMethod.POST,
+                    new HttpEntity<>(new ForgotPasswordDTO(uniqueEmail), createHeaders(null)),
+                    Void.class
+            );
+            then(forgotResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+            await().atMost(Duration.ofSeconds(5))
+                    .pollInterval(Duration.ofMillis(100))
+                    .untilAsserted(() -> then(localEmailService.lastCallTo(uniqueEmail)).isPresent());
+
+            var email = localEmailService.lastCallTo(uniqueEmail).orElseThrow();
+            String resetToken = email.body().split("token=")[1].split("\"")[0];
+
+            var resetResponse = rest.exchange(
+                    "/v1/auth/reset-password",
+                    HttpMethod.POST,
+                    new HttpEntity<>(new RequestPasswordChangeDTO(resetToken, "novaSenhaForte123"), createHeaders(null)),
+                    Void.class
+            );
+            then(resetResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+            var oldPasswordLogin = rest.exchange(
+                    "/v1/auth/login",
+                    HttpMethod.POST,
+                    new HttpEntity<>(new LoginRequestDTO(uniqueEmail, "senhaAntiga123"), createHeaders(null)),
+                    String.class
+            );
+            then(oldPasswordLogin.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+
+            var newPasswordLogin = rest.exchange(
+                    "/v1/auth/login",
+                    HttpMethod.POST,
+                    new HttpEntity<>(new LoginRequestDTO(uniqueEmail, "novaSenhaForte123"), createHeaders(null)),
+                    LoginResponseDTO.class
+            );
+            then(newPasswordLogin.getStatusCode()).isEqualTo(HttpStatus.OK);
+            then(Objects.requireNonNull(newPasswordLogin.getBody()).token()).isNotBlank();
+
+            var reuseTokenResponse = rest.exchange(
+                    "/v1/auth/reset-password",
+                    HttpMethod.POST,
+                    new HttpEntity<>(new RequestPasswordChangeDTO(resetToken, "terceiraSenha123"), createHeaders(null)),
+                    String.class
+            );
+            then(reuseTokenResponse.getStatusCode().is4xxClientError()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Deve retornar 200 OK sem enviar e-mail quando o endereço não está cadastrado")
+        void shouldReturnOkWithoutSendingEmailForUnknownAddress() {
+            String unknownEmail = "nao-existe-" + UUID.randomUUID() + "@ifride.com";
+
+            var response = rest.exchange(
+                    "/v1/auth/forgot-password",
+                    HttpMethod.POST,
+                    new HttpEntity<>(new ForgotPasswordDTO(unknownEmail), createHeaders(null)),
+                    Void.class
+            );
+
+            then(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            then(localEmailService.lastCallTo(unknownEmail)).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("Proteção de Rate Limiting no Login")
+    class RateLimitFlows {
+
+        @Test
+        @DisplayName("Deve bloquear conta com 429 Too Many Requests após 5 tentativas falhas consecutivas")
+        void shouldBlockLoginAfterFiveFailedAttempts() {
+            String uniqueEmail = "bruteforce-" + UUID.randomUUID() + "@ifride.com";
+            registerUser(uniqueEmail, "senhaCorreta123", "111.444.777-35");
+
+            for (int i = 0; i < 5; i++) {
+                var failedResponse = rest.exchange(
+                        "/v1/auth/login",
+                        HttpMethod.POST,
+                        new HttpEntity<>(new LoginRequestDTO(uniqueEmail, "senhaErrada"), createHeaders(null)),
+                        String.class
+                );
+                then(failedResponse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+            }
+
+            var blockedResponse = rest.exchange(
+                    "/v1/auth/login",
+                    HttpMethod.POST,
+                    new HttpEntity<>(new LoginRequestDTO(uniqueEmail, "senhaCorreta123"), createHeaders(null)),
+                    String.class
+            );
+            then(blockedResponse.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        }
+
+        @Test
+        @DisplayName("Deve resetar o contador de tentativas após um login bem-sucedido")
+        void shouldResetLoginCounterAfterSuccessfulAuthentication() {
+            String uniqueEmail = "resetlimit-" + UUID.randomUUID() + "@ifride.com";
+            registerUser(uniqueEmail, "senhaCorreta123", "248.468.670-64");
+
+            for (int i = 0; i < 4; i++) {
+                var failedResponse = rest.exchange(
+                        "/v1/auth/login",
+                        HttpMethod.POST,
+                        new HttpEntity<>(new LoginRequestDTO(uniqueEmail, "senhaErrada"), createHeaders(null)),
+                        String.class
+                );
+                then(failedResponse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+            }
+
+            var successResponse = rest.exchange(
+                    "/v1/auth/login",
+                    HttpMethod.POST,
+                    new HttpEntity<>(new LoginRequestDTO(uniqueEmail, "senhaCorreta123"), createHeaders(null)),
+                    LoginResponseDTO.class
+            );
+            then(successResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+            var nextFailedResponse = rest.exchange(
+                    "/v1/auth/login",
+                    HttpMethod.POST,
+                    new HttpEntity<>(new LoginRequestDTO(uniqueEmail, "senhaErrada"), createHeaders(null)),
+                    String.class
+            );
+            then(nextFailedResponse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         }
     }
 

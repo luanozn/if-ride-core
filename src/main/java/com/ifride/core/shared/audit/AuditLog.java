@@ -31,8 +31,8 @@ public class AuditLog {
     @Enumerated(EnumType.STRING)
     private TargetType targetType;
 
-    @Column(name = "author_id", nullable = false)
-    private String authorId;
+    @Column(name = "author", nullable = false)
+    private String author;
 
     @Column(name = "ip_address_encrypted")
     private String ipAddressEncrypted;

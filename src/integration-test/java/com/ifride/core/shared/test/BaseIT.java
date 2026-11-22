@@ -50,9 +50,6 @@ public abstract class BaseIT extends IntegrationTest {
         jdbcTemplate.execute("TRUNCATE TABLE users, drivers, vehicles, rides, ride_participants, driver_applications, tokens, audit_logs CASCADE");
     }
 
-    @Value("${app.gateway.origin}")
-    protected String gatewayOriginHash;
-
     protected User createUser(Role role) {
         return createUser("user-" + UUID.randomUUID() + "@ifride.com", role);
     }
@@ -86,7 +83,6 @@ public abstract class BaseIT extends IntegrationTest {
         if (token != null) {
             headers.setBearerAuth(token);
         }
-        headers.set("X-Origin", gatewayOriginHash);
         return headers;
     }
 

@@ -1,6 +1,7 @@
 package com.ifride.core.auth.controller;
 
 import com.ifride.core.auth.model.TooManyRequestsException;
+import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.service.EmailVerificationTokenService;
 import com.ifride.core.auth.service.UserService;
 import com.ifride.core.shared.audit.enums.AuditAction;
@@ -61,8 +62,9 @@ public class WebVerificationController {
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
     public ResponseEntity<String> resendVerificationForm(@RequestParam String email, HttpServletRequest request) throws IOException {
+        User user = null;
         try {
-            var user = userService.findByEmail(email);
+            user = userService.findByEmail(email);
             emailVerificationTokenService.generateTokenAndSendEmail(user);
         } catch (TooManyRequestsException e) {
             log.warn(e.getMessage());
@@ -74,10 +76,10 @@ public class WebVerificationController {
                 AuditAction.RESEND,
                 null,
                 TargetType.EMAIL_VERIFICATION,
-                email,
+                user == null ? "ANONYMOUS:" + email : user.getId(),
                 HttpRequestUtils.getClientIp(request)
         );
-
+        
         var html = new ClassPathResource("auth/verification-resend.html")
                 .getContentAsString(StandardCharsets.UTF_8);
 
@@ -115,5 +117,15 @@ public class WebVerificationController {
 
             return "redirect:/auth/verification-error.html";
         }
+    }
+
+    @GetMapping("/reset-password")
+    public ResponseEntity<String> showResetPasswordPage() throws IOException {
+        var html = new ClassPathResource("auth/reset-password.html")
+                .getContentAsString(StandardCharsets.UTF_8);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_HTML)
+                .body(html);
     }
 }
