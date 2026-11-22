@@ -64,6 +64,8 @@ dependencies {
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-database-postgresql'
 	implementation 'org.cryptomator:siv-mode:1.6.1'
+	implementation 'com.bucket4j:bucket4j-core:8.7.0'
+	implementation 'com.github.ben-manes.caffeine:caffeine'
 
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
 

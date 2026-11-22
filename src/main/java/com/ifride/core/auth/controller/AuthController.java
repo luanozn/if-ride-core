@@ -10,8 +10,9 @@ import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.service.AuthService;
 import com.ifride.core.auth.service.ChangePasswordTokenService;
 import com.ifride.core.auth.service.JwtService;
-import com.ifride.core.auth.service.LoginRateLimitService;
 import com.ifride.core.auth.service.UserService;
+import com.ifride.core.shared.rate_limit.RateLimitOperation;
+import com.ifride.core.shared.rate_limit.RateLimitService;
 import com.ifride.core.shared.utils.HttpRequestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -20,12 +21,12 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -38,7 +39,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final AuthService authService;
-    private final LoginRateLimitService loginRateLimitService;
+    private final RateLimitService rateLimitService;
     private final ChangePasswordTokenService changePasswordTokenService;
     private final UserService userService;
 
@@ -68,18 +69,16 @@ public class AuthController {
     @PostMapping("/login")
     public LoginResponseDTO login(@Valid @RequestBody LoginRequestDTO authBody, HttpServletRequest request) {
         String ip = HttpRequestUtils.getClientIp(request);
-        loginRateLimitService.checkBlocked(authBody.email(), ip);
+        Duration window = Duration.ofMinutes(15);
 
-        try {
-            var userPassword = new UsernamePasswordAuthenticationToken(authBody.email(), authBody.password());
-            var auth = this.authenticationManager.authenticate(userPassword);
-            loginRateLimitService.loginSucceeded(authBody.email());
+        rateLimitService.checkLimit(RateLimitOperation.LOGIN_EMAIL, authBody.email(), 5, window);
+        rateLimitService.checkLimit(RateLimitOperation.LOGIN_IP, ip, 50, window);
 
-            return jwtService.generateLoginResponse((User) auth.getPrincipal());
-        } catch (AuthenticationException e) {
-            loginRateLimitService.loginFailed(authBody.email(), ip);
-            throw e;
-        }
+        var userPassword = new UsernamePasswordAuthenticationToken(authBody.email(), authBody.password());
+        var auth = this.authenticationManager.authenticate(userPassword);
+
+        rateLimitService.resetLimit(RateLimitOperation.LOGIN_EMAIL, authBody.email());
+        return jwtService.generateLoginResponse((User) auth.getPrincipal());
     }
 
     @Operation(
@@ -104,8 +103,10 @@ public class AuthController {
             @ApiResponse(responseCode = "409", description = "Conflito de dados: E-mail ou CPF já cadastrado no sistema.")
     })
     @PostMapping("/register")
-    public RegisterResponseDTO register(@Valid @RequestBody RegisterRequestDTO registerDTO) {
+    public RegisterResponseDTO register(@Valid @RequestBody RegisterRequestDTO registerDTO, HttpServletRequest request) {
+        String ip = HttpRequestUtils.getClientIp(request);
         log.info("Novo registro público iniciado para {}", registerDTO.email());
+        rateLimitService.checkLimit(RateLimitOperation.REGISTRATION_IP, ip, 100, Duration.ofHours(1));
         return RegisterResponseDTO.from(authService.register(registerDTO));
     }
 

@@ -12,7 +12,6 @@ import com.ifride.core.auth.model.dto.LoginResponseDTO;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.service.AuthService;
 import com.ifride.core.auth.service.JwtService;
-import com.ifride.core.auth.service.LoginRateLimitService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

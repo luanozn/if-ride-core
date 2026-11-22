@@ -1,33 +1,32 @@
 package com.ifride.core.auth.service.abstracts;
 
-import com.ifride.core.auth.model.TooManyRequestsException;
 import com.ifride.core.auth.model.dto.ActionTokenWrapper;
 import com.ifride.core.auth.model.entity.ActionToken;
-import com.ifride.core.auth.model.entity.Attempt;
 import com.ifride.core.auth.model.entity.User;
 import com.ifride.core.auth.model.enums.TokenType;
 import com.ifride.core.auth.repository.ActionTokenRepository;
 import com.ifride.core.shared.exceptions.InvalidTokenTypeException;
 import com.ifride.core.shared.exceptions.TokenExpiredException;
 import com.ifride.core.shared.exceptions.TokenNotFoundException;
+import com.ifride.core.shared.rate_limit.RateLimitOperation;
+import com.ifride.core.shared.rate_limit.RateLimitService;
 import com.ifride.core.shared.services.HashingService;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class TokenManager {
-    private final ConcurrentHashMap<String, Attempt> attempts = new ConcurrentHashMap<>();
     private final Integer maxAttempts;
     private final Duration attemptWindow;
     protected final Duration tokenTtl;
 
     protected final ActionTokenRepository tokenRepository;
     protected final HashingService hashingService;
+    protected final RateLimitService rateLimitService;
     protected final Clock clock;
 
-    public TokenManager(Integer maxAttempts, Integer attemptWindowInMinutes, Duration tokenTtlInHours, Clock clock, ActionTokenRepository tokenRepository, HashingService hashingService) {
+    public TokenManager(Integer maxAttempts, Integer attemptWindowInMinutes, Duration tokenTtlInHours, Clock clock, ActionTokenRepository tokenRepository, HashingService hashingService, RateLimitService rateLimitService) {
         this.maxAttempts = maxAttempts;
         this.attemptWindow = Duration.ofMinutes(attemptWindowInMinutes);
         this.tokenTtl = tokenTtlInHours;
@@ -35,6 +34,7 @@ public abstract class TokenManager {
         this.clock = clock;
         this.tokenRepository = tokenRepository;
         this.hashingService = hashingService;
+        this.rateLimitService = rateLimitService;
     }
 
     protected abstract void generateTokenAndSendEmail(User user);
@@ -53,19 +53,8 @@ public abstract class TokenManager {
         return new ActionTokenWrapper(token, plainToken);
     }
 
-    protected void enforceRateLimit(String identifier, TokenType type) {
-        var now = Instant.now(clock);
-        attempts.compute(String.format("%s_%s", identifier, type.toString()), (id, current) -> {
-            if (current == null || current.lastAttempt().isBefore(now.minus(attemptWindow))) {
-                return new Attempt(1, now);
-            }
-            if (current.quantity() >= maxAttempts) {
-                throw new TooManyRequestsException(
-                        "Limite de emails enviados atingido para: %s, tente novamente após 15 minutos", identifier
-                );
-            }
-            return new Attempt(current.quantity() + 1, now);
-        });
+    protected void enforceRateLimit(User user, RateLimitOperation operation) {
+        rateLimitService.checkLimit(operation, user.getId(), this.maxAttempts, this.attemptWindow);
     }
 
     protected ActionToken validateToken(TokenType type, String plainToken) {
