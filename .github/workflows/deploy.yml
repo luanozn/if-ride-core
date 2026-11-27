@@ -45,18 +45,27 @@ jobs:
       - name: Resolve Instance ID
         id: instance
         run: |
-          INSTANCE_ID=$(aws ec2 describe-instances \
-            --filters \
-              "Name=tag:Name,Values=IfRideServer/IfRideServer" \
-              "Name=instance-state-name,Values=running" \
-            --query "Reservations[0].Instances[0].InstanceId" \
+          INSTANCE_ID=$(aws cloudformation list-exports \
+            --query "Exports[?Name=='IfRideInstanceId'].Value" \
             --output text)
+          
           if [ -z "$INSTANCE_ID" ] || [ "$INSTANCE_ID" == "None" ]; then
-            echo "::error::Instância não encontrada em estado running"
+            echo "::error::Export IfRideInstanceId não encontrado no CloudFormation"
             exit 1
           fi
+          
+          STATE=$(aws ec2 describe-instances \
+            --instance-ids "$INSTANCE_ID" \
+            --query "Reservations[0].Instances[0].State.Name" \
+            --output text)
+          
+          if [ "$STATE" != "running" ]; then
+            echo "::error::Instância $INSTANCE_ID não está running (estado atual: $STATE)"
+            exit 1
+          fi
+          
           echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
-          echo "Instância: $INSTANCE_ID"
+          echo "Instância: $INSTANCE_ID ($STATE)"
 
       - name: Deploy via SSM
         env:
@@ -75,6 +84,7 @@ jobs:
            "docker stop if-ride-app || true",
            "docker rm if-ride-app || true",
            "docker run -d --name if-ride-app --restart unless-stopped -p 8080:8080 $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG",
+           "docker image prune -af",
            "sleep 5",
            "docker ps --filter name=if-ride-app --format '{{.Status}}'"]
           EOF
@@ -121,15 +131,20 @@ jobs:
 
       - name: Smoke Test
         run: |
-          API_ENDPOINT=$(aws cloudformation describe-stacks \
-            --stack-name IfRideGateway \
-            --query "Stacks[0].Outputs[?OutputKey=='IfRideApiEndpoint0A263F8C'].OutputValue" \
+          API_ENDPOINT=$(aws cloudformation list-exports \
+            --query "Exports[?Name=='IfRideAppUrl'].Value" \
             --output text)
-
-          echo "Endpoint: $API_ENDPOINT"
-
+          
+          if [ -z "$API_ENDPOINT" ] || [ "$API_ENDPOINT" == "None" ]; then
+            echo "::error::Export IfRideAppUrl não encontrado no CloudFormation"
+            exit 1
+          fi
+          
+          TARGET_URL="${API_ENDPOINT%/}/health"
+          echo "Endpoint: $TARGET_URL"
+          
           for i in {1..10}; do
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${API_ENDPOINT}swagger-ui/index.html" || true)
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$TARGET_URL" || true)
             if [ "$HTTP_CODE" = "200" ]; then
               echo "Smoke test OK (HTTP $HTTP_CODE)"
               exit 0
@@ -137,6 +152,6 @@ jobs:
             echo "Tentativa $i: HTTP $HTTP_CODE, aguardando..."
             sleep 6
           done
-
+          
           echo "::error::Smoke test falhou após 10 tentativas"
           exit 1

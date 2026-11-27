@@ -1,8 +1,15 @@
 import { Construct } from 'constructs';
-import {ParameterUtils} from "./utils/parameter-utils";
-import {IVpc, SubnetType, Vpc} from "aws-cdk-lib/aws-ec2";
-import {Stack, StackProps} from "aws-cdk-lib";
-import {ConfigProps} from "./utils/config-props";
+import {
+    IVpc,
+    SubnetType,
+    Vpc,
+    InstanceType,
+    InstanceClass,
+    NatProvider,
+    GatewayVpcEndpointAwsService, InstanceSize
+} from "aws-cdk-lib/aws-ec2";
+import { Stack } from "aws-cdk-lib";
+import { ConfigProps } from "./utils/config-props";
 
 export class VpcStack extends Stack {
     vpc: IVpc;
@@ -10,13 +17,24 @@ export class VpcStack extends Stack {
     constructor(scope: Construct, id: string, props: ConfigProps) {
         super(scope, id, props);
 
+        const natProvider = NatProvider.instanceV2({
+            instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.NANO),
+            defaultAllowedTraffic: undefined,
+        });
+
         this.vpc = new Vpc(this, 'IfRideVpc', {
             maxAzs: 2,
-            natGateways: 0,
+            natGatewayProvider: natProvider,
+            natGateways: 1,
             subnetConfiguration: [
                 {
                     name: 'Public',
                     subnetType: SubnetType.PUBLIC,
+                    cidrMask: 24,
+                },
+                {
+                    name: 'PrivateWithEgress',
+                    subnetType: SubnetType.PRIVATE_WITH_EGRESS,
                     cidrMask: 24,
                 },
                 {
@@ -27,5 +45,8 @@ export class VpcStack extends Stack {
             ],
         });
 
+        this.vpc.addGatewayEndpoint('S3Endpoint', {
+            service: GatewayVpcEndpointAwsService.S3,
+        });
     }
 }

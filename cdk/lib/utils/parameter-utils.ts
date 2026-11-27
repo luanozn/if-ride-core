@@ -6,7 +6,7 @@ export class ParameterUtils {
 
     public static createParameter(context: Construct, id: string, parameterValue: string, path: string, description?: string): StringParameter {
         return new StringParameter(context, id, {
-            parameterName: `${SSM_PREFIX}/${path}/`,
+            parameterName: `${SSM_PREFIX}/${path}`,
             stringValue: parameterValue,
             description: description,
         });

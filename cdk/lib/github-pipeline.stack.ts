@@ -1,5 +1,5 @@
 import {Construct} from 'constructs';
-import {Effect, FederatedPrincipal, ManagedPolicy, OpenIdConnectProvider, PolicyStatement, Role} from "aws-cdk-lib/aws-iam";
+import {Effect, FederatedPrincipal, OpenIdConnectProvider, PolicyStatement, Role} from "aws-cdk-lib/aws-iam";
 import {CfnOutput, Duration, Stack, StackProps} from "aws-cdk-lib";
 
 export class GithubPipelineStack extends Stack {
@@ -29,11 +29,32 @@ export class GithubPipelineStack extends Stack {
             maxSessionDuration: Duration.hours(1)
         });
 
-        githubRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));
+        githubRole.addToPolicy(new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['ecr:GetAuthorizationToken'],
+            resources: ['*'],
+        }));
 
         githubRole.addToPolicy(new PolicyStatement({
             effect: Effect.ALLOW,
             actions: [
+                'ecr:BatchCheckLayerAvailability',
+                'ecr:GetDownloadUrlForLayer',
+                'ecr:BatchGetImage',
+                'ecr:InitiateLayerUpload',
+                'ecr:UploadLayerPart',
+                'ecr:CompleteLayerUpload',
+                'ecr:PutImage',
+            ],
+            resources: [`arn:aws:ecr:${this.region}:${this.account}:repository/if-ride-core`],
+        }));
+
+        githubRole.addToPolicy(new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: [
+                'ec2:DescribeInstances',
+                'cloudformation:DescribeStacks',
+                'cloudformation:ListExports',
                 'ssm:SendCommand',
                 'ssm:GetCommandInvocation',
                 'ssm:ListCommandInvocations',

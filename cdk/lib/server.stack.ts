@@ -26,9 +26,15 @@ export class ServerStack extends Stack {
 
         const securityGroup = new SecurityGroup(this, 'InstanceSG', {
             vpc,
-            description: 'Permitir acesso HTTP vindo apenas do ALB',
+            description: 'Permitir acesso apenas do CloudFront VPC Origin',
             allowAllOutbound: true,
         });
+
+        securityGroup.addIngressRule(
+            ec2.Peer.ipv4(vpc.vpcCidrBlock),
+            ec2.Port.tcp(8080),
+            'Permitir porta 8080 do CIDR da VPC (contingencia para CloudFront VPC Origin)'
+        );
 
         const ec2Role = new Role(this, 'IFRideEc2Role', {
             assumedBy: new ServicePrincipal('ec2.amazonaws.com'),
@@ -88,7 +94,7 @@ export class ServerStack extends Stack {
             emptyOnDelete: true,
             lifecycleRules: [
                 {
-                    maxImageCount: 1,
+                    maxImageCount: 3,
                     description: 'Limpeza de imagens antigas para economia de custo',
                 },
             ],
@@ -100,7 +106,9 @@ export class ServerStack extends Stack {
             machineImage: MachineImage.latestAmazonLinux2023(),
             securityGroup: securityGroup,
             role: ec2Role,
-            vpcSubnets: {subnetType: SubnetType.PUBLIC},
+            vpcSubnets: { subnetType: SubnetType.PRIVATE_WITH_EGRESS },
+            requireImdsv2: true,
+            httpPutResponseHopLimit: 2,
         });
 
         ecrRepo!.grantPull(instance)
